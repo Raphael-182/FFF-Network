@@ -6,6 +6,7 @@
     <title>FFF Network</title>
     
     <!-- PWA / App Store Setup -->
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -188,7 +189,7 @@
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
             <div id="trade-history-container" class="space-y-4 mb-8">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
@@ -339,7 +340,6 @@
         let globalTrophies = {}; 
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
-        window.allDraftsInfo = window.allDraftsInfo || {};
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -358,9 +358,9 @@
         }
 
         if ('serviceWorker' in navigator) {
-            const swCode = `self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`;
-            const blob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(console.error);
+            });
         }
 
         function switchTab(tabId) {
@@ -440,6 +440,7 @@
                 if (league.avatar) {
                     const iconUrl = `https://sleepercdn.com/avatars/thumbs/${league.avatar}`;
                     document.getElementById('league-logo').innerHTML = `<img src="${iconUrl}" class="w-full h-full object-cover">`;
+                    document.getElementById('apple-icon').href = iconUrl;
                 }
 
                 users.forEach(u => { usersData[u.user_id] = u; globalTrophies[u.user_id] = { j:0, t:0, b:0 }; });
@@ -612,19 +613,7 @@
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                             str += picks.map(p => {
                                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                                let pickPlayerStr = "";
-                                if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                    let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
-                                    let pickMade = window.allDraftPicks[p.season].find(pick => {
-                                        let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
-                                        return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
-                                    });
-                                    if (pickMade) {
-                                        let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
-                                        pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
-                                    }
-                                }
-                                return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                                return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span></div>`;
                             }).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
@@ -1062,19 +1051,7 @@
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                            let pickPlayerStr = "";
-                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
-                                let pickMade = window.allDraftPicks[p.season].find(pick => {
-                                    let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
-                                    return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
-                                });
-                                if (pickMade) {
-                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
-                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
-                                }
-                            }
-                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span></div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
@@ -1146,7 +1123,6 @@
 
                     if(!picks || picks.length === 0) continue;
                     window.allDraftPicks[l.season] = picks; 
-                    window.allDraftsInfo[l.season] = drafts[0].slot_to_roster_id || {};
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
