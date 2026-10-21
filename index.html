@@ -106,9 +106,9 @@
         <!-- DRAFT CAPITAL TAB -->
         <div id="draft-capital" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">Dynasty Assets Vault</h2>
-            <p class="text-gray-400 mb-6">Current breakdown of future rookie draft capital across the FFF.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="draft-capital-container">
-                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Reconciling traded picks...</div>
+            <p class="text-gray-400 mb-6">Current breakdown of future rookie draft capital across the FFF (6 Rounds).</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="draft-capital-container">
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Reconciling 6-Round traded picks...</div>
             </div>
         </div>
 
@@ -215,7 +215,11 @@
         let currentNFLWeek = 1;
         let allTimeData = {};
         let playerDictionary = {};
-        let leagueYears = [2024, 2025, 2026]; // Adjust based on current dynasty years
+        
+        // Target upcoming draft years (2027, 2028, 2029)
+        let draftYears = [2027, 2028, 2029]; 
+        // 6 Round Rookie Draft
+        let draftRounds = [1, 2, 3, 4, 5, 6];
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -310,36 +314,46 @@
                 const tradedPicksRes = await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/traded_picks`);
                 const tradedPicks = await tradedPicksRes.json();
                 
-                let teamPicks = {};
+                let allPicks = [];
+                // Build robust base 6-round picks for every franchise
                 rostersData.forEach(r => {
-                    teamPicks[r.roster_id] = { name: getTeamName(r.owner_id), picks: [] };
-                    leagueYears.forEach(year => {
-                        [1, 2, 3].forEach(round => teamPicks[r.roster_id].picks.push({ year, round, original_owner: r.roster_id, current_owner: r.roster_id }));
+                    draftYears.forEach(year => {
+                        draftRounds.forEach(round => {
+                            allPicks.push({ year: year, round: round, original_roster_id: r.roster_id, current_roster_id: r.roster_id });
+                        });
                     });
                 });
 
+                // Re-route traded picks to current owner
                 tradedPicks.forEach(trade => {
-                    const pick = teamPicks[trade.roster_id]?.picks.find(p => p.year === parseInt(trade.season) && p.round === trade.round);
-                    if (pick) pick.current_owner = trade.owner_id;
+                    const pickIndex = allPicks.findIndex(p => p.year === parseInt(trade.season) && p.round === trade.round && p.original_roster_id === trade.roster_id);
+                    if (pickIndex !== -1) {
+                        allPicks[pickIndex].current_roster_id = trade.owner_id;
+                    }
                 });
 
                 let html = "";
-                Object.values(teamPicks).forEach(team => {
-                    let picksList = team.picks.filter(p => p.current_owner === Object.keys(teamPicks).find(k => teamPicks[k].name === team.name))
-                        .sort((a,b) => a.year - b.year || a.round - b.round)
-                        .map(p => {
-                            const isOwn = p.original_owner === p.current_owner;
-                            const origName = isOwn ? "" : ` <span class="text-gray-500 text-xs">(${teamPicks[p.original_owner].name})</span>`;
-                            return `<div class="bg-slate-800 rounded px-2 py-1 text-sm"><span class="font-bold text-cyan-400">${p.year}</span> Round ${p.round}${origName}</div>`;
-                        }).join("");
+                // Sort the teams alphabetically to display cleanly
+                const sortedRosters = [...rostersData].sort((a,b) => getTeamName(a.owner_id).localeCompare(getTeamName(b.owner_id)));
+                
+                sortedRosters.forEach(r => {
+                    const teamName = getTeamName(r.owner_id);
+                    const teamPicks = allPicks.filter(p => p.current_roster_id === r.roster_id).sort((a, b) => a.year - b.year || a.round - b.round);
+                    
+                    let picksList = teamPicks.map(p => {
+                        const isOwn = p.original_roster_id === p.current_roster_id;
+                        const origTeamName = getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id);
+                        const origLabel = isOwn ? "" : ` <span class="text-gray-500 text-xs">(${origTeamName})</span>`;
+                        return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-cyan-400">${p.year} <span class="text-gray-300 font-normal">Round ${p.round}</span></span>${origLabel}</div>`;
+                    }).join("");
 
-                    html += `<div class="glass-panel p-4 rounded-xl border border-slate-700">
-                        <h4 class="font-black text-white mb-3 text-lg">${team.name}</h4>
-                        <div class="space-y-2">${picksList || '<div class="text-gray-500 italic text-sm">No draft capital</div>'}</div>
+                    html += `<div class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col h-full">
+                        <h4 class="font-black text-white mb-3 text-lg border-b border-slate-700 pb-2">${teamName}</h4>
+                        <div class="space-y-2 overflow-y-auto max-h-64 hide-scrollbar flex-1">${picksList || '<div class="text-gray-500 italic text-sm">No draft capital</div>'}</div>
                     </div>`;
                 });
                 document.getElementById('draft-capital-container').innerHTML = html;
-            } catch (e) { document.getElementById('draft-capital-container').innerHTML = `<div class="text-red-500 p-4">Failed to load draft capital.</div>`; }
+            } catch (e) { console.error(e); document.getElementById('draft-capital-container').innerHTML = `<div class="text-red-500 p-4">Failed to load draft capital.</div>`; }
         }
 
         function populateWeekSelectors() {
