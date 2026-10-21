@@ -179,7 +179,7 @@
 
             <h3 class="text-2xl font-black text-white mb-2">Positional All-Time Greats</h3>
             <p class="text-gray-400 text-sm mb-4">The highest single-game scoring performances in FFF history by position.</p>
-            <div id="positional-records-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+            <div id="positional-records-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
                 <div class="glass-panel p-4 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Scanning positional archives...</div>
             </div>
 
@@ -188,8 +188,8 @@
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
 
@@ -379,15 +379,31 @@
             window.scrollTo(0,0);
         }
 
-        function unlockEditor() { document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
-        function closeModal() { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
-        function verifyPin() {
-            if (document.getElementById('pin-input').value === 'Commish') {
-                document.getElementById('editor-tab-btn').classList.remove('hidden'); 
-                document.getElementById('mob-nav-editor').classList.remove('hidden');
-                closeModal(); switchTab('editor');
-            } else { alert("ACCESS DENIED."); document.getElementById('pin-input').value = ''; }
+        function unlockEditor() { 
+            document.getElementById('pin-modal').classList.remove('hidden'); 
+            setTimeout(() => document.getElementById('pin-input').focus(), 100); 
         }
+        
+        function closeModal() { 
+            document.getElementById('pin-modal').classList.add('hidden'); 
+            document.getElementById('pin-input').value = ''; 
+        }
+        
+        function verifyPin() {
+            const input = document.getElementById('pin-input').value.trim().toLowerCase();
+            if (input === 'commish') {
+                const deskBtn = document.getElementById('editor-desk-btn');
+                if(deskBtn) deskBtn.classList.remove('hidden'); 
+                const mobBtn = document.getElementById('mob-nav-editor');
+                if(mobBtn) mobBtn.classList.remove('hidden');
+                closeModal(); 
+                switchTab('editor');
+            } else { 
+                alert("ACCESS DENIED."); 
+                document.getElementById('pin-input').value = ''; 
+            }
+        }
+        
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
         async function forceSync() {
@@ -431,7 +447,6 @@
                 loadAnnouncements();
                 await fetchPlayersWithCache();
 
-                // ENSURE DRAFT HISTORY LOADS BEFORE TRADE LEDGER
                 if(league.previous_league_id) {
                     await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
                 }
@@ -544,7 +559,7 @@
             const teamPicks = globalDraftPicks[roster.roster_id] || [];
             document.getElementById('tm-picks').innerHTML = teamPicks.map(p => {
                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
+                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
                 return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
             }).join("") || `<span class="text-gray-500 italic text-sm">No draft capital</span>`;
 
@@ -777,6 +792,7 @@
 
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
+            // Headline Randomizers
             if(highGame) {
                 let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner); let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
@@ -784,12 +800,7 @@
                 const titles = [ `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wLink}`, `TOTAL DOMINATION: ${star.name} CARRIES ${wLink} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`, `OFFENSIVE CLINIC: ${wLink} PUTS ON A MASTERCLASS IN MASSACRE OVER ${lLink}` ];
                 const bodies = [ `Nobody was stopping <strong>${wLink}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lLink} (${loser.points.toFixed(2)}) completely in the dust.`, `${lLink} got completely rolled over. <strong>${wLink}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, `A certified blowout display. <strong>${wLink}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lLink} shell-shocked.` ];
                 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">
-                    ${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
@@ -799,11 +810,7 @@
                 const titles = [ `NAIL-BITER: ${wLink} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lLink}`, `HEARTBREAK IN THE FFF: ${lLink} COMES UP JUST SHORT TO ${wLink}`, `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wLink}` ];
                 const bodies = [ `Talk about a high-stress finish. <strong>${wLink}</strong> barely escaped with their lives, edging out ${lLink} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, `An agonizing finish for ${lLink}. <strong>${wLink}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, `The matchup of the week lived up to the hype. <strong>${wLink}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lLink} is left wondering what could have been.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p></article>`;
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
@@ -813,11 +820,7 @@
                 const titles = [ `MASSACRE: ${wLink} ABSOLUTELY EMBARRASSES ${lLink} BY ${maxDiff.toFixed(2)}`, `BLOWOUT ALERT: ${lLink} GETS SYSTEMATICALLY DISMANTLED`, `NO MERCY: ${wLink} DROPS THE HAMMER ON ${lLink}` ];
                 const bodies = [ `It was ugly from the opening kickoff. <strong>${wLink}</strong> absolutely dismantled ${lLink} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, `A complete demolition. <strong>${wLink}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lLink} failed to put up any resistance whatsoever.`, `This wasn't even a contest. <strong>${wLink}</strong> violated every rule of sportsmanship, continuing to pour it on ${lLink} until the clock hit triple zeroes.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p></article>`;
             }
             
             if(blunderer && maxBenchPts >= 15) {
@@ -826,13 +829,7 @@
                 const titles = [ `ROSTER MALPRACTICE: ${bLink} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`, `BENCH BLUNDER: ${bLink} WASTES A MONSTER PERFORMANCE FROM ${starName}`, `COACHING DISASTER: ${bLink} OUTSMARTS THEMSELVES IN THE WORST WAY` ];
                 const bodies = [ `What were you thinking? <strong>${bLink}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, `Congrats to <strong>${bLink}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, `Someone revoke their coaching credentials. <strong>${bLink}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div>
-                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'">
-                    <h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2>
-                    <p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
-                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'"><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
             }
 
             if(toiletGame && minCombined > 0 && minCombined < 170) {
@@ -841,12 +838,7 @@
                 const titles = [ `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`, `EYE BLEACH REQUIRED: ${t1Link} & ${t2Link} COMBINE FOR PURE TRASH`, `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Link} AND ${t2Link}` ];
                 const bodies = [ `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, `Did either of these managers even look at their lineups on Sunday? <strong>${t1Link}</strong> and <strong>${t2Link}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div>
-                    <h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2>
-                    <p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
-                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p></article>`;
             }
 
             feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
@@ -872,6 +864,15 @@
                     loseStreak: { streak: 0, owner: null, year: '' } 
                 };
                 
+                let posRecords = {
+                    'QB': { score: 0, id: null, owner: null, year: '', week: '' },
+                    'RB': { score: 0, id: null, owner: null, year: '', week: '' },
+                    'WR': { score: 0, id: null, owner: null, year: '', week: '' },
+                    'TE': { score: 0, id: null, owner: null, year: '', week: '' },
+                    'K':  { score: 0, id: null, owner: null, year: '', week: '' },
+                    'DEF':{ score: 0, id: null, owner: null, year: '', week: '' }
+                };
+
                 let cumulativeWLT = {}; let activeStreaks = {};
 
                 for (let l of leaguesToProcess) {
@@ -947,11 +948,22 @@
                                 if(!globalTrophies[teamOwner]) globalTrophies[teamOwner] = {j:0, t:0, b:0};
 
                                 if(team.players_points && team.starters) {
-                                    for(let pid in team.players_points) {
-                                        if(!team.starters.includes(pid) && team.players_points[pid] >= 15) {
+                                    team.starters.forEach(pid => {
+                                        let pts = team.players_points[pid] || 0;
+                                        let pos = playerDictionary[pid]?.pos;
+                                        
+                                        // Track positional records
+                                        if (pos && posRecords[pos]) {
+                                            if (pts > posRecords[pos].score) {
+                                                posRecords[pos] = { score: pts, id: pid, owner: teamOwner, year: l.season, week: weekNum };
+                                            }
+                                        }
+
+                                        // Track blunder trophies (benched players scoring >= 15)
+                                        if(!team.starters.includes(pid) && pts >= 15) {
                                             globalTrophies[teamOwner].b++;
                                         }
-                                    }
+                                    });
                                 }
                             });
 
@@ -987,6 +999,25 @@
 
                 document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
+                // Positional Records Rendering
+                let posHtml = "";
+                ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].forEach(pos => {
+                    let rec = posRecords[pos];
+                    if(rec.score > 0) {
+                        let pName = playerDictionary[rec.id]?.name || "Unknown";
+                        posHtml += `
+                        <div class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 w-full bg-cyan-900/30 text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-slate-700">${pos}</div>
+                            <img src="https://sleepercdn.com/content/nfl/players/thumb/${rec.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-14 h-14 rounded-full border-2 border-slate-500 mt-6 mb-2 object-cover bg-slate-800">
+                            <div class="text-2xl font-black text-white">${rec.score.toFixed(2)}</div>
+                            <div class="text-xs font-bold text-white mt-1 w-full truncate px-1">${pName}</div>
+                            <div class="text-[10px] text-gray-400 mt-1 uppercase w-full truncate px-1">${getTeamName(rec.owner)}</div>
+                            <div class="text-[10px] text-gray-500">${rec.year} - Wk ${rec.week}</div>
+                        </div>`;
+                    }
+                });
+                document.getElementById('positional-records-container').innerHTML = posHtml || `<div class="text-gray-500 italic text-sm p-4 col-span-full">Not enough data to calculate positional records.</div>`;
+
                 let html = ""; 
                 Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { 
                     const d = cumulativeWLT[id], total = d.w + d.l; 
@@ -999,7 +1030,10 @@
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
                 renderTradeHistory();
 
-            } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
+            } catch (e) { 
+                document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; 
+                document.getElementById('positional-records-container').innerHTML = `<div class="text-red-500 p-4 col-span-full text-center text-sm font-bold">Failed to compile positional records.</div>`; 
+            }
         }
 
         function renderTradeHistory() {
@@ -1028,7 +1062,15 @@
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span></div>`;
+                            let pickPlayerStr = "";
+                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
+                                if (pickMade) {
+                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
+                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
+                                }
+                            }
+                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
