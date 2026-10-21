@@ -54,7 +54,7 @@
                     <select id="public-week-selector" onchange="changePublicWeek()" class="bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-bold rounded px-2 py-1 focus:outline-none"></select>
                 </div>
                 <div id="scoreboard-container" class="flex overflow-x-auto space-x-4 hide-scrollbar pb-2">
-                    <div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Syncing matchups...</div>
+                    <div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic loader-node">Syncing matchups...</div>
                 </div>
             </div>
 
@@ -62,7 +62,7 @@
                 <div class="md:col-span-2 space-y-6">
                     <div id="commish-announcements-feed"></div>
                     <div id="news-feed" class="space-y-6">
-                        <div class="glass-panel p-8 rounded-xl text-center text-gray-500 animate-pulse">Generating algorithmic headlines...</div>
+                        <div class="glass-panel p-8 rounded-xl text-center text-gray-500 animate-pulse loader-node">Generating algorithmic headlines...</div>
                     </div>
                 </div>
                 
@@ -70,14 +70,14 @@
                     <div class="glass-panel p-5 rounded-xl border-l-4 border-purple-500 shadow-lg">
                         <h3 class="font-black text-sm text-gray-400 uppercase tracking-widest mb-3">Global Trending Pickups</h3>
                         <div id="trending-feed" class="space-y-3 text-sm h-56 overflow-y-auto hide-scrollbar pr-2">
-                            <div class="text-gray-500 italic animate-pulse">Scanning Sleeper global adds...</div>
+                            <div class="text-gray-500 italic animate-pulse loader-node">Scanning Sleeper global adds...</div>
                         </div>
                     </div>
 
                     <div class="glass-panel p-5 rounded-xl border-l-4 border-blue-500 shadow-lg">
                         <h3 class="font-black text-sm text-gray-400 uppercase tracking-widest mb-3">Live League Wire</h3>
                         <div id="live-wire-feed" class="space-y-3 text-sm h-48 overflow-y-auto hide-scrollbar pr-2">
-                            <div class="text-gray-500 italic animate-pulse">Scanning transactions...</div>
+                            <div class="text-gray-500 italic animate-pulse loader-node">Scanning transactions...</div>
                         </div>
                     </div>
                 </div>
@@ -98,7 +98,7 @@
                         </tr>
                     </thead>
                     <tbody id="standings-body" class="divide-y divide-slate-700">
-                        <tr><td colspan="4" class="p-8 text-center text-gray-500 animate-pulse">Establishing Sleeper Uplink...</td></tr>
+                        <tr><td colspan="4" class="p-8 text-center text-gray-500 animate-pulse loader-node">Establishing Sleeper Uplink...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -106,7 +106,7 @@
             <h3 class="text-2xl font-black text-white mb-2">True Contender Power Rankings</h3>
             <p class="text-gray-400 text-sm mb-6">Algorithmically generated based on Total Points, Win %, and Luck Factors (Points Against).</p>
             <div id="power-rankings-container" class="space-y-3">
-                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse">Calculating Power Indexes...</div>
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Calculating Power Indexes...</div>
             </div>
         </div>
 
@@ -115,7 +115,7 @@
             <h2 class="text-3xl font-black text-white mb-2">Dynasty Assets Vault</h2>
             <p class="text-gray-400 mb-6">Current breakdown of future rookie draft capital across the FFF (6 Rounds).</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="draft-capital-container">
-                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Reconciling 6-Round traded picks...</div>
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full loader-node">Reconciling 6-Round traded picks...</div>
             </div>
         </div>
 
@@ -141,11 +141,10 @@
                 </div>
             </div>
 
-            <!-- NEW: HISTORIC DRAFT VAULT -->
             <h3 class="text-2xl font-black text-white mt-10 mb-2">Historic Draft Vault</h3>
             <p class="text-gray-400 text-sm mb-4">Past 1st and 2nd Round Rookie Selections.</p>
             <div id="draft-history-container" class="space-y-6 mb-8">
-               <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse">Loading draft archives...</div>
+               <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Loading draft archives...</div>
             </div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">Head-to-Head Rivalry Engine</h3>
@@ -174,7 +173,7 @@
                         </tr>
                     </thead>
                     <tbody id="all-time-body" class="divide-y divide-slate-700">
-                        <tr><td colspan="3" class="p-8 text-center text-gray-500 animate-pulse">Compiling historical records...</td></tr>
+                        <tr><td colspan="3" class="p-8 text-center text-gray-500 animate-pulse loader-node">Compiling historical records...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -184,7 +183,7 @@
         <div id="editor" class="tab-content max-w-2xl mx-auto space-y-8 pb-10">
             <div class="glass-panel p-6 rounded-xl border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 <h2 class="text-2xl font-black text-white mb-2">Commish Announcements</h2>
-                <p class="text-sm text-gray-400 mb-6">Because the site now auto-generates news, recaps, and tickers autonomously, this desk is reserved for official league-wide announcements. These will be pinned to the top of the news feed.</p>
+                <p class="text-sm text-gray-400 mb-6">This desk is reserved for official league-wide announcements. These will be pinned to the top of the news feed.</p>
                 <input type="text" id="post-title" placeholder="Announcement Title" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-white mb-4 text-lg font-bold focus:border-cyan-500 focus:outline-none shadow-inner">
                 <textarea id="post-body" rows="6" placeholder="Message to the league..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-white mb-4 text-sm focus:border-cyan-500 focus:outline-none shadow-inner"></textarea>
                 <button onclick="publishAnnouncement()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-black py-4 px-4 rounded-lg transition active:scale-95 tracking-widest uppercase">
@@ -220,17 +219,14 @@
                         <div id="tm-record" class="text-3xl font-black text-white">0-0</div>
                     </div>
                 </div>
-                
                 <div>
                     <h4 class="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-2 border-b border-slate-700 pb-1">Future Draft Capital</h4>
                     <div id="tm-picks" class="grid grid-cols-2 gap-2"></div>
                 </div>
-
                 <div>
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-slate-700 pb-1">Active Roster</h4>
                     <div id="tm-roster" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-white"></div>
                 </div>
-
                 <div>
                     <h4 class="text-xs font-bold text-red-400 uppercase tracking-widest mb-2 border-b border-slate-700 pb-1">Injured Reserve / TAXI</h4>
                     <div id="tm-ir" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-400"></div>
@@ -257,12 +253,11 @@
         let usersData = {};
         let rostersData = [];
         let currentNFLWeek = 1;
+        let actualSleeperWeek = 1;
         let playerDictionary = {};
         
         let draftYears = [2027, 2028, 2029]; 
         let draftRounds = [1, 2, 3, 4, 5, 6];
-        
-        // Globals for deep analytics
         let globalAllMatchups = []; 
         let globalDraftPicks = {}; 
         let globalPowerRankings = {};
@@ -284,59 +279,88 @@
         }
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
+        // MASTER PIPELINE: PROGRESSIVE LOADER
         async function runDataPipeline() {
             try {
-                await fetchPlayers();
-                const stateRes = await fetch('https://api.sleeper.app/v1/state/nfl');
-                const state = await stateRes.json();
-                let actualSleeperWeek = state.week || 1;
+                // 1. Fetch Lightweight Data Instantly
+                const [stateRes, usersRes, leagueRes, rostersRes] = await Promise.all([
+                    fetch('https://api.sleeper.app/v1/state/nfl'),
+                    fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/users`),
+                    fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}`),
+                    fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/rosters`)
+                ]);
 
-                const dayOfWeek = new Date().getDay(); // 0=Sun, 2=Tue, 3=Wed, 4=Thu
+                const state = await stateRes.json();
+                const users = await usersRes.json();
+                const league = await leagueRes.json();
+                rostersData = await rostersRes.json();
+
+                actualSleeperWeek = state.week || 1;
+                const dayOfWeek = new Date().getDay(); 
                 if (dayOfWeek === 2 || dayOfWeek === 3) currentNFLWeek = Math.max(1, actualSleeperWeek - 1);
                 else currentNFLWeek = actualSleeperWeek;
 
                 populateWeekSelectors();
 
-                const [usersRes, leagueRes] = await Promise.all([ fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/users`), fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}`) ]);
-                const users = await usersRes.json();
-                const league = await leagueRes.json();
                 if (league.avatar) document.getElementById('league-logo').innerHTML = `<img src="https://sleepercdn.com/avatars/thumbs/${league.avatar}" class="w-full h-full object-cover">`;
                 users.forEach(u => { usersData[u.user_id] = u; });
 
-                rostersData = await (await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/rosters`)).json();
-
+                // 2. Render Fast UI immediately to clear loading spinners
                 calculateGlobalPowerRankings();
                 renderStandings();
                 renderPowerRankings();
-                fetchAndRenderScoreboard(currentNFLWeek);
-                
+                loadAnnouncements();
+
+                // 3. Initiate Heavy Player Fetch in Background (Uses Cache API)
+                await fetchPlayersWithCache();
+
+                // 4. Render the rest of the components now that names are loaded
+                await fetchAndRenderScoreboard(currentNFLWeek);
                 fetchTransactions(actualSleeperWeek); 
                 fetchTrendingPlayers();
                 await compileDraftCapital();
                 
                 if(league.previous_league_id) compileAllTimeRecords(LEAGUE_ID, currentNFLWeek);
 
-                loadAnnouncements();
-
-            } catch (e) { console.error("Data Pipeline Error:", e); }
+            } catch (e) { 
+                console.error("Data Pipeline Error:", e); 
+                document.querySelectorAll('.loader-node').forEach(el => {
+                    el.classList.remove('animate-pulse');
+                    el.innerHTML = `<span class="text-red-500 font-bold p-2 text-center text-sm">Failed to connect to Sleeper database. Please refresh.</span>`;
+                });
+            }
         }
 
-        async function fetchPlayers() {
+        // CACHE API PLAYER LOADER (Prevents RAM Crashes)
+        async function fetchPlayersWithCache() {
             try {
-                const data = await (await fetch('https://api.sleeper.app/v1/players/nfl')).json();
-                for (const id in data) {
-                    playerDictionary[id] = {
-                        name: (data[id].first_name && data[id].last_name) ? `${data[id].first_name.charAt(0)}. ${data[id].last_name}` : "Player",
-                        pos: data[id].position || "UNK",
-                        team: data[id].team || "FA"
-                    };
+                const cacheName = 'fff-players-v1';
+                const url = 'https://api.sleeper.app/v1/players/nfl';
+                let cache = await caches.open(cacheName);
+                let response = await cache.match(url);
+                
+                if (!response) {
+                    await cache.add(url);
+                    response = await cache.match(url);
                 }
-            } catch (e) {}
+                
+                const data = await response.json();
+                
+                // Filter heavily to save RAM
+                for (const id in data) {
+                    if(data[id].active === true || data[id].team !== null) {
+                        playerDictionary[id] = {
+                            name: (data[id].first_name && data[id].last_name) ? `${data[id].first_name.charAt(0)}. ${data[id].last_name}` : "Player",
+                            pos: data[id].position || "UNK",
+                            team: data[id].team || "FA"
+                        };
+                    }
+                }
+            } catch (e) { console.error("Player map cache failed", e); }
         }
 
         function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Unknown Team"; }
 
-        // Franchise Dashboard Logic
         function getTeamLink(ownerId, extraClasses="") {
             const name = getTeamName(ownerId);
             if(!ownerId) return `<span class="${extraClasses}">${name}</span>`;
@@ -355,38 +379,32 @@
             const avImage = document.getElementById('tm-avatar');
             if(user.avatar) {
                 avImage.src = `https://sleepercdn.com/avatars/thumbs/${user.avatar}`;
-                avImage.classList.remove('hidden');
-                avFallback.classList.add('hidden');
+                avImage.classList.remove('hidden'); avFallback.classList.add('hidden');
             } else {
-                avImage.classList.add('hidden');
-                avFallback.classList.remove('hidden');
+                avImage.classList.add('hidden'); avFallback.classList.remove('hidden');
                 avFallback.innerText = getTeamName(ownerId).substring(0,2).toUpperCase();
             }
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
             document.getElementById('tm-record').innerText = `${roster.settings.wins}-${roster.settings.losses}`;
 
-            // Roster Lists
             const buildPlayerItem = (id) => {
                 const p = playerDictionary[id];
-                const pName = p ? p.name : "Unknown";
-                const pPos = p ? p.pos : "";
-                const pTeam = p ? p.team : "";
-                return `<div class="flex items-center space-x-2"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600"><span class="truncate">${pName} <span class="text-xs text-gray-500">${pPos} - ${pTeam}</span></span></div>`;
+                const pName = p ? p.name : "Unknown Player";
+                return `<div class="flex items-center space-x-2"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600 object-cover"><span class="truncate">${pName} <span class="text-[10px] text-gray-500">${p?.pos||''}</span></span></div>`;
             };
 
             const activePlayers = (roster.players || []).filter(p => !(roster.reserve || []).includes(p) && !(roster.taxi || []).includes(p));
-            document.getElementById('tm-roster').innerHTML = activePlayers.map(buildPlayerItem).join("") || "<span class="text-gray-500 italic">Empty</span>";
+            document.getElementById('tm-roster').innerHTML = activePlayers.map(buildPlayerItem).join("") || `<span class="text-gray-500 italic">Empty</span>`;
             
             const inactivePlayers = [...(roster.reserve || []), ...(roster.taxi || [])];
-            document.getElementById('tm-ir').innerHTML = inactivePlayers.map(buildPlayerItem).join("") || "<span class="text-gray-500 italic">Empty</span>";
+            document.getElementById('tm-ir').innerHTML = inactivePlayers.map(buildPlayerItem).join("") || `<span class="text-gray-500 italic">Empty</span>`;
 
-            // Draft Picks
             const teamPicks = globalDraftPicks[roster.roster_id] || [];
             document.getElementById('tm-picks').innerHTML = teamPicks.map(p => {
                 const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
                 return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs"><span class="font-bold text-yellow-400">${p.year}</span> Round ${p.round}${origLabel}</div>`;
-            }).join("") || "<span class="text-gray-500 italic text-sm">No draft capital</span>";
+            }).join("") || `<span class="text-gray-500 italic text-sm">No draft capital</span>`;
 
             document.getElementById('team-modal').classList.remove('hidden');
         }
@@ -399,12 +417,11 @@
                 const trends = await res.json();
                 let html = "";
                 trends.forEach(t => {
-                    const p = playerDictionary[t.player_id];
-                    const pName = p ? p.name : "Unknown Player";
-                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${p?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
+                    const pName = playerDictionary[t.player_id]?.name || "Unknown Player";
+                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
                 });
                 document.getElementById('trending-feed').innerHTML = html || "<div class='text-gray-500 italic'>No trends found.</div>";
-            } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic'>Failed to load trends.</div>"; }
+            } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Sleeper trend database unavailable.</div>"; }
         }
 
         async function fetchTransactions(week) {
@@ -430,9 +447,9 @@
                     }
                     if(tickerStr) tickerArr.push(tickerStr);
                 });
-                document.getElementById('live-wire-feed').innerHTML = wireHTML || "<div class='text-gray-500 italic'>The wire is quiet this week.</div>";
+                document.getElementById('live-wire-feed').innerHTML = wireHTML || "<div class='text-gray-500 italic text-center p-2'>The wire is quiet this week.</div>";
                 document.getElementById('live-ticker').innerText = tickerArr.length > 0 ? "🚨 LATEST MOVES: " + tickerArr.slice(0, 5).join("  |  ") + " 🚨" : "🚨 FFF NETWORK LIVE: Standings and scores synced successfully. 🚨";
-            } catch (e) { document.getElementById('live-wire-feed').innerHTML = "<div class='text-red-500 italic'>Failed to load transactions.</div>"; }
+            } catch (e) { document.getElementById('live-wire-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Failed to fetch transactions.</div>"; }
         }
 
         async function compileDraftCapital() {
@@ -444,12 +461,10 @@
                     const pickIndex = allPicks.findIndex(p => p.year === parseInt(trade.season) && parseInt(p.round) === parseInt(trade.round) && p.original_roster_id === trade.roster_id);
                     if (pickIndex !== -1) allPicks[pickIndex].current_roster_id = trade.owner_id;
                 });
-                
                 let html = "";
                 [...rostersData].sort((a,b) => getTeamName(a.owner_id).localeCompare(getTeamName(b.owner_id))).forEach(r => {
                     const teamPicks = allPicks.filter(p => p.current_roster_id === r.roster_id).sort((a, b) => a.year - b.year || a.round - b.round);
-                    globalDraftPicks[r.roster_id] = teamPicks; // Store globally for Modal
-
+                    globalDraftPicks[r.roster_id] = teamPicks;
                     let picksList = teamPicks.map(p => {
                         const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
                         return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-cyan-400">${p.year} <span class="text-gray-300 font-normal">Round ${p.round}</span></span>${origLabel}</div>`;
@@ -529,7 +544,7 @@
 
         function generateAlgorithmicHeadlines(matchups, week) {
             const feed = document.getElementById('news-feed');
-            if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
+            if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
             let toiletGame = null; let minCombined = 9999;
@@ -544,7 +559,6 @@
                 if (diff > maxDiff) { maxDiff = diff; blowoutGame = g; }
                 if (comb < minCombined && comb > 0) { minCombined = comb; toiletGame = g; }
 
-                // Bench Blunder Scan
                 [g[0], g[1]].forEach(team => {
                     if(!team.players || !team.starters) return;
                     let bench = team.players.filter(p => !team.starters.includes(p));
@@ -558,11 +572,10 @@
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
-                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner);
                 html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">
-                    ${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}
+                    ${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}
                     <h2 class="text-2xl sm:text-3xl font-black text-white mb-2 uppercase tracking-tight">JUGGERNAUT: ${star.name} Drops ${star.pts.toFixed(1)} to Propel ${getTLink(winner.roster_id)}</h2>
                     <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
                     <p class="text-gray-300 leading-relaxed text-sm">Nobody was stopping <strong>${getTLink(winner.roster_id)}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${getTLink(loser.roster_id)} (${loser.points.toFixed(2)}) completely in the dust.</p>
@@ -586,30 +599,26 @@
                     <p class="text-gray-300 leading-relaxed text-sm">It got ugly fast. <strong>${getTLink(winner.roster_id)}</strong> absolutely dismantled ${getTLink(loser.roster_id)} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound, exploding for ${star.pts.toFixed(2)} points to guarantee the blowout.</p>
                 </article>`;
             }
-            
-            // HALL OF SHAME: Bench Blunder
             if(blunderer && maxBenchPts >= 15) {
                 let starName = playerDictionary[blunderPlayerId]?.name || "A player";
                 html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500">🤡</div>
-                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'">
+                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'">
                     <h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">BENCH BLUNDER: ${getTLink(blunderer.roster_id)} Wastes ${maxBenchPts.toFixed(1)} Pts</h2>
                     <p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
                     <p class="text-gray-300 leading-relaxed text-sm relative z-10">Ouch. <strong>${getTLink(blunderer.roster_id)}</strong> outsmarted themselves this week by leaving ${starName} on the bench to explode for ${maxBenchPts.toFixed(2)} points. You hate to see it.</p>
                 </article>`;
             }
-
-            // HALL OF SHAME: Toilet Bowl
             if(toiletGame && minCombined > 0 && minCombined < 170) {
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-lg mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500">🚽</div>
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div>
                     <h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">TOILET BOWL: Offensive Clinic Denied</h2>
                     <p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
                     <p class="text-gray-300 leading-relaxed text-sm relative z-10">Offensive coordinators look away. <strong>${getTLink(toiletGame[0].roster_id)}</strong> and <strong>${getTLink(toiletGame[1].roster_id)}</strong> put on an absolute clinic in offensive ineptitude, combining for a pathetic ${minCombined.toFixed(2)} points. Burn the tape.</p>
                 </article>`;
             }
 
-            feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
+            feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
         }
 
         async function compileAllTimeRecords(activeLeagueId, activeWeek) {
@@ -623,7 +632,6 @@
                 }
                 leaguesToProcess.reverse();
                 
-                // Trigger Draft Vault compilation since we now have past league IDs
                 fetchDraftHistory(leaguesToProcess);
 
                 let records = { highTeam: { score: 0 }, lowTeam: { score: 9999 }, highPlayer: { score: 0 }, winStreak: { streak: 0 }, loseStreak: { streak: 0 } };
@@ -643,9 +651,9 @@
                         } else {
                             weekPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/matchups/${w}`).then(r => r.json()).then(d => { 
                                 if(l.id !== activeLeagueId) {
-                                    // CACHE COMPRESSION: Minify historical payload to save 5MB limit
-                                    const minified = d.map(m => ({ matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: m.players_points }));
-                                    localStorage.setItem(cacheKey, JSON.stringify(minified)); 
+                                    // CACHE COMPRESSION: Minify to prevent 5MB localStorage crash
+                                    const min = d.map(m => ({ matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: m.players_points }));
+                                    localStorage.setItem(cacheKey, JSON.stringify(min)); 
                                 }
                                 return d; 
                             }));
@@ -693,7 +701,7 @@
                 
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
 
-            } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500">Failed to compile historical database.</div>`; }
+            } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
         }
 
         async function fetchDraftHistory(leagues) {
@@ -718,12 +726,12 @@
                         let pName = playerDictionary[p.player_id]?.name || (p.metadata?.first_name ? p.metadata.first_name + " " + p.metadata.last_name : "Unknown");
                         return `<div class="flex justify-between items-center text-sm border-b border-slate-700/50 py-2">
                             <div><span class="text-gray-400 font-mono w-8 inline-block">${p.round}.${p.draft_slot}</span> <span class="text-white font-bold">${pName}</span></div>
-                            <div class="text-xs uppercase">${getTeamLink(rostersData.find(r => r.roster_id === p.roster_id)?.owner_id)}</div>
+                            <div class="text-[10px] uppercase truncate max-w-[80px] sm:max-w-[120px]">${getTeamLink(rostersData.find(r => r.roster_id === p.roster_id)?.owner_id)}</div>
                         </div>`;
                     }).join('');
                     html += `<div class="glass-panel p-5 rounded-xl border border-slate-700"><h4 class="font-black text-white mb-3 text-lg border-b border-slate-700 pb-2">${l.season} Rookie Draft</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">${picksHtml}</div></div>`;
                 }
-                document.getElementById('draft-history-container').innerHTML = html || `<div class="text-gray-500 italic">No draft history found.</div>`;
+                document.getElementById('draft-history-container').innerHTML = html || `<div class="text-gray-500 italic p-4 text-center">No past drafts detected.</div>`;
             } catch(e){}
         }
 
