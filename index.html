@@ -27,7 +27,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
-        .draft-accordion.open { max-height: 5000px; }
+        .draft-accordion.open { max-height: 4000px; }
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
     </style>
@@ -99,7 +99,7 @@
         <!-- STANDINGS & PLAYOFFS TAB -->
         <div id="standings" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">The Playoff Picture</h2>
-            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship (Top 8 Qualify).</p>
+            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship.</p>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar mb-10">
                 <table class="w-full text-left text-sm min-w-[500px]">
                     <thead class="bg-slate-800 text-gray-300">
@@ -286,6 +286,17 @@
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
 
+        // INLINE SERVICE WORKER FOR PWA INSTALLABILITY
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', () => self.skipWaiting());
+                self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+            `;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
@@ -418,12 +429,8 @@
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
             
-            let currentStreakStr = "";
-            if(activeStreaksGlobal[ownerId]) {
-                const s = activeStreaksGlobal[ownerId];
-                if(s.count > 0) currentStreakStr = ` <span class="text-xs ${s.type === 'W' ? 'text-green-400' : 'text-red-400'} ml-2">(${s.type}${s.count})</span>`;
-            }
-            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${currentStreakStr}`;
+            let streakStr = getCurrentSeasonStreak(ownerId);
+            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${streakStr}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
             document.getElementById('tm-trophies').innerHTML = `
@@ -501,7 +508,10 @@
 
                         const buildAssetList = (pIds, picks) => {
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                            str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`).join("");
+                            str += picks.map(p => {
+                                let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
+                                return `<div class="${pickColor} text-xs font-bold my-1 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`;
+                            }).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
 
@@ -545,7 +555,8 @@
                     globalDraftPicks[r.roster_id] = teamPicks;
                     let picksList = teamPicks.map(p => {
                         const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
-                        return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-cyan-400">${p.year} <span class="text-gray-300 font-normal">Round ${p.round}</span></span>${origLabel}</div>`;
+                        let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
+                        return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold ${pickColor}">${p.year} <span class="text-gray-300 font-normal">Round ${p.round}</span></span>${origLabel}</div>`;
                     }).join("");
                     html += `<div class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col h-full"><h4 class="font-black text-white mb-3 text-lg border-b border-slate-700 pb-2">${getTeamLink(r.owner_id)}</h4><div class="space-y-2 overflow-y-auto max-h-64 hide-scrollbar flex-1">${picksList || '<div class="text-gray-500 italic text-sm">No draft capital</div>'}</div></div>`;
                 });
@@ -905,6 +916,8 @@
                         });
                     });
                 }
+                
+                activeStreaksGlobal = activeStreaks;
 
                 document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
@@ -947,7 +960,10 @@
 
                     const buildAssetList = (pIds, picks) => {
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                        str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`).join("");
+                        str += picks.map(p => {
+                            let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
+                            return `<div class="${pickColor} text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`;
+                        }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
 
@@ -989,20 +1005,14 @@
         function toggleDraft(season) {
             const content = document.getElementById(`draft-content-${season}`);
             const chevron = document.getElementById(`draft-chevron-${season}`);
-            if(content.classList.contains('open')) {
-                content.classList.remove('open'); chevron.classList.remove('open');
-            } else {
-                content.classList.add('open'); chevron.classList.add('open');
-            }
+            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
+            else { content.classList.add('open'); chevron.classList.add('open'); }
         }
 
         async function fetchDraftHistory(leagues) {
             try {
                 const currentYear = new Date().getFullYear();
-                if(!leagues.find(l => l.season == currentYear)) {
-                    leagues.push({ id: LEAGUE_ID, season: currentYear });
-                }
-                
+                if(!leagues.find(l => l.season == currentYear)) { leagues.push({ id: LEAGUE_ID, season: currentYear }); }
                 leagues.sort((a,b) => b.season - a.season);
 
                 let html = '';
@@ -1024,7 +1034,6 @@
                     }
 
                     if(!picks || picks.length === 0) continue;
-                    window.allDraftPicks[l.season] = picks; 
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
@@ -1068,11 +1077,50 @@
             if(games.length === 0) { resContainer.innerHTML = `<div class="text-gray-400 italic text-center text-sm py-4">No historical matchups found between these franchises.</div>`; return; }
 
             let aWins = 0, bWins = 0, aPoints = 0, bPoints = 0;
-            games.forEach(g => { let pA = g.o1 === a ? g.p1 : g.p2; let pB = g.o1 === b ? g.p1 : g.p2; aPoints += pA; bPoints += pB; if(pA > pB) aWins++; else if(pB > pA) bWins++; });
+            let aMax = 0, bMax = 0, currStreak = 0, streakWinner = null, maxStreak = 0, maxStreakWinner = null;
+            
+            games.sort((x,y) => x.year - y.year || x.week - y.week).forEach(g => { 
+                let pA = g.o1 === a ? g.p1 : g.p2; let pB = g.o1 === b ? g.p1 : g.p2; 
+                aPoints += pA; bPoints += pB; 
+                if(pA > aMax) aMax = pA; if(pB > bMax) bMax = pB;
+                
+                let gameWinner = pA > pB ? a : (pB > pA ? b : null);
+                if(gameWinner) {
+                    if(gameWinner === a) aWins++; else bWins++;
+                    if(streakWinner === gameWinner) currStreak++;
+                    else { streakWinner = gameWinner; currStreak = 1; }
+                    if(currStreak > maxStreak) { maxStreak = currStreak; maxStreakWinner = streakWinner; }
+                }
+            });
+
             const avgMargin = (Math.abs(aPoints - bPoints) / games.length).toFixed(2);
             let leaderText = aWins > bWins ? `${getTeamLink(a)} leads the all-time series` : bWins > aWins ? `${getTeamLink(b)} leads the all-time series` : "The all-time series is tied";
 
-            resContainer.innerHTML = `<div class="text-center mb-4"><span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">${leaderText}</span></div><div class="grid grid-cols-3 text-center gap-2 items-center"><div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${aWins > bWins ? 'border-green-500' : 'border-slate-600'}"><div class="text-3xl font-black text-white">${aWins}</div><div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(a)}</div></div><div class="text-gray-500 font-black text-xl">- WINS -</div><div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${bWins > aWins ? 'border-green-500' : 'border-slate-600'}"><div class="text-3xl font-black text-white">${bWins}</div><div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(b)}</div></div></div><div class="mt-5 text-center text-sm text-gray-400">Total Matchups: <span class="text-white font-bold">${games.length}</span> &nbsp;|&nbsp; Avg Margin: <span class="text-white font-bold">${avgMargin} pts</span></div>`;
+            resContainer.innerHTML = `
+                <div class="text-center mb-4"><span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">${leaderText}</span></div>
+                <div class="grid grid-cols-3 text-center gap-2 items-center mb-6">
+                    <div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${aWins > bWins ? 'border-green-500' : 'border-slate-600'}">
+                        <div class="text-3xl font-black text-white">${aWins}</div><div class="text-[10px] text-gray-400 font-bold uppercase truncate px-1">${getTeamName(a)}</div>
+                    </div>
+                    <div class="text-gray-500 font-black text-xl">- WINS -</div>
+                    <div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${bWins > aWins ? 'border-green-500' : 'border-slate-600'}">
+                        <div class="text-3xl font-black text-white">${bWins}</div><div class="text-[10px] text-gray-400 font-bold uppercase truncate px-1">${getTeamName(b)}</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Longest Win Streak</div>
+                        <div class="text-lg font-black text-yellow-400">${maxStreak} Games</div>
+                        <div class="text-xs text-white truncate px-1">${getTeamName(maxStreakWinner)}</div>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Highest Matchup Score</div>
+                        <div class="text-lg font-black text-cyan-400">${Math.max(aMax, bMax).toFixed(2)}</div>
+                        <div class="text-xs text-white truncate px-1">${aMax > bMax ? getTeamName(a) : getTeamName(b)}</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center text-[10px] text-gray-400 uppercase tracking-widest">Total Matchups: <span class="text-white">${games.length}</span> &nbsp;|&nbsp; Avg Margin: <span class="text-white">${avgMargin} pts</span></div>
+            `;
         }
 
         function publishAnnouncement() {
