@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FFF Network</title>
     
-    <!-- PWA / App Store Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -26,7 +25,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Accordion transition for Draft Vault */
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
         .draft-accordion.open { max-height: 2000px; }
         .chevron { transition: transform 0.3s ease; }
@@ -159,6 +157,13 @@
             <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
+            <!-- NEW: THE TRADE LEDGER -->
+            <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every blockbuster trade in FFF history.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
+               <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
+            </div>
+
             <h3 class="text-2xl font-black text-white mt-10 mb-2">Historic Draft Vault</h3>
             <p class="text-gray-400 text-sm mb-4">Past 1st and 2nd Round Rookie Selections.</p>
             <div id="draft-history-container" class="space-y-4 mb-8">
@@ -274,6 +279,7 @@
         let draftRounds = [1, 2, 3, 4, 5, 6];
         
         let globalAllMatchups = []; 
+        let globalAllTrades = []; // Stores historical trades
         let globalDraftPicks = {}; 
         let globalPowerRankings = {};
         let globalTrophies = {}; 
@@ -515,7 +521,6 @@
             let html = "";
             sorted.forEach((r, i) => {
                 let seedStyle = "text-gray-500"; let rowClass = "";
-                // CHANGED TO 8 PLAYOFF TEAMS
                 if(i < 8) { seedStyle = "text-green-400 font-black bg-green-900/20 px-2 py-1 rounded"; rowClass = "border-l-4 border-green-500 bg-green-900/10"; }
                 else if(i < 10) { seedStyle = "text-gray-400 font-bold px-2 py-1"; rowClass = ""; }
                 
@@ -558,7 +563,7 @@
                         let o2 = rostersData.find(r => r.roster_id === g[1].roster_id)?.owner_id;
                         const p1s = g[0].points > g[1].points ? "text-green-400 font-black" : "text-gray-300";
                         const p2s = g[1].points > g[0].points ? "text-green-400 font-black" : "text-gray-300";
-                        html += `<div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2"><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2 ${p1s}">${getTeamLink(o1)}</span><span class="text-sm font-mono ${p1s}">${g[0].points.toFixed(2)}</span></div><div class="h-px w-full bg-slate-700/50"></div><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2 ${p2s}">${getTeamLink(o2)}</span><span class="text-sm font-mono ${p2s}">${g[1].points.toFixed(2)}</span></div></div>`;
+                        html += `<div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2"><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o1, p1s)}</span><span class="text-sm font-mono ${p1s}">${g[0].points.toFixed(2)}</span></div><div class="h-px w-full bg-slate-700/50"></div><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o2, p2s)}</span><span class="text-sm font-mono ${p2s}">${g[1].points.toFixed(2)}</span></div></div>`;
                     }
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
@@ -670,7 +675,6 @@
                 let records = { 
                     highTeam: { score: 0, owner: null, year: '', week: '' }, 
                     lowTeam: { score: 9999, owner: null, year: '', week: '' }, 
-                    highPlayer: { score: 0, name: '', owner: null, year: '', week: '' }, 
                     winStreak: { streak: 0, owner: null, year: '' }, 
                     loseStreak: { streak: 0, owner: null, year: '' } 
                 };
@@ -702,6 +706,20 @@
                                 }
                                 return d; 
                             }));
+                        }
+                    }
+
+                    let transPromises = [];
+                    for(let w = 1; w <= endWeek; w++) {
+                        let tCacheKey = `fff_transactions_v2_${l.id}_w${w}`;
+                        if(l.id !== activeLeagueId && localStorage.getItem(tCacheKey)) {
+                            transPromises.push(Promise.resolve(JSON.parse(localStorage.getItem(tCacheKey))));
+                        } else {
+                            transPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/transactions/${w}`).then(r => r.json()).then(d => {
+                                const minT = d.filter(t => t.type === 'trade' && t.status === 'complete').map(t => ({ roster_ids: t.roster_ids, adds: t.adds, draft_picks: t.draft_picks }));
+                                if(l.id !== activeLeagueId) localStorage.setItem(tCacheKey, JSON.stringify(minT));
+                                return minT;
+                            }).catch(e => { return []; }));
                         }
                     }
 
@@ -738,9 +756,6 @@
                                         if(!team.starters.includes(pid) && team.players_points[pid] >= 15) {
                                             globalTrophies[teamOwner].b++;
                                         }
-                                        if(team.players_points[pid] > records.highPlayer.score) {
-                                            records.highPlayer = {score: team.players_points[pid], name: playerDictionary[pid]?.name || 'Unknown', owner: teamOwner, year: l.season, week: weekNum};
-                                        }
                                     }
                                 }
                             });
@@ -759,9 +774,19 @@
                             });
                         });
                     });
+
+                    let allWeeksTrans = await Promise.all(transPromises);
+                    allWeeksTrans.forEach((weekTrades, wIndex) => {
+                        let weekNum = wIndex + 1;
+                        weekTrades.forEach(t => {
+                            if(t.roster_ids && t.roster_ids.length === 2) {
+                                globalAllTrades.push({ ...t, year: l.season, week: weekNum, o1: r2o[t.roster_ids[0]], o2: r2o[t.roster_ids[1]] });
+                            }
+                        });
+                    });
                 }
 
-                document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-cyan-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Player Score</div><div class="text-3xl font-black text-cyan-400">${records.highPlayer.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${records.highPlayer.name} <span class="text-gray-400 text-xs font-normal">(${getTeamLink(records.highPlayer.owner)})</span></div><div class="text-xs text-gray-500">${records.highPlayer.year} - Week ${records.highPlayer.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
+                document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
                 let html = ""; 
                 Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { 
@@ -773,8 +798,30 @@
                 document.getElementById('all-time-body').innerHTML = html;
                 
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
+                renderTradeHistory();
 
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
+        }
+
+        function renderTradeHistory() {
+            let html = "";
+            if(globalAllTrades.length === 0) { document.getElementById('trade-history-container').innerHTML = `<div class="text-gray-500 italic p-4 text-center">No past trades found.</div>`; return; }
+            globalAllTrades.sort((a,b) => b.year - a.year || b.week - a.week);
+            globalAllTrades.forEach(t => {
+                let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
+                let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
+                if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
+                if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
+
+                const buildAssetList = (pIds, picks) => {
+                    let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                    str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1">🎯 ${p.season} Rd ${p.round}</div>`).join("");
+                    return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
+                };
+
+                html += `<div class="glass-panel p-4 rounded-xl border border-blue-500/30 mb-4 shadow-lg"><div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3"><span class="text-xs text-blue-400 font-black uppercase tracking-widest">🤝 Blockbuster Trade</span><span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${t.year} • Week ${t.week}</span></div><div class="grid grid-cols-2 gap-4 divide-x divide-slate-700"><div><div class="text-sm font-bold text-white mb-2 truncate">${getTeamLink(t.o1)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div><div class="pl-4"><div class="text-sm font-bold text-white mb-2 truncate">${getTeamLink(t.o2)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div></div></div>`;
+            });
+            document.getElementById('trade-history-container').innerHTML = html;
         }
 
         function toggleDraft(season) {
