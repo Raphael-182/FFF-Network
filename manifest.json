@@ -1,0 +1,20 @@
+{
+  "name": "FFF Network",
+  "short_name": "FFF Network",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b111e",
+  "theme_color": "#0b111e",
+  "icons": [
+    {
+      "src": "https://sleepercdn.com/images/v2/icons/player_default.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "https://sleepercdn.com/images/v2/icons/player_default.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
