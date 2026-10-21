@@ -27,7 +27,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
-        .draft-accordion.open { max-height: 4000px; }
+        .draft-accordion.open { max-height: 5000px; }
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
     </style>
@@ -99,7 +99,7 @@
         <!-- STANDINGS & PLAYOFFS TAB -->
         <div id="standings" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">The Playoff Picture</h2>
-            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship.</p>
+            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship (Top 8 Qualify).</p>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar mb-10">
                 <table class="w-full text-left text-sm min-w-[500px]">
                     <thead class="bg-slate-800 text-gray-300">
@@ -213,7 +213,7 @@
     </main>
 
     <!-- FRANCHISE DASHBOARD MODAL -->
-    <div id="team-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-4 transition-opacity duration-300">
+    <div id="team-modal" onclick="if(event.target === this) closeTeamModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-4 transition-opacity duration-300">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-start mb-4 border-b border-slate-700 pb-4">
                 <div class="flex items-center space-x-4">
@@ -255,7 +255,7 @@
     </div>
 
     <!-- PIN MODAL -->
-    <div id="pin-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[120] px-4">
+    <div id="pin-modal" onclick="if(event.target === this) closeModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[120] px-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-sm w-full shadow-2xl transform transition-all">
             <h3 class="text-xl font-black text-white mb-2 text-center">Commissioner Access</h3>
             <p class="text-xs text-center text-gray-400 mb-6">Enter protocol override code.</p>
@@ -418,8 +418,12 @@
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
             
-            let streakStr = getCurrentSeasonStreak(ownerId);
-            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${streakStr}`;
+            let currentStreakStr = "";
+            if(activeStreaksGlobal[ownerId]) {
+                const s = activeStreaksGlobal[ownerId];
+                if(s.count > 0) currentStreakStr = ` <span class="text-xs ${s.type === 'W' ? 'text-green-400' : 'text-red-400'} ml-2">(${s.type}${s.count})</span>`;
+            }
+            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${currentStreakStr}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
             document.getElementById('tm-trophies').innerHTML = `
@@ -567,7 +571,6 @@
                 else if(i < 10) { seedStyle = "text-gray-400 font-bold px-2 py-1"; rowClass = ""; }
                 
                 let streakStr = getCurrentSeasonStreak(r.owner_id);
-
                 html += `<tr class="hover:bg-slate-700/30 transition border-t border-slate-700 ${rowClass}"><td class="p-4 text-center"><span class="${seedStyle}">${i + 1}</span></td><td class="p-4 font-bold text-white whitespace-nowrap">${getTeamLink(r.owner_id)}</td><td class="p-4 text-center font-mono text-cyan-400 whitespace-nowrap">${r.settings.wins}-${r.settings.losses}${streakStr}</td><td class="p-4 text-center text-gray-300">${(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(2)}</td></tr>`;
             });
             document.getElementById('standings-body').innerHTML = html;
@@ -633,8 +636,7 @@
             if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
-            let toiletGame = null; let minCombined = 9999;
-            let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
+            let toiletGame = null; let minCombined = 9999; let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
 
             matchups.forEach(g => {
                 const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
@@ -659,8 +661,7 @@
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
-                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
                 
@@ -684,8 +685,7 @@
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
-                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; 
-                let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -708,8 +708,7 @@
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
-                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; 
-                let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -791,7 +790,7 @@
                 }
                 leaguesToProcess.reverse();
                 
-                await fetchDraftHistory([...leaguesToProcess]);
+                await fetchDraftHistory(leaguesToProcess);
 
                 let records = { 
                     highTeam: { score: 0, owner: null, year: '', week: '' }, 
@@ -948,9 +947,7 @@
 
                     const buildAssetList = (pIds, picks) => {
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                        str += picks.map(p => {
-                            return `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`;
-                        }).join("");
+                        str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
 
@@ -992,14 +989,20 @@
         function toggleDraft(season) {
             const content = document.getElementById(`draft-content-${season}`);
             const chevron = document.getElementById(`draft-chevron-${season}`);
-            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
-            else { content.classList.add('open'); chevron.classList.add('open'); }
+            if(content.classList.contains('open')) {
+                content.classList.remove('open'); chevron.classList.remove('open');
+            } else {
+                content.classList.add('open'); chevron.classList.add('open');
+            }
         }
 
         async function fetchDraftHistory(leagues) {
             try {
                 const currentYear = new Date().getFullYear();
-                if(!leagues.find(l => l.season == currentYear)) { leagues.push({ id: LEAGUE_ID, season: currentYear }); }
+                if(!leagues.find(l => l.season == currentYear)) {
+                    leagues.push({ id: LEAGUE_ID, season: currentYear });
+                }
+                
                 leagues.sort((a,b) => b.season - a.season);
 
                 let html = '';
