@@ -16,20 +16,16 @@
         @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
         
         .glass-panel { background: rgba(22, 32, 50, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        
-        /* Mobile Scrollbar Hiding */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-20">
 
-    <!-- Dynamic Trade Ticker -->
     <div class="ticker-wrap">
         <div class="ticker" id="live-ticker">🚨 RUMOR MILL: The FFF Trade Deadline is approaching. Several GMs reportedly fielding offers. 🚨</div>
     </div>
 
-    <!-- Navigation -->
     <nav class="glass-panel sticky top-0 z-50 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
@@ -47,34 +43,28 @@
         </div>
     </nav>
 
-    <!-- Main Content Area -->
     <main class="max-w-6xl mx-auto p-4 mt-2">
         
         <!-- NEWS TAB -->
         <div id="news" class="tab-content active space-y-6">
             
-            <!-- NEW FEATURE 1: Live Matchup Scoreboard -->
             <div class="mb-6">
-                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Live Scoreboard - Week <span id="current-week-display">...</span></h3>
+                <div class="flex justify-between items-end mb-3">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Scoreboard</h3>
+                    <select id="public-week-selector" onchange="changePublicWeek()" class="bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-bold rounded px-2 py-1 focus:outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
                 <div id="scoreboard-container" class="flex overflow-x-auto space-x-4 hide-scrollbar pb-2">
-                    <!-- Scoreboard cards injected here -->
                     <div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Syncing matchups...</div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Feed -->
                 <div class="md:col-span-2 space-y-6" id="news-feed">
-                    <article class="glass-panel p-6 rounded-xl border border-slate-700">
-                        <h2 class="text-2xl font-black text-white mb-2">Welcome to the FFF Network</h2>
-                        <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest">SYSTEM INITIALIZED • FFF INSIDER</p>
-                        <div class="prose prose-invert max-w-none text-gray-300">
-                            <p>The premier source for all Fantasy Football Federation news. The site is live and synced. Commissioner, access the Editor Desk to publish your first recap.</p>
-                        </div>
-                    </article>
+                    <!-- Posts go here -->
                 </div>
                 
-                <!-- Sidebar -->
                 <div class="space-y-6">
                     <div class="glass-panel p-5 rounded-xl border-l-4 border-cyan-500 shadow-lg">
                         <h3 class="font-black text-sm text-gray-400 uppercase tracking-widest mb-3">Quote of the Week</h3>
@@ -87,7 +77,7 @@
 
         <!-- STANDINGS TAB -->
         <div id="standings" class="tab-content">
-            <h2 class="text-3xl font-black text-white mb-6">League Standings</h2>
+            <h2 class="text-3xl font-black text-white mb-6">Current Season Standings</h2>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar">
                 <table class="w-full text-left text-sm min-w-[500px]">
                     <thead class="bg-slate-800 text-gray-300">
@@ -108,10 +98,11 @@
         <!-- RECORDS TAB -->
         <div id="records" class="tab-content space-y-8">
             <div class="text-center mb-10 pt-4">
-                <h2 class="text-4xl font-black text-white tracking-tight">HALL OF CHAMPIONS</h2>
+                <h2 class="text-4xl font-black text-white tracking-tight">THE DYNASTY LEDGER</h2>
                 <div class="h-1 w-24 bg-cyan-500 mx-auto mt-4 rounded"></div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                     <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 1</div>
                     <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
@@ -125,22 +116,35 @@
                     <p class="text-yellow-400 font-semibold text-sm mt-1">Reigning Champion</p>
                 </div>
             </div>
+
+            <h3 class="text-2xl font-black text-white mb-4">All-Time Franchise Leaderboard</h3>
+            <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar">
+                <table class="w-full text-left text-sm min-w-[500px]">
+                    <thead class="bg-slate-800 text-gray-300">
+                        <tr>
+                            <th class="p-4 font-bold tracking-wider">FRANCHISE</th>
+                            <th class="p-4 text-center font-bold tracking-wider">ALL-TIME W-L</th>
+                            <th class="p-4 text-center font-bold tracking-wider">WIN %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-time-body" class="divide-y divide-slate-700">
+                        <tr><td colspan="3" class="p-8 text-center text-gray-500 animate-pulse">Compiling historical records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- EDITOR DESK TAB -->
         <div id="editor" class="tab-content max-w-3xl mx-auto space-y-8 pb-10">
             
-            <!-- NEW FEATURE 2: Dynamic Settings Control -->
             <div class="glass-panel p-6 rounded-xl border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <h3 class="text-xl font-black text-white mb-1">Site Settings</h3>
-                <p class="text-xs text-gray-400 mb-5">Update the live ticker and quote of the week directly from your phone.</p>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 block">Trade Block Ticker</label>
+                <input type="text" id="edit-ticker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-4 mt-1 text-sm focus:border-purple-500 focus:outline-none">
                 
-                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Trade Block Ticker</label>
-                <input type="text" id="edit-ticker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-4 mt-1 text-sm focus:border-purple-500 focus:outline-none" placeholder="🚨 RUMOR MILL...">
-                
-                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Quote of the Week</label>
-                <textarea id="edit-quote" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-2 mt-1 text-sm focus:border-purple-500 focus:outline-none" placeholder="Type the trash talk here..."></textarea>
-                <input type="text" id="edit-quote-author" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-4 text-sm focus:border-purple-500 focus:outline-none" placeholder="Author (e.g. RipDipSki)">
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block">Quote of the Week</label>
+                <textarea id="edit-quote" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-2 mt-1 text-sm focus:border-purple-500 focus:outline-none"></textarea>
+                <input type="text" id="edit-quote-author" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white mb-4 text-sm focus:border-purple-500 focus:outline-none" placeholder="Author">
                 
                 <button onclick="saveSiteSettings()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">
                     Update Website Live
@@ -148,11 +152,16 @@
             </div>
 
             <div class="glass-panel p-6 rounded-xl border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                <h2 class="text-2xl font-black text-white mb-1">AI Copilot Engine</h2>
-                <p class="text-sm text-gray-400 mb-6 leading-relaxed">Fetch the latest raw scores, generate your prompt, and paste it to the Gemini chat to get your automated beat writer recap.</p>
+                <h2 class="text-2xl font-black text-white mb-1">Time-Machine Copilot</h2>
+                <p class="text-sm text-gray-400 mb-4 leading-relaxed">Select the exact week you want to recap. The system will pull those specific scores for the prompt.</p>
                 
+                <label class="text-xs font-bold text-cyan-400 uppercase tracking-widest block mb-1">Target Week</label>
+                <select id="editor-week-selector" class="w-full bg-slate-900 border border-cyan-700 rounded-lg p-3 text-white mb-6 text-sm font-bold focus:border-cyan-400 focus:outline-none">
+                    <!-- Populated by JS -->
+                </select>
+
                 <button onclick="generateCopilotPrompt()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 px-4 rounded-lg transition mb-4 shadow-lg active:scale-95">
-                    1. Analyze Matchups & Generate Prompt
+                    1. Fetch Scores & Generate Prompt
                 </button>
 
                 <textarea id="prompt-output" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-gray-300 mb-2 font-mono shadow-inner" placeholder="Your AI prompt will appear here..." readonly></textarea>
@@ -165,7 +174,7 @@
 
                 <h3 class="text-xl font-black text-white mb-4">Publish & Distribute</h3>
                 <input type="text" id="post-title" placeholder="Headline (e.g. WEEK 6 CARNAGE)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-white mb-4 text-lg font-bold focus:border-green-500 focus:outline-none shadow-inner">
-                <textarea id="post-body" rows="8" placeholder="Paste the final AI-generated article here..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-white mb-4 text-sm focus:border-green-500 focus:outline-none shadow-inner"></textarea>
+                <textarea id="post-body" rows="8" placeholder="Paste the final AI-generated article here (HTML formatting allowed)..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-white mb-4 text-sm focus:border-green-500 focus:outline-none shadow-inner"></textarea>
                 <button onclick="publishPost()" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 px-4 rounded-lg transition shadow-[0_0_15px_rgba(22,163,74,0.4)] active:scale-95 tracking-widest uppercase">
                     3. Publish to Feed
                 </button>
@@ -174,7 +183,6 @@
 
     </main>
 
-    <!-- Custom Secure PIN Modal -->
     <div id="pin-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-sm w-full shadow-2xl transform transition-all">
             <h3 class="text-xl font-black text-white mb-2 text-center">Commissioner Access</h3>
@@ -188,24 +196,19 @@
     </div>
 
     <script>
-        // Core League Configuration
         const LEAGUE_ID = "1337435000663986176";
         let usersData = {};
         let rostersData = [];
-        let matchupsData = [];
         let currentNFLWeek = 1;
+        let allTimeData = {};
 
-        // Navigation Controller
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => {
                 btn.classList.remove('text-white');
                 btn.classList.add('text-gray-400');
             });
-            
             document.getElementById(tabId).classList.add('active');
-            
-            // Highlight active nav button
             const activeBtn = Array.from(document.querySelectorAll('nav button')).find(btn => btn.getAttribute('onclick').includes(tabId));
             if(activeBtn) {
                 activeBtn.classList.remove('text-gray-400');
@@ -213,20 +216,16 @@
             }
         }
 
-        // Security Protocol
         function unlockEditor() {
             document.getElementById('pin-modal').classList.remove('hidden');
             setTimeout(() => document.getElementById('pin-input').focus(), 100);
         }
-
         function closeModal() {
             document.getElementById('pin-modal').classList.add('hidden');
             document.getElementById('pin-input').value = '';
         }
-
         function verifyPin() {
-            const pin = document.getElementById('pin-input').value;
-            if (pin === 'Commish') {
+            if (document.getElementById('pin-input').value === 'Commish') {
                 document.getElementById('editor-tab-btn').classList.remove('hidden');
                 closeModal();
                 switchTab('editor');
@@ -235,24 +234,16 @@
                 document.getElementById('pin-input').value = '';
             }
         }
+        document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
-        // Allow Enter key to submit PIN
-        document.getElementById('pin-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') verifyPin();
-        });
-
-        // ==========================================
-        // DATA PIPELINE (API Sync Engine)
-        // ==========================================
         async function runDataPipeline() {
             try {
-                // 1. Get State
                 const stateRes = await fetch('https://api.sleeper.app/v1/state/nfl');
                 const state = await stateRes.json();
                 currentNFLWeek = state.week || 1;
-                document.getElementById('current-week-display').innerText = currentNFLWeek;
 
-                // 2. Fetch Users & League Metadata
+                populateWeekSelectors();
+
                 const [usersRes, leagueRes] = await Promise.all([
                     fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/users`),
                     fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}`)
@@ -261,31 +252,39 @@
                 const users = await usersRes.json();
                 const league = await leagueRes.json();
                 
-                // Sync League Avatar
                 if (league.avatar) {
-                    const avatarUrl = `https://sleepercdn.com/avatars/thumbs/${league.avatar}`;
-                    document.getElementById('league-logo').innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
+                    document.getElementById('league-logo').innerHTML = `<img src="https://sleepercdn.com/avatars/thumbs/${league.avatar}" class="w-full h-full object-cover">`;
                 }
 
                 users.forEach(u => { usersData[u.user_id] = u; });
 
-                // 3. Fetch Rosters
                 const rostersRes = await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/rosters`);
                 rostersData = await rostersRes.json();
 
-                // 4. Fetch Matchups for Scoreboard
-                const matchRes = await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/matchups/${currentNFLWeek}`);
-                matchupsData = await matchRes.json();
-
-                // Build UI Components
                 renderStandings();
-                renderScoreboard();
+                fetchAndRenderScoreboard(currentNFLWeek);
+                
+                // Background task: Compile Historical Ledger
+                if(league.previous_league_id) {
+                    compileHistory(rostersData, league.previous_league_id);
+                } else {
+                    document.getElementById('all-time-body').innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500">Not enough historical data available yet.</td></tr>`;
+                }
 
             } catch (e) {
                 console.error("Data Pipeline Error:", e);
-                document.getElementById('standings-body').innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">Failed to establish connection. Check network.</td></tr>`;
-                document.getElementById('scoreboard-container').innerHTML = `<div class="text-red-500 text-sm">Failed to load scores.</div>`;
             }
+        }
+
+        function populateWeekSelectors() {
+            const pubSel = document.getElementById('public-week-selector');
+            const edSel = document.getElementById('editor-week-selector');
+            let opts = '';
+            for(let i=1; i<=18; i++) {
+                opts += `<option value="${i}" ${i === currentNFLWeek ? 'selected' : ''}>Week ${i}</option>`;
+            }
+            pubSel.innerHTML = opts;
+            edSel.innerHTML = opts;
         }
 
         function getTeamName(ownerId) {
@@ -295,9 +294,7 @@
         }
 
         function renderStandings() {
-            // Sort by Wins, then by Fantasy Points
             const sortedRosters = [...rostersData].sort((a, b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts);
-            
             let html = "";
             sortedRosters.forEach((roster, index) => {
                 const teamName = getTeamName(roster.owner_id);
@@ -305,21 +302,11 @@
                 const losses = roster.settings.losses;
                 const pf = (roster.settings.fpts + (roster.settings.fpts_decimal / 100)).toFixed(2);
                 const pa = (roster.settings.fpts_against + (roster.settings.fpts_against_decimal / 100)).toFixed(2);
-                
-                // Add conditional formatting for top 3 teams
-                let rankStyle = "text-gray-500";
-                if(index === 0) rankStyle = "text-yellow-500 font-black";
-                if(index === 1) rankStyle = "text-gray-300 font-bold";
-                if(index === 2) rankStyle = "text-yellow-700 font-bold";
+                let rankStyle = index === 0 ? "text-yellow-500 font-black" : index === 1 ? "text-gray-300 font-bold" : index === 2 ? "text-yellow-700 font-bold" : "text-gray-500";
 
                 html += `
                     <tr class="hover:bg-slate-700/30 transition border-t border-slate-700">
-                        <td class="p-4">
-                            <div class="flex items-center">
-                                <span class="w-6 text-xs ${rankStyle}">${index + 1}</span>
-                                <span class="font-bold text-white whitespace-nowrap">${teamName}</span>
-                            </div>
-                        </td>
+                        <td class="p-4"><div class="flex items-center"><span class="w-6 text-xs ${rankStyle}">${index + 1}</span><span class="font-bold text-white whitespace-nowrap">${teamName}</span></div></td>
                         <td class="p-4 text-center font-mono text-cyan-400">${wins}-${losses}</td>
                         <td class="p-4 text-center text-gray-300">${pf}</td>
                         <td class="p-4 text-center text-gray-400">${pa}</td>
@@ -329,203 +316,184 @@
             document.getElementById('standings-body').innerHTML = html;
         }
 
-        function renderScoreboard() {
-            let games = {};
-            matchupsData.forEach(m => {
-                if (!games[m.matchup_id]) games[m.matchup_id] = [];
-                games[m.matchup_id].push(m);
-            });
-
-            let html = "";
-            Object.values(games).forEach(game => {
-                if (game.length === 2) {
-                    const r1 = rostersData.find(r => r.roster_id === game[0].roster_id);
-                    const r2 = rostersData.find(r => r.roster_id === game[1].roster_id);
-                    
-                    let name1 = getTeamName(r1?.owner_id);
-                    let name2 = getTeamName(r2?.owner_id);
-                    
-                    // Truncate long names for mobile scoreboard
-                    if(name1.length > 15) name1 = name1.substring(0, 13) + '..';
-                    if(name2.length > 15) name2 = name2.substring(0, 13) + '..';
-
-                    const pts1 = game[0].points.toFixed(2);
-                    const pts2 = game[1].points.toFixed(2);
-                    
-                    const p1Style = game[0].points > game[1].points ? "text-green-400 font-black" : "text-gray-300";
-                    const p2Style = game[1].points > game[0].points ? "text-green-400 font-black" : "text-gray-300";
-
-                    html += `
-                        <div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold truncate pr-2 ${p1Style}">${name1}</span>
-                                <span class="text-sm font-mono ${p1Style}">${pts1}</span>
-                            </div>
-                            <div class="h-px w-full bg-slate-700/50"></div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold truncate pr-2 ${p2Style}">${name2}</span>
-                                <span class="text-sm font-mono ${p2Style}">${pts2}</span>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            
-            if(html === "") html = `<div class="text-gray-500 text-sm italic p-2">No active matchups found for this week.</div>`;
-            document.getElementById('scoreboard-container').innerHTML = html;
+        function changePublicWeek() {
+            const week = document.getElementById('public-week-selector').value;
+            fetchAndRenderScoreboard(week);
         }
 
-        // ==========================================
-        // DYNAMIC SITE SETTINGS (Feature 1)
-        // ==========================================
+        async function fetchAndRenderScoreboard(week) {
+            document.getElementById('scoreboard-container').innerHTML = `<div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Fetching Week ${week}...</div>`;
+            try {
+                const matchRes = await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/matchups/${week}`);
+                const matchupsData = await matchRes.json();
+                
+                let games = {};
+                matchupsData.forEach(m => {
+                    if (!games[m.matchup_id]) games[m.matchup_id] = [];
+                    games[m.matchup_id].push(m);
+                });
+
+                let html = "";
+                Object.values(games).forEach(game => {
+                    if (game.length === 2) {
+                        const r1 = rostersData.find(r => r.roster_id === game[0].roster_id);
+                        const r2 = rostersData.find(r => r.roster_id === game[1].roster_id);
+                        let name1 = getTeamName(r1?.owner_id); let name2 = getTeamName(r2?.owner_id);
+                        if(name1.length > 15) name1 = name1.substring(0, 13) + '..';
+                        if(name2.length > 15) name2 = name2.substring(0, 13) + '..';
+
+                        const pts1 = game[0].points.toFixed(2); const pts2 = game[1].points.toFixed(2);
+                        const p1Style = game[0].points > game[1].points ? "text-green-400 font-black" : "text-gray-300";
+                        const p2Style = game[1].points > game[0].points ? "text-green-400 font-black" : "text-gray-300";
+
+                        html += `
+                            <div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2">
+                                <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2 ${p1Style}">${name1}</span><span class="text-sm font-mono ${p1Style}">${pts1}</span></div>
+                                <div class="h-px w-full bg-slate-700/50"></div>
+                                <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2 ${p2Style}">${name2}</span><span class="text-sm font-mono ${p2Style}">${pts2}</span></div>
+                            </div>
+                        `;
+                    }
+                });
+                if(html === "") html = `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
+                document.getElementById('scoreboard-container').innerHTML = html;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function compileHistory(currentRosters, prevLeagueId) {
+            try {
+                // Initialize with current stats
+                currentRosters.forEach(r => {
+                    if(r.owner_id) {
+                        allTimeData[r.owner_id] = { wins: r.settings.wins, losses: r.settings.losses };
+                    }
+                });
+
+                // Fetch previous year stats
+                const prevRostersRes = await fetch(`https://api.sleeper.app/v1/league/${prevLeagueId}/rosters`);
+                const prevRosters = await prevRostersRes.json();
+                
+                prevRosters.forEach(r => {
+                    if(r.owner_id && allTimeData[r.owner_id]) {
+                        allTimeData[r.owner_id].wins += r.settings.wins;
+                        allTimeData[r.owner_id].losses += r.settings.losses;
+                    }
+                });
+
+                let html = "";
+                const sortedOwners = Object.keys(allTimeData).sort((a,b) => allTimeData[b].wins - allTimeData[a].wins);
+                
+                sortedOwners.forEach((ownerId, index) => {
+                    const w = allTimeData[ownerId].wins;
+                    const l = allTimeData[ownerId].losses;
+                    const total = w + l;
+                    const pct = total > 0 ? ((w / total) * 100).toFixed(1) + "%" : "0.0%";
+                    const rankStyle = index === 0 ? "text-yellow-500 font-black" : "text-white font-bold";
+
+                    html += `
+                    <tr class="border-t border-slate-700">
+                        <td class="p-4 ${rankStyle}">${getTeamName(ownerId)}</td>
+                        <td class="p-4 text-center font-mono text-cyan-400">${w}-${l}</td>
+                        <td class="p-4 text-center text-gray-300">${pct}</td>
+                    </tr>`;
+                });
+                document.getElementById('all-time-body').innerHTML = html;
+            } catch (e) {
+                console.error("History Error", e);
+            }
+        }
+
         function loadSettings() {
             const settings = JSON.parse(localStorage.getItem('fff_settings') || '{}');
-            
-            // Apply Ticker
-            if(settings.ticker) {
-                document.getElementById('live-ticker').innerText = settings.ticker;
-                document.getElementById('edit-ticker').value = settings.ticker;
-            }
-            
-            // Apply Quote
-            if(settings.quote) {
-                document.getElementById('live-quote').innerText = `"${settings.quote}"`;
-                document.getElementById('edit-quote').value = settings.quote;
-            }
-            if(settings.quoteAuthor) {
-                document.getElementById('live-quote-author').innerText = `- ${settings.quoteAuthor}`;
-                document.getElementById('edit-quote-author').value = settings.quoteAuthor;
-            }
+            if(settings.ticker) { document.getElementById('live-ticker').innerText = settings.ticker; document.getElementById('edit-ticker').value = settings.ticker; }
+            if(settings.quote) { document.getElementById('live-quote').innerText = `"${settings.quote}"`; document.getElementById('edit-quote').value = settings.quote; }
+            if(settings.quoteAuthor) { document.getElementById('live-quote-author').innerText = `- ${settings.quoteAuthor}`; document.getElementById('edit-quote-author').value = settings.quoteAuthor; }
         }
 
         function saveSiteSettings() {
-            const ticker = document.getElementById('edit-ticker').value.trim();
-            const quote = document.getElementById('edit-quote').value.trim();
-            const quoteAuthor = document.getElementById('edit-quote-author').value.trim();
-            
-            const settings = { ticker, quote, quoteAuthor };
+            const settings = { 
+                ticker: document.getElementById('edit-ticker').value.trim(), 
+                quote: document.getElementById('edit-quote').value.trim(), 
+                quoteAuthor: document.getElementById('edit-quote-author').value.trim() 
+            };
             localStorage.setItem('fff_settings', JSON.stringify(settings));
-            
             loadSettings();
             
-            // Flash success
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Settings Saved!";
-            btn.classList.add('bg-green-600');
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.remove('bg-green-600');
-            }, 2000);
+            const btn = event.target; const orig = btn.innerText; btn.innerText = "Saved!"; btn.classList.add('bg-green-600');
+            setTimeout(() => { btn.innerText = orig; btn.classList.remove('bg-green-600'); }, 2000);
         }
 
-        // ==========================================
-        // CONTENT ENGINE
-        // ==========================================
-        function generateCopilotPrompt() {
-            if(matchupsData.length === 0) {
-                alert("Data hasn't synced yet. Wait a moment and try again.");
-                return;
-            }
+        async function generateCopilotPrompt() {
+            const targetWeek = document.getElementById('editor-week-selector').value;
+            try {
+                const matchRes = await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/matchups/${targetWeek}`);
+                const matchupsData = await matchRes.json();
 
-            let games = {};
-            matchupsData.forEach(m => {
-                if (!games[m.matchup_id]) games[m.matchup_id] = [];
-                games[m.matchup_id].push(m);
-            });
+                let games = {};
+                matchupsData.forEach(m => {
+                    if (!games[m.matchup_id]) games[m.matchup_id] = [];
+                    games[m.matchup_id].push(m);
+                });
 
-            let resultsText = `WEEK ${currentNFLWeek} FFF MATCHUPS:\n`;
-            
-            Object.values(games).forEach(game => {
-                if (game.length === 2) {
-                    const r1 = rostersData.find(r => r.roster_id === game[0].roster_id);
-                    const r2 = rostersData.find(r => r.roster_id === game[1].roster_id);
-                    const t1Name = getTeamName(r1?.owner_id);
-                    const t2Name = getTeamName(r2?.owner_id);
-                    resultsText += `- ${t1Name} (${game[0].points}) vs ${t2Name} (${game[1].points})\n`;
-                }
-            });
+                let resultsText = `WEEK ${targetWeek} FFF MATCHUPS:\n`;
+                Object.values(games).forEach(game => {
+                    if (game.length === 2) {
+                        const r1 = rostersData.find(r => r.roster_id === game[0].roster_id);
+                        const r2 = rostersData.find(r => r.roster_id === game[1].roster_id);
+                        resultsText += `- ${getTeamName(r1?.owner_id)} (${game[0].points}) vs ${getTeamName(r2?.owner_id)} (${game[1].points})\n`;
+                    }
+                });
 
-            const prompt = `Act as the ruthless, satirical beat writer for my Dynasty Fantasy Football league, the Fantasy Football Federation (FFF). 
-            
-Here are the raw results for Week ${currentNFLWeek}:
+                const prompt = `Act as the ruthless, satirical beat writer for my Dynasty Fantasy Football league, the Fantasy Football Federation (FFF). 
+                
+Here are the raw results for Week ${targetWeek}:
 ${resultsText}
 
-Write a highly entertaining 4-paragraph news article summarizing this week's action. Roast the losers heavily, hype up the big winners, and mention the historical context of the league (like past champions GM Shane S. and GM Joey C., or the ongoing divisional turf war). Ensure you explicitly recognize the "Tazmanian Titty Twisters" and their manager "RipDipSki" if they played. Use HTML tags (<h3> for headers, <p> for paragraphs, <strong> for emphasis) so I can paste it directly into my website. Do not use markdown code block backticks around the final output.`;
+Write a highly entertaining 4-paragraph news article summarizing this week's action. Roast the losers heavily, hype up the big winners, and mention the historical context of the league (like past champions GM Shane S. and GM Joey C., or the ongoing Crips vs Bloods divisional turf war). Ensure you explicitly recognize the "Tazmanian Titty Twisters" and their manager "RipDipSki" if they played. Use HTML tags (<h3> for headers, <p> for paragraphs, <strong> for emphasis) so I can paste it directly into my website. Do not use markdown code block backticks around the final output.`;
 
-            document.getElementById('prompt-output').value = prompt;
+                document.getElementById('prompt-output').value = prompt;
+            } catch (e) {
+                alert("Failed to fetch target week matchups.");
+            }
         }
 
         function copyPrompt() {
             const promptText = document.getElementById('prompt-output');
-            if(!promptText.value) { alert("Generate a prompt first!"); return; }
-            
-            promptText.select();
-            promptText.setSelectionRange(0, 99999); // For mobile
-            
-            // Execute Copy
-            try {
-                document.execCommand('copy');
-                const btn = event.target;
-                const orig = btn.innerText;
-                btn.innerText = "COPIED TO CLIPBOARD ✅";
-                btn.classList.add('bg-green-600');
-                setTimeout(() => { btn.innerText = orig; btn.classList.remove('bg-green-600'); }, 2000);
-            } catch (err) {
-                alert("Failed to copy. Please manually highlight and copy the text.");
-            }
+            if(!promptText.value) return;
+            promptText.select(); promptText.setSelectionRange(0, 99999);
+            try { document.execCommand('copy'); const btn = event.target; const orig = btn.innerText; btn.innerText = "COPIED ✅"; btn.classList.add('bg-green-600'); setTimeout(() => { btn.innerText = orig; btn.classList.remove('bg-green-600'); }, 2000); } 
+            catch (err) { alert("Failed to copy."); }
         }
 
         function publishPost() {
             const title = document.getElementById('post-title').value.trim();
             const body = document.getElementById('post-body').value.trim();
-            
-            if (!title || !body) {
-                alert("Headline and Body are required to publish.");
-                return;
-            }
+            if (!title || !body) { alert("Headline and Body are required."); return; }
 
             let posts = JSON.parse(localStorage.getItem('fff_posts') || '[]');
-            
-            // Cap history at 20 posts to prevent mobile storage limits
             if(posts.length > 20) posts.pop();
 
-            const newPost = {
-                id: Date.now(),
-                title: title,
-                body: body,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            };
-            
-            posts.unshift(newPost);
+            posts.unshift({ id: Date.now(), title: title, body: body, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
             localStorage.setItem('fff_posts', JSON.stringify(posts));
             
-            document.getElementById('post-title').value = '';
-            document.getElementById('post-body').value = '';
-            
-            loadPosts();
-            switchTab('news');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('post-title').value = ''; document.getElementById('post-body').value = '';
+            loadPosts(); switchTab('news'); window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function loadPosts() {
             const posts = JSON.parse(localStorage.getItem('fff_posts') || '[]');
             const feed = document.getElementById('news-feed');
             
-            if (posts.length === 0) return; // Keep default welcome message
+            if (posts.length === 0) {
+                feed.innerHTML = `<article class="glass-panel p-6 rounded-xl border border-slate-700"><h2 class="text-2xl font-black text-white mb-2">Welcome to the FFF Network</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest">SYSTEM INITIALIZED • FFF INSIDER</p><div class="prose prose-invert max-w-none text-gray-300"><p>The premier source for all Fantasy Football Federation news. Commissioner, access the Editor Desk to publish your first recap.</p></div></article>`;
+                return;
+            }
 
             let html = '';
             posts.forEach(post => {
-                html += `
-                    <article class="glass-panel p-5 sm:p-7 rounded-xl border border-slate-700 relative group shadow-lg mb-6">
-                        <button onclick="deletePost(${post.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow">Delete</button>
-                        <h2 class="text-2xl sm:text-3xl font-black text-white mb-2 uppercase tracking-tight leading-tight pr-14">${post.title}</h2>
-                        <p class="text-cyan-500 text-xs font-bold mb-5 tracking-widest uppercase">${post.date} • FFF INSIDER</p>
-                        <div class="prose prose-invert max-w-none text-gray-300 leading-relaxed text-sm sm:text-base">
-                            ${post.body}
-                        </div>
-                    </article>
-                `;
+                html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-slate-700 relative group shadow-lg mb-6"><button onclick="deletePost(${post.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow">Delete</button><h2 class="text-2xl sm:text-3xl font-black text-white mb-2 uppercase tracking-tight leading-tight pr-14">${post.title}</h2><p class="text-cyan-500 text-xs font-bold mb-5 tracking-widest uppercase">${post.date} • FFF INSIDER</p><div class="prose prose-invert max-w-none text-gray-300 leading-relaxed text-sm sm:text-base">${post.body}</div></article>`;
             });
             feed.innerHTML = html;
         }
@@ -535,15 +503,10 @@ Write a highly entertaining 4-paragraph news article summarizing this week's act
                 let posts = JSON.parse(localStorage.getItem('fff_posts') || '[]');
                 posts = posts.filter(p => p.id !== id);
                 localStorage.setItem('fff_posts', JSON.stringify(posts));
-                if(posts.length === 0) {
-                    location.reload(); 
-                } else {
-                    loadPosts();
-                }
+                if(posts.length === 0) location.reload(); else loadPosts();
             }
         }
 
-        // Initialize App on load
         window.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             loadPosts();
