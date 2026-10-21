@@ -339,6 +339,7 @@
         let globalTrophies = {}; 
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
+        window.allDraftsInfo = window.allDraftsInfo || {};
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -613,7 +614,11 @@
                                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                                 let pickPlayerStr = "";
                                 if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                    let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
+                                    let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
+                                    let pickMade = window.allDraftPicks[p.season].find(pick => {
+                                        let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
+                                        return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
+                                    });
                                     if (pickMade) {
                                         let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
                                         pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
@@ -951,15 +956,11 @@
                                     team.starters.forEach(pid => {
                                         let pts = team.players_points[pid] || 0;
                                         let pos = playerDictionary[pid]?.pos;
-                                        
-                                        // Track positional records
                                         if (pos && posRecords[pos]) {
                                             if (pts > posRecords[pos].score) {
                                                 posRecords[pos] = { score: pts, id: pid, owner: teamOwner, year: l.season, week: weekNum };
                                             }
                                         }
-
-                                        // Track blunder trophies (benched players scoring >= 15)
                                         if(!team.starters.includes(pid) && pts >= 15) {
                                             globalTrophies[teamOwner].b++;
                                         }
@@ -999,7 +1000,6 @@
 
                 document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
-                // Positional Records Rendering
                 let posHtml = "";
                 ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].forEach(pos => {
                     let rec = posRecords[pos];
@@ -1064,7 +1064,11 @@
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                             let pickPlayerStr = "";
                             if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
+                                let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
+                                let pickMade = window.allDraftPicks[p.season].find(pick => {
+                                    let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
+                                    return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
+                                });
                                 if (pickMade) {
                                     let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
                                     pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
@@ -1142,6 +1146,7 @@
 
                     if(!picks || picks.length === 0) continue;
                     window.allDraftPicks[l.season] = picks; 
+                    window.allDraftsInfo[l.season] = drafts[0].slot_to_roster_id || {};
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
