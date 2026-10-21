@@ -17,6 +17,8 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spinFast { 100% { transform: rotate(360deg); } }
+        .spin-active { animation: spinFast 0.8s linear infinite; }
         
         .ticker-wrap { width: 100%; overflow: hidden; background-color: #ef4444; color: white; padding: 4px 0; font-weight: bold; font-size: 0.875rem; }
         .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 35s linear infinite; }
@@ -30,38 +32,51 @@
         .draft-accordion.open { max-height: 5000px; }
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
+
+        /* Bottom Nav Mobile Styles */
+        .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 0.5rem 0; color: #9ca3af; transition: color 0.2s; }
+        .nav-btn.active { color: #22d3ee; }
+        .nav-btn svg { width: 1.25rem; height: 1.25rem; margin-bottom: 0.125rem; }
     </style>
 </head>
-<body class="min-h-screen font-sans antialiased pb-20">
+<body class="min-h-screen font-sans antialiased pb-24 sm:pb-8">
 
-    <div class="ticker-wrap">
-        <div class="ticker" id="live-ticker">🚨 INITIATING FFF NETWORK AUTO-SYNC... FETCHING LATEST TRANSACTIONS... 🚨</div>
+    <div class="ticker-wrap hidden sm:block">
+        <div class="ticker" id="live-ticker-desk">🚨 INITIATING FFF NETWORK AUTO-SYNC... FETCHING LATEST TRANSACTIONS... 🚨</div>
     </div>
 
-    <nav class="glass-panel sticky top-0 z-50 px-4 py-3 shadow-lg">
+    <!-- TOP HEADER (Desktop Nav + Mobile Branding) -->
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
                     <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
                         FFF
                     </div>
-                    <span class="text-xl font-black tracking-wider text-white hidden sm:block">NETWORK</span>
+                    <span class="text-xl font-black tracking-wider text-white">NETWORK</span>
                 </div>
-                <!-- PWA Install Button -->
-                <button id="install-btn" onclick="installPWA()" class="hidden bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-                    +🏡 <span class="hidden sm:inline">App</span>
+                <button onclick="forceSync()" class="p-2 text-cyan-400 hover:text-white transition focus:outline-none" aria-label="Sync Data">
+                    <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
-            <div class="flex space-x-2 sm:space-x-4 overflow-x-auto hide-scrollbar text-sm font-semibold">
-                <button onclick="switchTab('news')" class="px-3 py-2 text-white hover:text-cyan-400 transition whitespace-nowrap">News</button>
-                <button onclick="switchTab('standings')" class="px-3 py-2 text-gray-400 hover:text-cyan-400 transition whitespace-nowrap">Playoffs</button>
-                <button onclick="switchTab('draft-capital')" class="px-3 py-2 text-gray-400 hover:text-cyan-400 transition whitespace-nowrap">Assets</button>
-                <button onclick="switchTab('records')" class="px-3 py-2 text-gray-400 hover:text-cyan-400 transition whitespace-nowrap">Records</button>
-                <button id="editor-tab-btn" onclick="switchTab('editor')" class="hidden px-3 py-2 text-cyan-400 bg-cyan-900/30 rounded transition whitespace-nowrap">Commish</button>
+            
+            <!-- Desktop Only Nav -->
+            <div class="hidden sm:flex space-x-4 text-sm font-bold uppercase tracking-widest">
+                <button onclick="switchTab('news')" class="desk-nav text-cyan-400 hover:text-cyan-300 transition">News</button>
+                <button onclick="switchTab('standings')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Playoffs</button>
+                <button onclick="switchTab('draft-capital')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Assets</button>
+                <button onclick="switchTab('records')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Records</button>
+                <button id="editor-desk-btn" onclick="switchTab('editor')" class="hidden desk-nav text-purple-400 hover:text-purple-300 transition">Commish</button>
             </div>
         </div>
-    </nav>
+    </header>
 
+    <!-- MOBILE TICKER -->
+    <div class="ticker-wrap sm:hidden">
+        <div class="ticker" id="live-ticker-mob">🚨 INITIATING FFF NETWORK AUTO-SYNC... FETCHING LATEST TRANSACTIONS... 🚨</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
     <main class="max-w-6xl mx-auto p-4 mt-2">
         
         <!-- NEWS TAB -->
@@ -165,8 +180,8 @@
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
 
@@ -180,11 +195,10 @@
             <p class="text-gray-400 text-sm mb-4">Settle the debate. Compare all-time historical matchups between any two franchises.</p>
             <div class="glass-panel p-6 rounded-xl border border-slate-700 mb-8 shadow-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <select id="rival-a" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
-                    <select id="rival-b" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
+                    <select id="rival-a" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
+                    <select id="rival-b" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
                 </div>
-                <button onclick="calculateRivalry()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-black tracking-widest uppercase py-4 px-4 rounded-lg transition active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.3)]">Compare History</button>
-                <div id="rivalry-results" class="mt-6 hidden pt-4 border-t border-slate-700"></div>
+                <div id="rivalry-results" class="mt-2 hidden pt-4 border-t border-slate-700"></div>
             </div>
 
             <h3 class="text-2xl font-black text-white mb-4">All-Time Franchise Leaderboard</h3>
@@ -218,9 +232,35 @@
         </div>
     </main>
 
+    <!-- MOBILE BOTTOM NAVIGATION (Native App Feel) -->
+    <nav class="fixed bottom-0 w-full glass-panel z-50 sm:hidden border-t border-slate-700 pb-safe">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="switchTab('news')" id="mob-nav-news" class="nav-btn active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5L18.5 8M6 8h4m-4 4h4m-4 4h12"></path></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider">News</span>
+            </button>
+            <button onclick="switchTab('standings')" id="mob-nav-standings" class="nav-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Playoffs</span>
+            </button>
+            <button onclick="switchTab('draft-capital')" id="mob-nav-draft-capital" class="nav-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Assets</span>
+            </button>
+            <button onclick="switchTab('records')" id="mob-nav-records" class="nav-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Records</span>
+            </button>
+            <button id="mob-nav-editor" onclick="switchTab('editor')" class="hidden nav-btn !text-purple-400">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Commish</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- FRANCHISE DASHBOARD MODAL -->
     <div id="team-modal" onclick="if(event.target === this) closeTeamModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-4 transition-opacity duration-300">
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200" id="team-modal-content">
             <div class="flex justify-between items-start mb-4 border-b border-slate-700 pb-4">
                 <div class="flex items-center space-x-4">
                     <img id="tm-avatar" src="" class="w-16 h-16 rounded-full border-2 border-cyan-400 object-cover hidden">
@@ -292,44 +332,40 @@
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-btn').classList.remove('hidden');
-        });
-
-        async function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { document.getElementById('install-btn').classList.add('hidden'); }
-                deferredPrompt = null;
-            }
-        }
-
-        if ('serviceWorker' in navigator) {
-            const swCode = `self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`;
-            const blob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
-        }
-
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
+            document.querySelectorAll('.desk-nav').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
             document.getElementById(tabId).classList.add('active');
-            const activeBtn = Array.from(document.querySelectorAll('nav button')).find(btn => btn.getAttribute('onclick').includes(tabId));
-            if(activeBtn) { activeBtn.classList.remove('text-gray-400'); activeBtn.classList.add('text-white'); }
+            
+            const activeDeskBtn = Array.from(document.querySelectorAll('.desk-nav')).find(btn => btn.getAttribute('onclick').includes(tabId));
+            if(activeDeskBtn) { activeDeskBtn.classList.remove('text-gray-400'); activeDeskBtn.classList.add('text-white'); }
+            
+            const mobBtnId = tabId === 'editor' ? 'mob-nav-editor' : 'mob-nav-' + tabId;
+            const activeMobBtn = document.getElementById(mobBtnId);
+            if(activeMobBtn) activeMobBtn.classList.add('active');
+            
+            window.scrollTo(0,0);
         }
 
         function unlockEditor() { document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
         function closeModal() { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
         function verifyPin() {
             if (document.getElementById('pin-input').value === 'Commish') {
-                document.getElementById('editor-tab-btn').classList.remove('hidden'); closeModal(); switchTab('editor');
+                document.getElementById('editor-tab-btn').classList.remove('hidden'); 
+                document.getElementById('mob-nav-editor').classList.remove('hidden');
+                closeModal(); switchTab('editor');
             } else { alert("ACCESS DENIED."); document.getElementById('pin-input').value = ''; }
         }
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
+
+        async function forceSync() {
+            const icon = document.getElementById('sync-icon');
+            icon.classList.add('spin-active');
+            await runDataPipeline();
+            setTimeout(() => icon.classList.remove('spin-active'), 500);
+        }
 
         async function runDataPipeline() {
             globalAllMatchups = []; globalAllTrades = []; globalTrophies = {}; activeStreaksGlobal = {}; globalDraftPicks = {}; globalPowerRankings = {};
@@ -357,10 +393,6 @@
                 if (league.avatar) {
                     const iconUrl = `https://sleepercdn.com/avatars/thumbs/${league.avatar}`;
                     document.getElementById('league-logo').innerHTML = `<img src="${iconUrl}" class="w-full h-full object-cover">`;
-                    const manifest = { "name": "FFF Network", "short_name": "FFF", "display": "standalone", "background_color": "#0b111e", "theme_color": "#0b111e", "icons": [{"src": iconUrl, "sizes": "192x192", "type": "image/webp"}] };
-                    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-                    document.querySelector("head").insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
-                    document.getElementById('apple-icon').href = iconUrl;
                 }
 
                 users.forEach(u => { usersData[u.user_id] = u; globalTrophies[u.user_id] = { j:0, t:0, b:0 }; });
@@ -399,12 +431,10 @@
                         playerDictionary[id] = { name: (data[id].first_name && data[id].last_name) ? `${data[id].first_name.charAt(0)}. ${data[id].last_name}` : "Player", pos: data[id].position || "UNK", team: data[id].team || "FA" };
                     }
                 }
-            } catch (e) { console.error("Player map cache failed", e); }
+            } catch (e) {}
         }
 
-        function getTeamName(ownerId) { 
-            return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Former Franchise"; 
-        }
+        function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Former Franchise"; }
 
         function getTeamLink(ownerId, extraClasses="") {
             const name = getTeamName(ownerId);
@@ -445,9 +475,7 @@
             else { avImage.classList.add('hidden'); avFallback.classList.remove('hidden'); avFallback.innerText = getTeamName(ownerId).substring(0,2).toUpperCase(); }
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
-            
-            let streakStr = getCurrentSeasonStreak(ownerId);
-            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${streakStr}`;
+            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${getCurrentSeasonStreak(ownerId)}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
             document.getElementById('tm-trophies').innerHTML = `
@@ -458,11 +486,7 @@
 
             const activePlayers = (roster.players || []).filter(p => !(roster.reserve || []).includes(p) && !(roster.taxi || []).includes(p));
             let groupedRoster = { 'QB': [], 'RB': [], 'WR': [], 'TE': [], 'K': [], 'DEF': [], 'OTHER': [] };
-            
-            activePlayers.forEach(id => {
-                const pos = playerDictionary[id]?.pos || 'OTHER';
-                if(groupedRoster[pos]) groupedRoster[pos].push(id); else groupedRoster['OTHER'].push(id);
-            });
+            activePlayers.forEach(id => { const pos = playerDictionary[id]?.pos || 'OTHER'; if(groupedRoster[pos]) groupedRoster[pos].push(id); else groupedRoster['OTHER'].push(id); });
 
             let rosterHtml = "";
             ['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'OTHER'].forEach(pos => {
@@ -474,20 +498,23 @@
                     rosterHtml += `<div class="mb-3"><h5 class="text-[10px] font-black text-cyan-500 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">${pos}</h5><div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">${pList}</div></div>`;
                 }
             });
-
             document.getElementById('tm-roster').innerHTML = rosterHtml || `<span class="text-gray-500 italic">Empty</span>`;
             
             const teamPicks = globalDraftPicks[roster.roster_id] || [];
             document.getElementById('tm-picks').innerHTML = teamPicks.map(p => {
                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
-                return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
+                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
+                return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
             }).join("") || `<span class="text-gray-500 italic text-sm">No draft capital</span>`;
 
             document.getElementById('team-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('team-modal-content').classList.remove('scale-95'), 10);
         }
 
-        function closeTeamModal() { document.getElementById('team-modal').classList.add('hidden'); }
+        function closeTeamModal() { 
+            document.getElementById('team-modal-content').classList.add('scale-95');
+            setTimeout(() => document.getElementById('team-modal').classList.add('hidden'), 200); 
+        }
 
         async function fetchTrendingPlayers() {
             try {
@@ -512,12 +539,8 @@
                         let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
                         let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
                         
-                        if(t.adds) {
-                            for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); }
-                        }
-                        if(t.draft_picks) {
-                            t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); });
-                        }
+                        if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
+                        if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
 
                         let isBlockbuster = (r1GetsPlayers.length + r1GetsPicks.length + r2GetsPlayers.length + r2GetsPicks.length) >= 4 || (t.draft_picks && t.draft_picks.some(p => p.round === 1));
                         let tradeLabel = isBlockbuster ? "🚨 BLOCKBUSTER TRADE" : "🤝 TRADE EXCHANGE";
@@ -536,7 +559,7 @@
                                         pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
                                     }
                                 }
-                                return `<div class="text-xs font-bold my-1.5 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                                return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                             }).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
@@ -562,7 +585,8 @@
                     if(tickerStr) tickerArr.push(tickerStr);
                 });
                 document.getElementById('live-wire-feed').innerHTML = wireHTML || "<div class='text-gray-500 italic text-center p-2'>The wire is quiet this week.</div>";
-                document.getElementById('live-ticker').innerText = tickerArr.length > 0 ? "🚨 LATEST MOVES: " + tickerArr.slice(0, 5).join("  |  ") + " 🚨" : "🚨 FFF NETWORK LIVE: Standings and scores synced successfully. 🚨";
+                document.getElementById('live-ticker-desk').innerText = tickerArr.length > 0 ? "🚨 LATEST MOVES: " + tickerArr.slice(0, 5).join("  |  ") + " 🚨" : "🚨 FFF NETWORK LIVE: Standings and scores synced successfully. 🚨";
+                document.getElementById('live-ticker-mob').innerText = document.getElementById('live-ticker-desk').innerText;
             } catch (e) { document.getElementById('live-wire-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Failed to fetch transactions.</div>"; }
         }
 
@@ -647,7 +671,18 @@
                         let o2 = rostersData.find(r => r.roster_id === g[1].roster_id)?.owner_id;
                         const p1s = g[0].points > g[1].points ? "text-green-400 font-black" : "text-gray-300";
                         const p2s = g[1].points > g[0].points ? "text-green-400 font-black" : "text-gray-300";
-                        html += `<div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2"><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o1, p1s)}</span><span class="text-sm font-mono ${p1s}">${g[0].points.toFixed(2)}</span></div><div class="h-px w-full bg-slate-700/50"></div><div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o2, p2s)}</span><span class="text-sm font-mono ${p2s}">${g[1].points.toFixed(2)}</span></div></div>`;
+                        
+                        // Tug of war bars
+                        const totalPts = (g[0].points + g[1].points) || 1;
+                        const t1Pct = (g[0].points / totalPts) * 100;
+                        const t2Pct = (g[1].points / totalPts) * 100;
+
+                        html += `
+                        <div class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2">
+                            <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o1, p1s)}</span><span class="text-sm font-mono ${p1s}">${g[0].points.toFixed(2)}</span></div>
+                            <div class="flex h-1 w-full bg-slate-800 rounded overflow-hidden"><div class="${g[0].points > g[1].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t1Pct}%"></div><div class="${g[1].points > g[0].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t2Pct}%"></div></div>
+                            <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o2, p2s)}</span><span class="text-sm font-mono ${p2s}">${g[1].points.toFixed(2)}</span></div>
+                        </div>`;
                     }
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
@@ -673,8 +708,7 @@
             if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
-            let toiletGame = null; let minCombined = 9999;
-            let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
+            let toiletGame = null; let minCombined = 9999; let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
 
             matchups.forEach(g => {
                 const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
@@ -698,123 +732,53 @@
 
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
+            // Headline Randomizers
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
-                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
-                let star = getStarPlayer(winner);
-                let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let star = getStarPlayer(winner); let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
                 
-                const titles = [
-                    `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wLink}`,
-                    `TOTAL DOMINATION: ${star.name} CARRIES ${wLink} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`,
-                    `OFFENSIVE CLINIC: ${wLink} PUTS ON A MASTERCLASS IN MASSACRE OVER ${lLink}`
-                ];
-                const bodies = [
-                    `Nobody was stopping <strong>${wLink}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lLink} (${loser.points.toFixed(2)}) completely in the dust.`,
-                    `${lLink} got completely rolled over. <strong>${wLink}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`,
-                    `A certified blowout display. <strong>${wLink}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lLink} shell-shocked.`
-                ];
+                const titles = [ `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wLink}`, `TOTAL DOMINATION: ${star.name} CARRIES ${wLink} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`, `OFFENSIVE CLINIC: ${wLink} PUTS ON A MASTERCLASS IN MASSACRE OVER ${lLink}` ];
+                const bodies = [ `Nobody was stopping <strong>${wLink}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lLink} (${loser.points.toFixed(2)}) completely in the dust.`, `${lLink} got completely rolled over. <strong>${wLink}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, `A certified blowout display. <strong>${wLink}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lLink} shell-shocked.` ];
                 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">
-                    ${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
-                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; 
-                let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
-                let star = getStarPlayer(winner);
-                let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
+                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+                let star = getStarPlayer(winner); let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
-                const titles = [
-                    `NAIL-BITER: ${wLink} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lLink}`,
-                    `HEARTBREAK IN THE FFF: ${lLink} COMES UP JUST SHORT TO ${wLink}`,
-                    `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wLink}`
-                ];
-                const bodies = [
-                    `Talk about a high-stress finish. <strong>${wLink}</strong> barely escaped with their lives, edging out ${lLink} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`,
-                    `An agonizing finish for ${lLink}. <strong>${wLink}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`,
-                    `The matchup of the week lived up to the hype. <strong>${wLink}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lLink} is left wondering what could have been.`
-                ];
+                const titles = [ `NAIL-BITER: ${wLink} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lLink}`, `HEARTBREAK IN THE FFF: ${lLink} COMES UP JUST SHORT TO ${wLink}`, `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wLink}` ];
+                const bodies = [ `Talk about a high-stress finish. <strong>${wLink}</strong> barely escaped with their lives, edging out ${lLink} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, `An agonizing finish for ${lLink}. <strong>${wLink}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, `The matchup of the week lived up to the hype. <strong>${wLink}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lLink} is left wondering what could have been.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p></article>`;
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
-                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; 
-                let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
-                let star = getStarPlayer(winner);
-                let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
+                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+                let star = getStarPlayer(winner); let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
-                const titles = [
-                    `MASSACRE: ${wLink} ABSOLUTELY EMBARRASSES ${lLink} BY ${maxDiff.toFixed(2)}`,
-                    `BLOWOUT ALERT: ${lLink} GETS SYSTEMATICALLY DISMANTLED`,
-                    `NO MERCY: ${wLink} DROPS THE HAMMER ON ${lLink}`
-                ];
-                const bodies = [
-                    `It was ugly from the opening kickoff. <strong>${wLink}</strong> absolutely dismantled ${lLink} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`,
-                    `A complete demolition. <strong>${wLink}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lLink} failed to put up any resistance whatsoever.`,
-                    `This wasn't even a contest. <strong>${wLink}</strong> violated every rule of sportsmanship, continuing to pour it on ${lLink} until the clock hit triple zeroes.`
-                ];
+                const titles = [ `MASSACRE: ${wLink} ABSOLUTELY EMBARRASSES ${lLink} BY ${maxDiff.toFixed(2)}`, `BLOWOUT ALERT: ${lLink} GETS SYSTEMATICALLY DISMANTLED`, `NO MERCY: ${wLink} DROPS THE HAMMER ON ${lLink}` ];
+                const bodies = [ `It was ugly from the opening kickoff. <strong>${wLink}</strong> absolutely dismantled ${lLink} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, `A complete demolition. <strong>${wLink}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lLink} failed to put up any resistance whatsoever.`, `This wasn't even a contest. <strong>${wLink}</strong> violated every rule of sportsmanship, continuing to pour it on ${lLink} until the clock hit triple zeroes.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
-                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2>
-                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
-                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p></article>`;
             }
             
             if(blunderer && maxBenchPts >= 15) {
-                let starName = playerDictionary[blunderPlayerId]?.name || "A player";
-                let bLink = getTLink(blunderer.roster_id);
+                let starName = playerDictionary[blunderPlayerId]?.name || "A player"; let bLink = getTLink(blunderer.roster_id);
                 
-                const titles = [
-                    `ROSTER MALPRACTICE: ${bLink} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`,
-                    `BENCH BLUNDER: ${bLink} WASTES A MONSTER PERFORMANCE FROM ${starName}`,
-                    `COACHING DISASTER: ${bLink} OUTSMARTS THEMSELVES IN THE WORST WAY`
-                ];
-                const bodies = [
-                    `What were you thinking? <strong>${bLink}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`,
-                    `Congrats to <strong>${bLink}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`,
-                    `Someone revoke their coaching credentials. <strong>${bLink}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.`
-                ];
+                const titles = [ `ROSTER MALPRACTICE: ${bLink} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`, `BENCH BLUNDER: ${bLink} WASTES A MONSTER PERFORMANCE FROM ${starName}`, `COACHING DISASTER: ${bLink} OUTSMARTS THEMSELVES IN THE WORST WAY` ];
+                const bodies = [ `What were you thinking? <strong>${bLink}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, `Congrats to <strong>${bLink}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, `Someone revoke their coaching credentials. <strong>${bLink}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div>
-                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'">
-                    <h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2>
-                    <p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
-                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'"><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
             }
 
             if(toiletGame && minCombined > 0 && minCombined < 170) {
                 let t1Link = getTLink(toiletGame[0].roster_id), t2Link = getTLink(toiletGame[1].roster_id);
                 
-                const titles = [
-                    `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`,
-                    `EYE BLEACH REQUIRED: ${t1Link} & ${t2Link} COMBINE FOR PURE TRASH`,
-                    `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Link} AND ${t2Link}`
-                ];
-                const bodies = [
-                    `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`,
-                    `Did either of these managers even look at their lineups on Sunday? <strong>${t1Link}</strong> and <strong>${t2Link}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`,
-                    `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.`
-                ];
+                const titles = [ `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`, `EYE BLEACH REQUIRED: ${t1Link} & ${t2Link} COMBINE FOR PURE TRASH`, `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Link} AND ${t2Link}` ];
+                const bodies = [ `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, `Did either of these managers even look at their lineups on Sunday? <strong>${t1Link}</strong> and <strong>${t2Link}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div>
-                    <h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2>
-                    <p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
-                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p>
-                </article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p></article>`;
             }
 
             feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
@@ -884,8 +848,10 @@
                         }
                     }
 
-                    let allWeeksMatchups = await Promise.all(weekPromises);
-                    allWeeksMatchups.forEach((matchups, wIndex) => {
+                    let allWeeksMatchups = await Promise.allSettled(weekPromises);
+                    allWeeksMatchups.forEach((matchupRes, wIndex) => {
+                        if(matchupRes.status !== "fulfilled") return;
+                        let matchups = matchupRes.value;
                         let weekNum = wIndex + 1; let games = {};
                         matchups.forEach(m => { if (!m.matchup_id) return; if (!games[m.matchup_id]) games[m.matchup_id] = []; games[m.matchup_id].push(m); });
 
@@ -936,8 +902,10 @@
                         });
                     });
 
-                    let allWeeksTrans = await Promise.all(transPromises);
-                    allWeeksTrans.forEach((weekTrades, wIndex) => {
+                    let allWeeksTrans = await Promise.allSettled(transPromises);
+                    allWeeksTrans.forEach((transRes, wIndex) => {
+                        if(transRes.status !== "fulfilled") return;
+                        let weekTrades = transRes.value;
                         let weekNum = wIndex + 1;
                         weekTrades.forEach(t => {
                             if(t.roster_ids && t.roster_ids.length === 2) {
@@ -962,8 +930,6 @@
                 
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
                 renderTradeHistory();
-
-                renderStandings();
 
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
         }
@@ -993,6 +959,7 @@
                     const buildAssetList = (pIds, picks) => {
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
+                            let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                             let pickPlayerStr = "";
                             if (window.allDraftPicks && window.allDraftPicks[p.season]) {
                                 let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
@@ -1001,8 +968,7 @@
                                     pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
                                 }
                             }
-                            let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                            return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
@@ -1022,11 +988,11 @@
 
                 html += `
                 <div class="glass-panel rounded-xl border border-slate-700 overflow-hidden mb-4">
-                    <button onclick="toggleTradeYear('${year}')" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
+                    <button onclick="toggleAccordion('trade', '${year}')" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
                         <h4 class="font-black text-white text-lg">${year} Trade Ledger</h4>
                         <svg id="trade-chevron-${year}" class="w-6 h-6 text-cyan-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div id="trade-content-${year}" class="draft-accordion">
+                    <div id="trade-content-${year}" class="draft-accordion trade-acc">
                         <div class="p-5 pt-0 border-t border-slate-700/50">${tradesHtml}</div>
                     </div>
                 </div>`;
@@ -1035,18 +1001,19 @@
             document.getElementById('trade-history-container').innerHTML = html;
         }
 
-        function toggleTradeYear(year) {
-            const content = document.getElementById(`trade-content-${year}`);
-            const chevron = document.getElementById(`trade-chevron-${year}`);
-            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
-            else { content.classList.add('open'); chevron.classList.add('open'); }
-        }
+        function toggleAccordion(type, id) {
+            const content = document.getElementById(`${type}-content-${id}`);
+            const chevron = document.getElementById(`${type}-chevron-${id}`);
+            const isOpening = !content.classList.contains('open');
 
-        function toggleDraft(season) {
-            const content = document.getElementById(`draft-content-${season}`);
-            const chevron = document.getElementById(`draft-chevron-${season}`);
-            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
-            else { content.classList.add('open'); chevron.classList.add('open'); }
+            // Close all others of same type
+            document.querySelectorAll(`.${type}-acc`).forEach(el => { el.classList.remove('open'); });
+            document.querySelectorAll(`.chevron`).forEach(el => { if(el.id.startsWith(`${type}-chevron`)) el.classList.remove('open'); });
+
+            // Open targeted one if it was opening
+            if(isOpening) {
+                content.classList.add('open'); chevron.classList.add('open');
+            }
         }
 
         async function fetchDraftHistory(leagues) {
@@ -1089,11 +1056,11 @@
                     
                     html += `
                     <div class="glass-panel rounded-xl border border-slate-700 overflow-hidden mb-4">
-                        <button onclick="toggleDraft(${l.season})" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
+                        <button onclick="toggleAccordion('draft', '${l.season}')" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
                             <h4 class="font-black text-white text-lg">${l.season} Rookie Draft</h4>
                             <svg id="draft-chevron-${l.season}" class="w-6 h-6 text-cyan-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div id="draft-content-${l.season}" class="draft-accordion">
+                        <div id="draft-content-${l.season}" class="draft-accordion draft-acc">
                             <div class="p-5 pt-0 border-t border-slate-700/50"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mt-3">${picksHtml}</div></div>
                         </div>
                     </div>`;
@@ -1107,11 +1074,18 @@
             ownerIds.filter(id => usersData[id]).sort((a,b) => getTeamName(a).localeCompare(getTeamName(b))).forEach(id => { opts += `<option value="${id}">${getTeamName(id)}</option>`; });
             document.getElementById('rival-a').innerHTML = opts; document.getElementById('rival-b').innerHTML = opts;
         }
+        
+        function updateRivalryDropdowns() {
+            const a = document.getElementById('rival-a').value;
+            const b = document.getElementById('rival-b').value;
+            Array.from(document.getElementById('rival-b').options).forEach(opt => opt.disabled = (opt.value === a && a !== ""));
+            Array.from(document.getElementById('rival-a').options).forEach(opt => opt.disabled = (opt.value === b && b !== ""));
+            if(a && b) calculateRivalry(); 
+        }
 
         function calculateRivalry() {
             const a = document.getElementById('rival-a').value, b = document.getElementById('rival-b').value;
-            if(!a || !b) { alert("Please select two franchises."); return; }
-            if(a === b) { alert("Select two different franchises to compare."); return; }
+            if(!a || !b) return;
 
             const games = globalAllMatchups.filter(m => (m.o1 === a && m.o2 === b) || (m.o1 === b && m.o2 === a));
             const resContainer = document.getElementById('rivalry-results'); resContainer.classList.remove('hidden');
