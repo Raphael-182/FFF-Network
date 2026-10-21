@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FFF Network</title>
+    <title>FFF Network | Fantasy Football Federation</title>
     
-    <!-- PWA / App Store Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -26,7 +25,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Accordion transition for Draft Vault */
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
         .draft-accordion.open { max-height: 2000px; }
         .chevron { transition: transform 0.3s ease; }
@@ -140,7 +138,7 @@
                 <div class="h-1 w-24 bg-cyan-500 mx-auto mt-4 rounded"></div>
             </div>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                     <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 1</div>
                     <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
@@ -366,11 +364,13 @@
             } catch (e) { console.error("Player map cache failed", e); }
         }
 
-        function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Unknown Team"; }
+        function getTeamName(ownerId) { 
+            return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Former Franchise"; 
+        }
 
         function getTeamLink(ownerId, extraClasses="") {
             const name = getTeamName(ownerId);
-            if(!ownerId) return `<span class="${extraClasses}">${name}</span>`;
+            if(!ownerId || !usersData[ownerId]) return `<span class="${extraClasses}">${name}</span>`;
             return `<span onclick="openTeamModal('${ownerId}')" class="cursor-pointer hover:text-cyan-300 transition underline decoration-dashed decoration-slate-600 underline-offset-4 ${extraClasses}">${name}</span>`;
         }
 
@@ -664,7 +664,6 @@
                 
                 fetchDraftHistory(leaguesToProcess);
 
-                // FIXED: Initialized highPlayer properly to prevent crashes
                 let records = { 
                     highTeam: { score: 0, owner: null, year: '', week: '' }, 
                     lowTeam: { score: 9999, owner: null, year: '', week: '' }, 
@@ -680,7 +679,7 @@
                     let r2o = {};
                     rData.forEach(r => { r2o[r.roster_id] = r.owner_id; if(r.owner_id && !cumulativeWLT[r.owner_id]) cumulativeWLT[r.owner_id] = {w:0, l:0}; });
 
-                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 17;
+                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 18;
                     let weekPromises = [];
                     for(let w = 1; w <= endWeek; w++) {
                         let cacheKey = `fff_matchups_v2_${l.id}_w${w}`; 
@@ -717,19 +716,28 @@
 
                             if (t1.points > t2.points) { cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; } else if (t2.points > t1.points) { cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; }
 
+                            // SAFE TROPHY AWARDING (Prevent Ghost Crashes)
+                            if (!globalTrophies[o1]) globalTrophies[o1] = {j:0, t:0, b:0};
+                            if (!globalTrophies[o2]) globalTrophies[o2] = {j:0, t:0, b:0};
+
                             const gMax = Math.max(t1.points, t2.points);
                             const tComb = t1.points + t2.points;
-                            if(gMax >= Math.max(...matchups.map(m=>m.points))) { globalTrophies[t1.points > t2.points ? o1 : o2].j++; }
-                            if(tComb < 170) { globalTrophies[o1].t++; globalTrophies[o2].t++; }
+                            const maxWeekPts = Math.max(...matchups.map(m => m.points || 0));
+                            
+                            if(gMax >= maxWeekPts && gMax > 0) { globalTrophies[t1.points > t2.points ? o1 : o2].j++; }
+                            if(tComb < 170 && tComb > 0) { globalTrophies[o1].t++; globalTrophies[o2].t++; }
                             
                             [t1, t2].forEach(team => {
+                                let teamOwner = r2o[team.roster_id];
+                                if(!globalTrophies[teamOwner]) globalTrophies[teamOwner] = {j:0, t:0, b:0};
+
                                 if(team.players_points && team.starters) {
                                     for(let pid in team.players_points) {
-                                        if(!team.starters.includes(pid) && team.players_points[pid] >= 15) globalTrophies[r2o[team.roster_id]].b++;
-                                        
-                                        // Single Highest Player
+                                        if(!team.starters.includes(pid) && team.players_points[pid] >= 15) {
+                                            globalTrophies[teamOwner].b++;
+                                        }
                                         if(team.players_points[pid] > records.highPlayer.score) {
-                                            records.highPlayer = {score: team.players_points[pid], name: playerDictionary[pid]?.name || 'Unknown', owner: r2o[team.roster_id], year: l.season, week: weekNum};
+                                            records.highPlayer = {score: team.players_points[pid], name: playerDictionary[pid]?.name || 'Unknown', owner: teamOwner, year: l.season, week: weekNum};
                                         }
                                     }
                                 }
@@ -753,7 +761,13 @@
 
                 document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-cyan-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Player Score</div><div class="text-3xl font-black text-cyan-400">${records.highPlayer.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${records.highPlayer.name} <span class="text-gray-400 text-xs font-normal">(${getTeamLink(records.highPlayer.owner)})</span></div><div class="text-xs text-gray-500">${records.highPlayer.year} - Week ${records.highPlayer.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
-                let html = ""; Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { const d = cumulativeWLT[id], total = d.w + d.l; const style = i === 0 ? "text-yellow-500 font-black" : "text-white font-bold"; html += `<tr class="border-t border-slate-700"><td class="p-4 ${style}">${getTeamLink(id)}</td><td class="p-4 text-center font-mono text-cyan-400">${d.w}-${d.l}</td><td class="p-4 text-center text-gray-300">${total > 0 ? ((d.w/total)*100).toFixed(1)+"%" : "0.0%"}</td></tr>`; });
+                let html = ""; 
+                Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { 
+                    const d = cumulativeWLT[id], total = d.w + d.l; 
+                    if(total === 0) return;
+                    const style = i === 0 ? "text-yellow-500 font-black" : "text-white font-bold"; 
+                    html += `<tr class="border-t border-slate-700"><td class="p-4 ${style}">${getTeamLink(id)}</td><td class="p-4 text-center font-mono text-cyan-400">${d.w}-${d.l}</td><td class="p-4 text-center text-gray-300">${((d.w/total)*100).toFixed(1)+"%"}</td></tr>`; 
+                });
                 document.getElementById('all-time-body').innerHTML = html;
                 
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
@@ -761,7 +775,6 @@
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
         }
 
-        // ACCORDION DRAFT VAULT
         function toggleDraft(season) {
             const content = document.getElementById(`draft-content-${season}`);
             const chevron = document.getElementById(`draft-chevron-${season}`);
@@ -829,7 +842,7 @@
 
         function populateRivalryDropdowns(ownerIds) {
             let opts = '<option value="" disabled selected>Select Franchise</option>';
-            ownerIds.sort((a,b) => getTeamName(a).localeCompare(getTeamName(b))).forEach(id => { opts += `<option value="${id}">${getTeamName(id)}</option>`; });
+            ownerIds.filter(id => usersData[id]).sort((a,b) => getTeamName(a).localeCompare(getTeamName(b))).forEach(id => { opts += `<option value="${id}">${getTeamName(id)}</option>`; });
             document.getElementById('rival-a').innerHTML = opts; document.getElementById('rival-b').innerHTML = opts;
         }
 
@@ -872,4 +885,3 @@
     </script>
 </body>
 </html>
-
