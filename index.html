@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FFF Network</title>
     
+    <!-- PWA / App Store Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -25,8 +26,9 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Accordion transition */
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
-        .draft-accordion.open { max-height: 2000px; }
+        .draft-accordion.open { max-height: 4000px; }
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
     </style>
@@ -157,10 +159,10 @@
             <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
-            <!-- NEW: THE TRADE LEDGER -->
+            <!-- RESTORED & UPGRADED: THE TRADE LEDGER -->
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every blockbuster trade in FFF history.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
 
@@ -279,10 +281,11 @@
         let draftRounds = [1, 2, 3, 4, 5, 6];
         
         let globalAllMatchups = []; 
-        let globalAllTrades = []; // Stores historical trades
+        let globalAllTrades = []; 
         let globalDraftPicks = {}; 
         let globalPowerRankings = {};
         let globalTrophies = {}; 
+        window.allDraftPicks = window.allDraftPicks || {};
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -453,6 +456,14 @@
                             t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); });
                         }
 
+                        // Blockbuster Assessment
+                        let totalAssets = r1GetsPlayers.length + r1GetsPicks.length + r2GetsPlayers.length + r2GetsPicks.length;
+                        let isBlockbuster = totalAssets >= 4 || (t.draft_picks && t.draft_picks.some(p => p.round === 1));
+                        
+                        let tradeLabel = isBlockbuster ? "🚨 BLOCKBUSTER TRADE" : "🤝 TRADE EXCHANGE";
+                        let labelColor = isBlockbuster ? "text-purple-400" : "text-blue-400";
+                        let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-700";
+
                         const buildAssetList = (pIds, picks) => {
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                             str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1">🎯 ${p.season} Rd ${p.round}</div>`).join("");
@@ -460,8 +471,8 @@
                         };
 
                         wireHTML += `
-                            <div class="glass-panel p-3 rounded-lg border border-blue-500/50 mb-3 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
-                                <div class="text-[10px] text-blue-400 font-black uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">🤝 Blockbuster Trade</div>
+                            <div class="glass-panel p-3 rounded-lg border ${borderColor} mb-3">
+                                <div class="text-[10px] ${labelColor} font-black uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">${tradeLabel}</div>
                                 <div class="grid grid-cols-2 gap-2 divide-x divide-slate-700">
                                     <div><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r1)?.owner_id)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div>
                                     <div class="pl-2"><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r2)?.owner_id)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div>
@@ -670,7 +681,7 @@
                 }
                 leaguesToProcess.reverse();
                 
-                fetchDraftHistory(leaguesToProcess);
+                await fetchDraftHistory(leaguesToProcess);
 
                 let records = { 
                     highTeam: { score: 0, owner: null, year: '', week: '' }, 
@@ -803,63 +814,102 @@
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
         }
 
+        function toggleTradeYear(year) {
+            const content = document.getElementById(`trade-content-${year}`);
+            const chevron = document.getElementById(`trade-chevron-${year}`);
+            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
+            else { content.classList.add('open'); chevron.classList.add('open'); }
+        }
+
         function renderTradeHistory() {
             let html = "";
             if(globalAllTrades.length === 0) { document.getElementById('trade-history-container').innerHTML = `<div class="text-gray-500 italic p-4 text-center">No past trades found.</div>`; return; }
-            globalAllTrades.sort((a,b) => b.year - a.year || b.week - a.week);
-            globalAllTrades.forEach(t => {
-                let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
-                let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
-                if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
-                if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
 
-                const buildAssetList = (pIds, picks) => {
-                    let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                    str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1">🎯 ${p.season} Rd ${p.round}</div>`).join("");
-                    return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
-                };
+            let tradesByYear = {};
+            globalAllTrades.forEach(t => { if(!tradesByYear[t.year]) tradesByYear[t.year] = []; tradesByYear[t.year].push(t); });
 
-                html += `<div class="glass-panel p-4 rounded-xl border border-blue-500/30 mb-4 shadow-lg"><div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3"><span class="text-xs text-blue-400 font-black uppercase tracking-widest">🤝 Blockbuster Trade</span><span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${t.year} • Week ${t.week}</span></div><div class="grid grid-cols-2 gap-4 divide-x divide-slate-700"><div><div class="text-sm font-bold text-white mb-2 truncate">${getTeamLink(t.o1)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div><div class="pl-4"><div class="text-sm font-bold text-white mb-2 truncate">${getTeamLink(t.o2)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div></div></div>`;
+            Object.keys(tradesByYear).sort((a,b) => b - a).forEach(year => {
+                let yearTrades = tradesByYear[year].sort((a,b) => b.week - a.week);
+                let tradesHtml = "";
+
+                yearTrades.forEach(t => {
+                    let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
+                    let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
+                    if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
+                    if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
+
+                    let isBlockbuster = (r1GetsPlayers.length + r1GetsPicks.length + r2GetsPlayers.length + r2GetsPicks.length) >= 4 || (t.draft_picks && t.draft_picks.some(p => p.round === 1));
+                    let tradeLabel = isBlockbuster ? "🚨 BLOCKBUSTER TRADE" : "🤝 TRADE EXCHANGE";
+                    let labelColor = isBlockbuster ? "text-purple-400" : "text-blue-400";
+                    let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
+
+                    const buildAssetList = (pIds, picks) => {
+                        let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                        str += picks.map(p => {
+                            let pickPlayerStr = "";
+                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && (pick.roster_id === p.owner_id || pick.roster_id === p.previous_owner_id));
+                                if (pickMade) pickPlayerStr = ` <span class="text-gray-400 text-[10px] block truncate ml-5">(Pick ${pickMade.draft_slot}: ${playerDictionary[pickMade.player_id]?.name || "Player"})</span>`;
+                            }
+                            return `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}${pickPlayerStr}</div>`;
+                        }).join("");
+                        return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
+                    };
+
+                    tradesHtml += `
+                        <div class="glass-panel p-4 rounded-xl border ${borderColor} mb-4">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
+                                <span class="text-[10px] ${labelColor} font-black uppercase tracking-widest">${tradeLabel}</span>
+                                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Week ${t.week}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 divide-x divide-slate-700">
+                                <div><div class="text-sm font-bold text-white mb-2 truncate border-b border-slate-700/50 pb-1">${getTeamLink(t.o1)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div>
+                                <div class="pl-4"><div class="text-sm font-bold text-white mb-2 truncate border-b border-slate-700/50 pb-1">${getTeamLink(t.o2)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div>
+                            </div>
+                        </div>`;
+                });
+
+                html += `
+                <div class="glass-panel rounded-xl border border-slate-700 overflow-hidden mb-4">
+                    <button onclick="toggleTradeYear('${year}')" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
+                        <h4 class="font-black text-white text-lg">${year} Trade Ledger</h4>
+                        <svg id="trade-chevron-${year}" class="w-6 h-6 text-cyan-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="trade-content-${year}" class="draft-accordion">
+                        <div class="p-5 pt-0 border-t border-slate-700/50">${tradesHtml}</div>
+                    </div>
+                </div>`;
             });
+
             document.getElementById('trade-history-container').innerHTML = html;
         }
 
         function toggleDraft(season) {
             const content = document.getElementById(`draft-content-${season}`);
             const chevron = document.getElementById(`draft-chevron-${season}`);
-            if(content.classList.contains('open')) {
-                content.classList.remove('open'); chevron.classList.remove('open');
-            } else {
-                content.classList.add('open'); chevron.classList.add('open');
-            }
+            if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
+            else { content.classList.add('open'); chevron.classList.add('open'); }
         }
 
         async function fetchDraftHistory(leagues) {
             try {
                 const currentYear = new Date().getFullYear();
-                if(!leagues.find(l => l.season == currentYear)) {
-                    leagues.push({ id: LEAGUE_ID, season: currentYear });
-                }
-                
+                if(!leagues.find(l => l.season == currentYear)) { leagues.push({ id: LEAGUE_ID, season: currentYear }); }
                 leagues.sort((a,b) => b.season - a.season);
 
                 let html = '';
                 for (let l of leagues) {
                     let drafts = localStorage.getItem(`fff_drafts_${l.id}`);
                     if(drafts) drafts = JSON.parse(drafts);
-                    else { 
-                        drafts = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/drafts`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_drafts_${l.id}`, JSON.stringify(drafts)); 
-                    }
+                    else { drafts = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/drafts`)).json(); if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_drafts_${l.id}`, JSON.stringify(drafts)); }
                     if(drafts.length === 0) continue;
 
                     let draftId = drafts[0].draft_id;
                     let picks = localStorage.getItem(`fff_picks_${draftId}`);
                     if(picks) picks = JSON.parse(picks);
-                    else { 
-                        picks = await (await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_picks_${draftId}`, JSON.stringify(picks)); 
-                    }
+                    else { picks = await (await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`)).json(); if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_picks_${draftId}`, JSON.stringify(picks)); }
+
+                    window.allDraftPicks[l.season] = picks; 
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
@@ -879,9 +929,7 @@
                             <svg id="draft-chevron-${l.season}" class="w-6 h-6 text-cyan-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div id="draft-content-${l.season}" class="draft-accordion">
-                            <div class="p-5 pt-0 border-t border-slate-700/50">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mt-3">${picksHtml}</div>
-                            </div>
+                            <div class="p-5 pt-0 border-t border-slate-700/50"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mt-3">${picksHtml}</div></div>
                         </div>
                     </div>`;
                 }
