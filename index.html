@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FFF Network</title>
     
-    <!-- PWA / App Store Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -158,10 +157,9 @@
             <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
-            <!-- THE TRADE LEDGER -->
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8">
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
 
@@ -284,9 +282,7 @@
         let globalDraftPicks = {}; 
         let globalPowerRankings = {};
         let globalTrophies = {}; 
-        let activeStreaksGlobal = {}; 
-        window.allDraftPicks = window.allDraftPicks || {};
-
+        
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
@@ -305,7 +301,7 @@
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
         async function runDataPipeline() {
-            globalAllMatchups = []; globalAllTrades = []; globalTrophies = {}; activeStreaksGlobal = {}; globalDraftPicks = {}; globalPowerRankings = {};
+            globalAllMatchups = []; globalAllTrades = []; globalTrophies = {}; globalDraftPicks = {}; globalPowerRankings = {};
             
             try {
                 const [stateRes, usersRes, leagueRes, rostersRes] = await Promise.all([
@@ -385,6 +381,26 @@
             return `<span onclick="openTeamModal('${ownerId}')" class="cursor-pointer hover:text-cyan-300 transition underline decoration-dashed decoration-slate-600 underline-offset-4 ${extraClasses}">${name}</span>`;
         }
 
+        function getCurrentSeasonStreak(ownerId) {
+            if (globalAllMatchups.length === 0) return "";
+            const currentYear = Math.max(...globalAllMatchups.map(m => m.year));
+            const teamGames = globalAllMatchups.filter(m => m.year == currentYear && (m.o1 === ownerId || m.o2 === ownerId)).sort((a,b) => b.week - a.week);
+            if(teamGames.length === 0) return "";
+            
+            let streakType = null; let count = 0;
+            for(let g of teamGames) {
+                let isO1 = g.o1 === ownerId;
+                let myPts = isO1 ? g.p1 : g.p2; let oppPts = isO1 ? g.p2 : g.p1;
+                if (myPts === oppPts) break; 
+                let type = myPts > oppPts ? 'W' : 'L';
+                if (streakType === null) { streakType = type; count = 1; } 
+                else if (streakType === type) count++; 
+                else break;
+            }
+            if(count === 0) return "";
+            return `<span class="text-[10px] font-bold ml-1 ${streakType === 'W' ? 'text-green-400' : 'text-red-400'}">(${streakType}${count})</span>`;
+        }
+
         function openTeamModal(ownerId) {
             const user = usersData[ownerId];
             const roster = rostersData.find(r => r.owner_id === ownerId);
@@ -399,12 +415,8 @@
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
             
-            let currentStreakStr = "";
-            if(activeStreaksGlobal[ownerId]) {
-                const s = activeStreaksGlobal[ownerId];
-                if(s.count > 0) currentStreakStr = ` <span class="text-xs ${s.type === 'W' ? 'text-green-400' : 'text-red-400'} ml-2">(${s.type}${s.count})</span>`;
-            }
-            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${currentStreakStr}`;
+            let streakStr = getCurrentSeasonStreak(ownerId);
+            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${streakStr}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
             document.getElementById('tm-trophies').innerHTML = `
@@ -482,17 +494,7 @@
 
                         const buildAssetList = (pIds, picks) => {
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                            str += picks.map(p => {
-                                let pickPlayerStr = "";
-                                if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                    let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
-                                    if (pickMade) {
-                                        let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
-                                        pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
-                                    }
-                                }
-                                return `<div class="text-yellow-400 text-xs font-bold my-1 leading-tight">🎯 ${p.season} Rd ${p.round}${pickPlayerStr}</div>`;
-                            }).join("");
+                            str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1">🎯 ${p.season} Rd ${p.round}</div>`).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
 
@@ -561,13 +563,8 @@
                 if(i < 8) { seedStyle = "text-green-400 font-black bg-green-900/20 px-2 py-1 rounded"; rowClass = "border-l-4 border-green-500 bg-green-900/10"; }
                 else if(i < 10) { seedStyle = "text-gray-400 font-bold px-2 py-1"; rowClass = ""; }
                 
-                let streakHtml = "";
-                if(activeStreaksGlobal[r.owner_id] && activeStreaksGlobal[r.owner_id].count > 0) {
-                    let s = activeStreaksGlobal[r.owner_id];
-                    streakHtml = `<span class="text-[10px] font-bold ml-1 ${s.type === 'W' ? 'text-green-400' : 'text-red-400'}">(${s.type}${s.count})</span>`;
-                }
-
-                html += `<tr class="hover:bg-slate-700/30 transition border-t border-slate-700 ${rowClass}"><td class="p-4 text-center"><span class="${seedStyle}">${i + 1}</span></td><td class="p-4 font-bold text-white whitespace-nowrap">${getTeamLink(r.owner_id)}</td><td class="p-4 text-center font-mono text-cyan-400 whitespace-nowrap">${r.settings.wins}-${r.settings.losses}${streakHtml}</td><td class="p-4 text-center text-gray-300">${(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(2)}</td></tr>`;
+                let streakStr = getCurrentSeasonStreak(r.owner_id);
+                html += `<tr class="hover:bg-slate-700/30 transition border-t border-slate-700 ${rowClass}"><td class="p-4 text-center"><span class="${seedStyle}">${i + 1}</span></td><td class="p-4 font-bold text-white whitespace-nowrap">${getTeamLink(r.owner_id)}</td><td class="p-4 text-center font-mono text-cyan-400 whitespace-nowrap">${r.settings.wins}-${r.settings.losses}${streakStr}</td><td class="p-4 text-center text-gray-300">${(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(2)}</td></tr>`;
             });
             document.getElementById('standings-body').innerHTML = html;
         }
@@ -620,13 +617,11 @@
             return { name: playerDictionary[topId]?.name || "A star player", pts: teamMatchupObj.players_points[topId], id: topId };
         };
 
-        // DETERMINISTIC HASH-PICKER (Locks headline text in stone per week)
         const pickSeeded = (arr, salt, weekNum) => {
             let str = `${LEAGUE_ID}_${weekNum}_${salt}`;
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            let idx = Math.abs(hash) % arr.length;
-            return arr[idx];
+            return arr[Math.abs(hash) % arr.length];
         };
 
         function generateAlgorithmicHeadlines(matchups, week) {
@@ -634,8 +629,7 @@
             if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
-            let toiletGame = null; let minCombined = 9999;
-            let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
+            let toiletGame = null; let minCombined = 9999; let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
 
             matchups.forEach(g => {
                 const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
@@ -659,10 +653,8 @@
 
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
-            // FROZEN DETERMINISTIC HEADLINES
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
-                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
                 
@@ -686,8 +678,7 @@
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
-                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; 
-                let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -710,8 +701,7 @@
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
-                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; 
-                let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -763,7 +753,7 @@
                 const titles = [
                     `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`,
                     `EYE BLEACH REQUIRED: ${t1Link} & ${t2Link} COMBINE FOR PURE TRASH`,
-                    `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK`
+                    `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Link} AND ${t2Link}`
                 ];
                 const bodies = [
                     `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`,
@@ -793,8 +783,6 @@
                 }
                 leaguesToProcess.reverse();
                 
-                await fetchDraftHistory(leaguesToProcess);
-
                 let records = { 
                     highTeam: { score: 0, owner: null, year: '', week: '' }, 
                     lowTeam: { score: 9999, owner: null, year: '', week: '' }, 
@@ -854,11 +842,25 @@
                         Object.values(games).forEach(g => {
                             if (g.length !== 2) return;
                             let t1 = g[0], t2 = g[1]; let o1 = r2o[t1.roster_id], o2 = r2o[t2.roster_id];
-                            if(!o1 || !o2 || t1.points === 0) return;
+                            if(!o1 || !o2 || t1.points === 0 || t2.points === 0) return;
 
                             globalAllMatchups.push({ o1: o1, p1: t1.points, o2: o2, p2: t2.points, year: l.season, week: weekNum }); 
 
-                            if (t1.points > t2.points) { cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; } else if (t2.points > t1.points) { cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; }
+                            if (t1.points === t2.points) {
+                                if(activeStreaks[o1]) activeStreaks[o1].count = 0;
+                                if(activeStreaks[o2]) activeStreaks[o2].count = 0;
+                                return;
+                            }
+
+                            if (t1.points > t2.points) { 
+                                cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; 
+                                updateAllTimeStreak(activeStreaks, records, o1, 'W', l.season);
+                                updateAllTimeStreak(activeStreaks, records, o2, 'L', l.season);
+                            } else { 
+                                cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; 
+                                updateAllTimeStreak(activeStreaks, records, o2, 'W', l.season);
+                                updateAllTimeStreak(activeStreaks, records, o1, 'L', l.season);
+                            }
 
                             if (!globalTrophies[o1]) globalTrophies[o1] = {j:0, t:0, b:0};
                             if (!globalTrophies[o2]) globalTrophies[o2] = {j:0, t:0, b:0};
@@ -887,14 +889,6 @@
                             if(t2.points > records.highTeam.score) records.highTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
                             if(t1.points < records.lowTeam.score) records.lowTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
                             if(t2.points < records.lowTeam.score) records.lowTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
-
-                            let wId = t1.points > t2.points ? o1 : o2; let lId = t1.points < t2.points ? o1 : o2;
-                            [o1, o2].forEach(o => {
-                                if(o === wId) { if(!activeStreaks[o]) activeStreaks[o] = {type: 'W', count: 0}; if(activeStreaks[o].type === 'W') activeStreaks[o].count++; else activeStreaks[o] = {type: 'W', count: 1}; }
-                                else { if(!activeStreaks[o]) activeStreaks[o] = {type: 'L', count: 0}; if(activeStreaks[o].type === 'L') activeStreaks[o].count++; else activeStreaks[o] = {type: 'L', count: 1}; }
-                                if(activeStreaks[o].type === 'W' && activeStreaks[o].count > records.winStreak.streak) records.winStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
-                                if(activeStreaks[o].type === 'L' && activeStreaks[o].count > records.loseStreak.streak) records.loseStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
-                            });
                         });
                     });
 
@@ -908,8 +902,6 @@
                         });
                     });
                 }
-                
-                activeStreaksGlobal = activeStreaks;
 
                 document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
@@ -924,9 +916,17 @@
                 
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
                 renderTradeHistory();
-                renderStandings();
 
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
+        }
+
+        function updateAllTimeStreak(activeStreaks, records, owner, type, year) {
+            if(!activeStreaks[owner]) activeStreaks[owner] = {type: type, count: 1};
+            else if(activeStreaks[owner].type === type) activeStreaks[owner].count++;
+            else activeStreaks[owner] = {type: type, count: 1};
+            
+            if(type === 'W' && activeStreaks[owner].count > records.winStreak.streak) records.winStreak = {streak: activeStreaks[owner].count, owner: owner, year: year};
+            if(type === 'L' && activeStreaks[owner].count > records.loseStreak.streak) records.loseStreak = {streak: activeStreaks[owner].count, owner: owner, year: year};
         }
 
         function renderTradeHistory() {
@@ -952,19 +952,8 @@
                     let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
 
                     const buildAssetList = (pIds, picks) => {
-                        let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
-                        str += picks.map(p => {
-                            let pickPlayerStr = "";
-                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                // Match on original roster draft slot
-                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
-                                if (pickMade) {
-                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
-                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
-                                }
-                            }
-                            return `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}${pickPlayerStr}</div>`;
-                        }).join("");
+                        let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                        str += picks.map(p => `<div class="text-yellow-400 text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
 
@@ -1008,58 +997,6 @@
             const chevron = document.getElementById(`draft-chevron-${season}`);
             if(content.classList.contains('open')) { content.classList.remove('open'); chevron.classList.remove('open'); } 
             else { content.classList.add('open'); chevron.classList.add('open'); }
-        }
-
-        async function fetchDraftHistory(leagues) {
-            try {
-                const currentYear = new Date().getFullYear();
-                if(!leagues.find(l => l.season == currentYear)) { leagues.push({ id: LEAGUE_ID, season: currentYear }); }
-                leagues.sort((a,b) => b.season - a.season);
-
-                let html = '';
-                for (let l of leagues) {
-                    let drafts = localStorage.getItem(`fff_drafts_${l.id}`);
-                    if(drafts) drafts = JSON.parse(drafts);
-                    else { 
-                        drafts = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/drafts`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_drafts_${l.id}`, JSON.stringify(drafts)); 
-                    }
-                    if(drafts.length === 0) continue;
-
-                    let draftId = drafts[0].draft_id;
-                    let picks = localStorage.getItem(`fff_picks_${draftId}`);
-                    if(picks) picks = JSON.parse(picks);
-                    else { 
-                        picks = await (await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_picks_${draftId}`, JSON.stringify(picks)); 
-                    }
-
-                    window.allDraftPicks[l.season] = picks; 
-
-                    let topPicks = picks.filter(p => p.round <= 2);
-                    if(topPicks.length === 0) continue;
-
-                    let picksHtml = topPicks.map(p => {
-                        let pName = playerDictionary[p.player_id]?.name || (p.metadata?.first_name ? p.metadata.first_name + " " + p.metadata.last_name : "Unknown");
-                        return `<div class="flex justify-between items-center text-sm border-b border-slate-700/50 py-2">
-                            <div class="flex items-center space-x-2"><span class="text-gray-400 font-mono w-8">${p.round}.${p.draft_slot < 10 ? '0'+p.draft_slot : p.draft_slot}</span> <img src="https://sleepercdn.com/content/nfl/players/thumb/${p.player_id}.jpg" class="w-6 h-6 rounded-full border border-slate-600 object-cover" onerror="this.style.display='none'"> <span class="text-white font-bold">${pName}</span></div>
-                            <div class="text-[10px] uppercase truncate max-w-[80px] sm:max-w-[120px]">${getTeamLink(rostersData.find(r => r.roster_id === p.roster_id)?.owner_id)}</div>
-                        </div>`;
-                    }).join('');
-                    
-                    html += `
-                    <div class="glass-panel rounded-xl border border-slate-700 overflow-hidden mb-4">
-                        <button onclick="toggleDraft(${l.season})" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
-                            <h4 class="font-black text-white text-lg">${l.season} Rookie Draft</h4>
-                            <svg id="draft-chevron-${l.season}" class="w-6 h-6 text-cyan-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div id="draft-content-${l.season}" class="draft-accordion">
-                            <div class="p-5 pt-0 border-t border-slate-700/50"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mt-3">${picksHtml}</div></div>
-                        </div>
-                    </div>`;
-                }
-                document.getElementById('draft-history-container').innerHTML = html || `<div class="text-gray-500 italic p-4 text-center">No past drafts detected.</div>`;
-            } catch(e){ document.getElementById('draft-history-container').innerHTML = `<div class="text-red-500 p-4 text-center">Failed to load draft archives.</div>`; }
         }
 
         function populateRivalryDropdowns(ownerIds) {
