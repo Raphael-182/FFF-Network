@@ -27,7 +27,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .draft-accordion { transition: max-height 0.3s ease-in-out; overflow: hidden; max-height: 0; }
-        .draft-accordion.open { max-height: 4000px; }
+        .draft-accordion.open { max-height: 5000px; }
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
     </style>
@@ -40,11 +40,17 @@
 
     <nav class="glass-panel sticky top-0 z-50 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
-                <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
-                    FFF
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
+                    <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+                        FFF
+                    </div>
+                    <span class="text-xl font-black tracking-wider text-white hidden sm:block">NETWORK</span>
                 </div>
-                <span class="text-xl font-black tracking-wider text-white hidden sm:block">NETWORK</span>
+                <!-- PWA Install Button -->
+                <button id="install-btn" onclick="installPWA()" class="hidden bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                    +🏡 <span class="hidden sm:inline">App</span>
+                </button>
             </div>
             <div class="flex space-x-2 sm:space-x-4 overflow-x-auto hide-scrollbar text-sm font-semibold">
                 <button onclick="switchTab('news')" class="px-3 py-2 text-white hover:text-cyan-400 transition whitespace-nowrap">News</button>
@@ -99,7 +105,7 @@
         <!-- STANDINGS & PLAYOFFS TAB -->
         <div id="standings" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">The Playoff Picture</h2>
-            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship.</p>
+            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship (Top 8 Qualify).</p>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar mb-10">
                 <table class="w-full text-left text-sm min-w-[500px]">
                     <thead class="bg-slate-800 text-gray-300">
@@ -286,13 +292,24 @@
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
 
-        // INLINE SERVICE WORKER FOR PWA INSTALLABILITY
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').classList.remove('hidden');
+        });
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') { document.getElementById('install-btn').classList.add('hidden'); }
+                deferredPrompt = null;
+            }
+        }
+
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', () => self.skipWaiting());
-                self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
-                self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
-            `;
+            const swCode = `self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`;
             const blob = new Blob([swCode], {type: 'application/javascript'});
             navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
         }
@@ -462,8 +479,9 @@
             
             const teamPicks = globalDraftPicks[roster.roster_id] || [];
             document.getElementById('tm-picks').innerHTML = teamPicks.map(p => {
+                let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                 const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
-                return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs"><span class="font-bold text-yellow-400">${p.year}</span> Round ${p.round}${origLabel}</div>`;
+                return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
             }).join("") || `<span class="text-gray-500 italic text-sm">No draft capital</span>`;
 
             document.getElementById('team-modal').classList.remove('hidden');
@@ -509,8 +527,16 @@
                         const buildAssetList = (pIds, picks) => {
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                             str += picks.map(p => {
-                                let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
-                                return `<div class="${pickColor} text-xs font-bold my-1 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`;
+                                let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
+                                let pickPlayerStr = "";
+                                if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                    let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
+                                    if (pickMade) {
+                                        let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
+                                        pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
+                                    }
+                                }
+                                return `<div class="text-xs font-bold my-1.5 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                             }).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
@@ -554,9 +580,9 @@
                     const teamPicks = allPicks.filter(p => p.current_roster_id === r.roster_id).sort((a, b) => a.year - b.year || a.round - b.round);
                     globalDraftPicks[r.roster_id] = teamPicks;
                     let picksList = teamPicks.map(p => {
+                        let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                         const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
-                        let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
-                        return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold ${pickColor}">${p.year} <span class="text-gray-300 font-normal">Round ${p.round}</span></span>${origLabel}</div>`;
+                        return `<div class="bg-slate-800 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
                     }).join("");
                     html += `<div class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col h-full"><h4 class="font-black text-white mb-3 text-lg border-b border-slate-700 pb-2">${getTeamLink(r.owner_id)}</h4><div class="space-y-2 overflow-y-auto max-h-64 hide-scrollbar flex-1">${picksList || '<div class="text-gray-500 italic text-sm">No draft capital</div>'}</div></div>`;
                 });
@@ -647,7 +673,8 @@
             if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
-            let toiletGame = null; let minCombined = 9999; let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
+            let toiletGame = null; let minCombined = 9999;
+            let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
 
             matchups.forEach(g => {
                 const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
@@ -672,7 +699,8 @@
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
+                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
                 
@@ -696,7 +724,8 @@
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
-                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; 
+                let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -719,7 +748,8 @@
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
-                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; 
+                let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
                 let star = getStarPlayer(winner);
                 let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
 
@@ -933,6 +963,8 @@
                 populateRivalryDropdowns(Object.keys(cumulativeWLT));
                 renderTradeHistory();
 
+                renderStandings();
+
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; }
         }
 
@@ -961,8 +993,16 @@
                     const buildAssetList = (pIds, picks) => {
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
-                            let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-300" : "text-slate-400";
-                            return `<div class="${pickColor} text-xs font-bold my-1.5 leading-tight">🎯 ${p.season} Rd ${p.round}</div>`;
+                            let pickPlayerStr = "";
+                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
+                                if (pickMade) {
+                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
+                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
+                                }
+                            }
+                            let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
+                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
@@ -1034,6 +1074,7 @@
                     }
 
                     if(!picks || picks.length === 0) continue;
+                    window.allDraftPicks[l.season] = picks; 
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
