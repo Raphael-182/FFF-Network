@@ -67,7 +67,6 @@
                 </div>
                 
                 <div class="space-y-6">
-                    <!-- NEW: GLOBAL TRENDING WIRE -->
                     <div class="glass-panel p-5 rounded-xl border-l-4 border-purple-500 shadow-lg">
                         <h3 class="font-black text-sm text-gray-400 uppercase tracking-widest mb-3">Global Trending Pickups</h3>
                         <div id="trending-feed" class="space-y-3 text-sm h-48 overflow-y-auto hide-scrollbar pr-2">
@@ -234,7 +233,17 @@
                 await fetchPlayers();
                 const stateRes = await fetch('https://api.sleeper.app/v1/state/nfl');
                 const state = await stateRes.json();
-                currentNFLWeek = state.week || 1;
+                let actualSleeperWeek = state.week || 1;
+
+                // THURSDAY ROLLOVER LOGIC
+                // Keeps scoreboard and headlines on the previous week through Tuesday and Wednesday
+                const dayOfWeek = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
+                if (dayOfWeek === 2 || dayOfWeek === 3) {
+                    currentNFLWeek = Math.max(1, actualSleeperWeek - 1);
+                } else {
+                    currentNFLWeek = actualSleeperWeek;
+                }
+
                 populateWeekSelectors();
 
                 const [usersRes, leagueRes] = await Promise.all([ fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/users`), fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}`) ]);
@@ -249,7 +258,9 @@
                 renderStandings();
                 renderPowerRankings();
                 fetchAndRenderScoreboard(currentNFLWeek);
-                fetchTransactions(currentNFLWeek);
+                
+                // Transactions always fetch actualSleeperWeek so wire is always live
+                fetchTransactions(actualSleeperWeek); 
                 fetchTrendingPlayers();
                 compileDraftCapital();
                 
@@ -361,7 +372,7 @@
 
         function changePublicWeek() {
             const w = document.getElementById('public-week-selector').value;
-            fetchAndRenderScoreboard(w); fetchTransactions(w);
+            fetchAndRenderScoreboard(w); 
         }
 
         async function fetchAndRenderScoreboard(week) {
