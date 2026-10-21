@@ -134,6 +134,14 @@
                 </div>
             </div>
 
+            <!-- NEW: DYNAMIC RECORD BOOK -->
+            <h3 class="text-2xl font-black text-white mb-2">League Records</h3>
+            <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
+            
+            <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Compiling history database...</div>
+            </div>
+
             <h3 class="text-2xl font-black text-white mb-4">All-Time Franchise Leaderboard</h3>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar">
                 <table class="w-full text-left text-sm min-w-[500px]">
@@ -213,12 +221,8 @@
         let usersData = {};
         let rostersData = [];
         let currentNFLWeek = 1;
-        let allTimeData = {};
         let playerDictionary = {};
-        
-        // Target upcoming draft years (2027, 2028, 2029)
         let draftYears = [2027, 2028, 2029]; 
-        // 6 Round Rookie Draft
         let draftRounds = [1, 2, 3, 4, 5, 6];
 
         function switchTab(tabId) {
@@ -271,8 +275,8 @@
                 fetchTransactions(currentNFLWeek);
                 compileDraftCapital();
                 
-                if(league.previous_league_id) compileHistory(rostersData, league.previous_league_id);
-                else document.getElementById('all-time-body').innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500">Not enough historical data available yet.</td></tr>`;
+                // Launch the Recursive All-Time Records Engine
+                compileAllTimeRecords(LEAGUE_ID, currentNFLWeek);
 
             } catch (e) { console.error("Data Pipeline Error:", e); }
         }
@@ -315,7 +319,6 @@
                 const tradedPicks = await tradedPicksRes.json();
                 
                 let allPicks = [];
-                // Build robust base 6-round picks for every franchise
                 rostersData.forEach(r => {
                     draftYears.forEach(year => {
                         draftRounds.forEach(round => {
@@ -324,16 +327,12 @@
                     });
                 });
 
-                // Re-route traded picks to current owner
                 tradedPicks.forEach(trade => {
-                    const pickIndex = allPicks.findIndex(p => p.year === parseInt(trade.season) && p.round === trade.round && p.original_roster_id === trade.roster_id);
-                    if (pickIndex !== -1) {
-                        allPicks[pickIndex].current_roster_id = trade.owner_id;
-                    }
+                    const pickIndex = allPicks.findIndex(p => p.year === parseInt(trade.season) && parseInt(p.round) === parseInt(trade.round) && p.original_roster_id === trade.roster_id);
+                    if (pickIndex !== -1) allPicks[pickIndex].current_roster_id = trade.owner_id;
                 });
 
                 let html = "";
-                // Sort the teams alphabetically to display cleanly
                 const sortedRosters = [...rostersData].sort((a,b) => getTeamName(a.owner_id).localeCompare(getTeamName(b.owner_id)));
                 
                 sortedRosters.forEach(r => {
@@ -354,6 +353,188 @@
                 });
                 document.getElementById('draft-capital-container').innerHTML = html;
             } catch (e) { console.error(e); document.getElementById('draft-capital-container').innerHTML = `<div class="text-red-500 p-4">Failed to load draft capital.</div>`; }
+        }
+
+        // ==============================================
+        // RECURSIVE ALL-TIME RECORDS ENGINE
+        // ==============================================
+        async function compileAllTimeRecords(activeLeagueId, activeWeek) {
+            try {
+                let leaguesToProcess = [];
+                let currId = activeLeagueId;
+                
+                // Reverse Traverse to find all history
+                while (currId) {
+                    let cached = localStorage.getItem(`fff_league_meta_${currId}`);
+                    let meta;
+                    if (cached) {
+                        meta = JSON.parse(cached);
+                    } else {
+                        meta = await (await fetch(`https://api.sleeper.app/v1/league/${currId}`)).json();
+                        localStorage.setItem(`fff_league_meta_${currId}`, JSON.stringify({
+                            id: meta.league_id,
+                            season: meta.season,
+                            previous_league_id: meta.previous_league_id
+                        }));
+                    }
+                    leaguesToProcess.push(meta);
+                    currId = meta.previous_league_id;
+                }
+                
+                leaguesToProcess.reverse(); // Process oldest to newest
+                
+                let records = {
+                    highTeam: { score: 0, owner: null, year: '', week: '' },
+                    lowTeam: { score: 9999, owner: null, year: '', week: '' },
+                    highPlayer: { score: 0, name: '', owner: null, year: '', week: '' },
+                    winStreak: { streak: 0, owner: null, year: '' },
+                    loseStreak: { streak: 0, owner: null, year: '' }
+                };
+
+                let cumulativeWLT = {}; // owner_id -> {w, l}
+                let activeStreaks = {}; // owner_id -> {type, count}
+
+                for (let l of leaguesToProcess) {
+                    let rData = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/rosters`)).json();
+                    let r2o = {};
+                    rData.forEach(r => {
+                        r2o[r.roster_id] = r.owner_id;
+                        if(r.owner_id && !cumulativeWLT[r.owner_id]) cumulativeWLT[r.owner_id] = {w:0, l:0};
+                    });
+
+                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 17;
+                    let weekPromises = [];
+                    
+                    for(let w = 1; w <= endWeek; w++) {
+                        let cacheKey = `fff_matchups_${l.id}_w${w}`;
+                        if(l.id !== activeLeagueId && localStorage.getItem(cacheKey)) {
+                            weekPromises.push(Promise.resolve(JSON.parse(localStorage.getItem(cacheKey))));
+                        } else {
+                            weekPromises.push(
+                                fetch(`https://api.sleeper.app/v1/league/${l.id}/matchups/${w}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    if(l.id !== activeLeagueId) localStorage.setItem(cacheKey, JSON.stringify(data));
+                                    return data;
+                                })
+                            );
+                        }
+                    }
+
+                    let allWeeksMatchups = await Promise.all(weekPromises);
+
+                    allWeeksMatchups.forEach((matchups, wIndex) => {
+                        let weekNum = wIndex + 1;
+                        let games = {};
+                        matchups.forEach(m => {
+                            if (!m.matchup_id) return;
+                            if (!games[m.matchup_id]) games[m.matchup_id] = [];
+                            games[m.matchup_id].push(m);
+                        });
+
+                        Object.values(games).forEach(g => {
+                            if (g.length !== 2) return;
+                            let t1 = g[0], t2 = g[1];
+                            let o1 = r2o[t1.roster_id], o2 = r2o[t2.roster_id];
+                            if(!o1 || !o2) return;
+
+                            // Played Games Only
+                            if (t1.points > 0 && t2.points > 0) {
+                                // Cumulative W-L
+                                if (t1.points > t2.points) { cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; }
+                                else if (t2.points > t1.points) { cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; }
+
+                                // High/Low Team Score
+                                if(t1.points > records.highTeam.score) records.highTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                                if(t2.points > records.highTeam.score) records.highTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+                                
+                                if(t1.points < records.lowTeam.score) records.lowTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                                if(t2.points < records.lowTeam.score) records.lowTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+
+                                // High Player Score
+                                [t1, t2].forEach(team => {
+                                    if(team.players_points) {
+                                        for(let pid in team.players_points) {
+                                            if(team.players_points[pid] > records.highPlayer.score) {
+                                                records.highPlayer = {score: team.players_points[pid], name: playerDictionary[pid] || 'Unknown', owner: r2o[team.roster_id], year: l.season, week: weekNum};
+                                            }
+                                        }
+                                    }
+                                });
+
+                                // Streaks
+                                let wId = t1.points > t2.points ? o1 : o2;
+                                let lId = t1.points < t2.points ? o1 : o2;
+                                
+                                [o1, o2].forEach(o => {
+                                    if(o === wId) {
+                                        if(!activeStreaks[o]) activeStreaks[o] = {type: 'W', count: 0};
+                                        if(activeStreaks[o].type === 'W') activeStreaks[o].count++; else activeStreaks[o] = {type: 'W', count: 1};
+                                    } else {
+                                        if(!activeStreaks[o]) activeStreaks[o] = {type: 'L', count: 0};
+                                        if(activeStreaks[o].type === 'L') activeStreaks[o].count++; else activeStreaks[o] = {type: 'L', count: 1};
+                                    }
+
+                                    if(activeStreaks[o].type === 'W' && activeStreaks[o].count > records.winStreak.streak) {
+                                        records.winStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
+                                    }
+                                    if(activeStreaks[o].type === 'L' && activeStreaks[o].count > records.loseStreak.streak) {
+                                        records.loseStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
+                                    }
+                                });
+                            }
+                        });
+                    });
+                }
+
+                // Render Dynamic Record Cards
+                const recContainer = document.getElementById('dynamic-records-container');
+                recContainer.innerHTML = `
+                    <div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div>
+                        <div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div>
+                        <div class="text-sm font-bold text-white mt-1">${getTeamName(records.highTeam.owner)}</div>
+                        <div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div>
+                        <div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div>
+                        <div class="text-sm font-bold text-white mt-1">${getTeamName(records.lowTeam.owner)}</div>
+                        <div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-xl border border-cyan-500/30 flex flex-col justify-center">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Player Score</div>
+                        <div class="text-3xl font-black text-cyan-400">${records.highPlayer.score.toFixed(2)}</div>
+                        <div class="text-sm font-bold text-white mt-1">${records.highPlayer.name} <span class="text-gray-400 text-xs font-normal">(${getTeamName(records.highPlayer.owner)})</span></div>
+                        <div class="text-xs text-gray-500">${records.highPlayer.year} - Week ${records.highPlayer.week}</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div>
+                        <div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div>
+                        <div class="text-sm font-bold text-white mt-1">${getTeamName(records.winStreak.owner)}</div>
+                        <div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div>
+                        <div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div>
+                        <div class="text-sm font-bold text-white mt-1">${getTeamName(records.loseStreak.owner)}</div>
+                        <div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div>
+                    </div>
+                `;
+
+                // Render All-Time Franchise Leaderboard
+                let html = "";
+                Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => {
+                    const d = cumulativeWLT[id], total = d.w + d.l;
+                    const style = i === 0 ? "text-yellow-500 font-black" : "text-white font-bold";
+                    html += `<tr class="border-t border-slate-700"><td class="p-4 ${style}">${getTeamName(id)}</td><td class="p-4 text-center font-mono text-cyan-400">${d.w}-${d.l}</td><td class="p-4 text-center text-gray-300">${total > 0 ? ((d.w/total)*100).toFixed(1)+"%" : "0.0%"}</td></tr>`;
+                });
+                document.getElementById('all-time-body').innerHTML = html;
+
+            } catch (e) {
+                console.error("All-Time Records Error:", e);
+                document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500">Failed to compile historical database.</div>`;
+            }
         }
 
         function populateWeekSelectors() {
@@ -409,22 +590,6 @@
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
             } catch (e) { console.error(e); }
-        }
-
-        async function compileHistory(curr, prevId) {
-            try {
-                curr.forEach(r => { if(r.owner_id) allTimeData[r.owner_id] = { w: r.settings.wins, l: r.settings.losses }; });
-                const prev = await (await fetch(`https://api.sleeper.app/v1/league/${prevId}/rosters`)).json();
-                prev.forEach(r => { if(r.owner_id && allTimeData[r.owner_id]) { allTimeData[r.owner_id].w += r.settings.wins; allTimeData[r.owner_id].l += r.settings.losses; } });
-
-                let html = "";
-                Object.keys(allTimeData).sort((a,b) => allTimeData[b].w - allTimeData[a].w).forEach((id, i) => {
-                    const d = allTimeData[id], total = d.w + d.l;
-                    const style = i === 0 ? "text-yellow-500 font-black" : "text-white font-bold";
-                    html += `<tr class="border-t border-slate-700"><td class="p-4 ${style}">${getTeamName(id)}</td><td class="p-4 text-center font-mono text-cyan-400">${d.w}-${d.l}</td><td class="p-4 text-center text-gray-300">${total > 0 ? ((d.w/total)*100).toFixed(1)+"%" : "0.0%"}</td></tr>`;
-                });
-                document.getElementById('all-time-body').innerHTML = html;
-            } catch (e) { console.error("History Error", e); }
         }
 
         function loadSettings() {
