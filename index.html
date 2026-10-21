@@ -45,7 +45,7 @@
         <div class="ticker" id="live-ticker-desk">🚨 INITIATING FFF NETWORK AUTO-SYNC... FETCHING LATEST TRANSACTIONS... 🚨</div>
     </div>
 
-    <!-- TOP HEADER (Desktop Nav + Mobile Branding) -->
+    <!-- TOP HEADER -->
     <header class="glass-panel sticky top-0 z-40 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -55,12 +55,15 @@
                     </div>
                     <span class="text-xl font-black tracking-wider text-white">NETWORK</span>
                 </div>
+                <!-- PWA Install Button -->
+                <button id="install-btn" onclick="installPWA()" class="hidden bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                    +🏡 <span class="hidden sm:inline">App</span>
+                </button>
                 <button onclick="forceSync()" class="p-2 text-cyan-400 hover:text-white transition focus:outline-none" aria-label="Sync Data">
                     <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
             
-            <!-- Desktop Only Nav -->
             <div class="hidden sm:flex space-x-4 text-sm font-bold uppercase tracking-widest">
                 <button onclick="switchTab('news')" class="desk-nav text-cyan-400 hover:text-cyan-300 transition">News</button>
                 <button onclick="switchTab('standings')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Playoffs</button>
@@ -71,7 +74,6 @@
         </div>
     </header>
 
-    <!-- MOBILE TICKER -->
     <div class="ticker-wrap sm:hidden">
         <div class="ticker" id="live-ticker-mob">🚨 INITIATING FFF NETWORK AUTO-SYNC... FETCHING LATEST TRANSACTIONS... 🚨</div>
     </div>
@@ -120,7 +122,7 @@
         <!-- STANDINGS & PLAYOFFS TAB -->
         <div id="standings" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">The Playoff Picture</h2>
-            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship (Top 8 Qualify).</p>
+            <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship.</p>
             <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar mb-10">
                 <table class="w-full text-left text-sm min-w-[500px]">
                     <thead class="bg-slate-800 text-gray-300">
@@ -147,9 +149,9 @@
         <!-- DRAFT CAPITAL TAB -->
         <div id="draft-capital" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">Dynasty Assets Vault</h2>
-            <p class="text-gray-400 mb-6">Current breakdown of future rookie draft capital across the FFF (6 Rounds).</p>
+            <p class="text-gray-400 mb-6">Current breakdown of future rookie draft capital across the FFF.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="draft-capital-container">
-                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full loader-node">Reconciling 6-Round traded picks...</div>
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse col-span-full loader-node">Reconciling traded picks...</div>
             </div>
         </div>
 
@@ -175,13 +177,19 @@
                 </div>
             </div>
 
+            <h3 class="text-2xl font-black text-white mb-2">Positional All-Time Greats</h3>
+            <p class="text-gray-400 text-sm mb-4">The highest single-game scoring performances in FFF history by position.</p>
+            <div id="positional-records-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+                <div class="glass-panel p-4 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Scanning positional archives...</div>
+            </div>
+
             <h3 class="text-2xl font-black text-white mb-2">League Records</h3>
             <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8">
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
+            <div id="trade-history-container" class="space-y-4 mb-8 max-h-[800px] overflow-y-auto hide-scrollbar pr-2">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
 
@@ -232,7 +240,7 @@
         </div>
     </main>
 
-    <!-- MOBILE BOTTOM NAVIGATION (Native App Feel) -->
+    <!-- MOBILE BOTTOM NAVIGATION -->
     <nav class="fixed bottom-0 w-full glass-panel z-50 sm:hidden border-t border-slate-700 pb-safe">
         <div class="flex justify-around items-center h-16">
             <button onclick="switchTab('news')" id="mob-nav-news" class="nav-btn active">
@@ -332,6 +340,28 @@
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
 
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').classList.remove('hidden');
+        });
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') { document.getElementById('install-btn').classList.add('hidden'); }
+                deferredPrompt = null;
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.desk-nav').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
@@ -401,7 +431,11 @@
                 loadAnnouncements();
                 await fetchPlayersWithCache();
 
-                await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
+                // ENSURE DRAFT HISTORY LOADS BEFORE TRADE LEDGER
+                if(league.previous_league_id) {
+                    await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
+                }
+
                 renderStandings(); 
                 renderPowerRankings();
                 await fetchAndRenderScoreboard(currentNFLWeek);
@@ -475,7 +509,9 @@
             else { avImage.classList.add('hidden'); avFallback.classList.remove('hidden'); avFallback.innerText = getTeamName(ownerId).substring(0,2).toUpperCase(); }
 
             document.getElementById('tm-power').innerText = globalPowerRankings[ownerId] ? globalPowerRankings[ownerId].score.toFixed(1) : "N/A";
-            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${getCurrentSeasonStreak(ownerId)}`;
+            
+            let streakStr = getCurrentSeasonStreak(ownerId);
+            document.getElementById('tm-record').innerHTML = `${roster.settings.wins}-${roster.settings.losses}${streakStr}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
             document.getElementById('tm-trophies').innerHTML = `
@@ -486,7 +522,11 @@
 
             const activePlayers = (roster.players || []).filter(p => !(roster.reserve || []).includes(p) && !(roster.taxi || []).includes(p));
             let groupedRoster = { 'QB': [], 'RB': [], 'WR': [], 'TE': [], 'K': [], 'DEF': [], 'OTHER': [] };
-            activePlayers.forEach(id => { const pos = playerDictionary[id]?.pos || 'OTHER'; if(groupedRoster[pos]) groupedRoster[pos].push(id); else groupedRoster['OTHER'].push(id); });
+            
+            activePlayers.forEach(id => {
+                const pos = playerDictionary[id]?.pos || 'OTHER';
+                if(groupedRoster[pos]) groupedRoster[pos].push(id); else groupedRoster['OTHER'].push(id);
+            });
 
             let rosterHtml = "";
             ['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'OTHER'].forEach(pos => {
@@ -498,13 +538,14 @@
                     rosterHtml += `<div class="mb-3"><h5 class="text-[10px] font-black text-cyan-500 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">${pos}</h5><div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">${pList}</div></div>`;
                 }
             });
+
             document.getElementById('tm-roster').innerHTML = rosterHtml || `<span class="text-gray-500 italic">Empty</span>`;
             
             const teamPicks = globalDraftPicks[roster.roster_id] || [];
             document.getElementById('tm-picks').innerHTML = teamPicks.map(p => {
                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px] truncate max-w-[80px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
-                return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sm flex justify-between items-center"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
+                const origLabel = p.original_roster_id === p.current_roster_id ? "" : ` <span class="text-gray-500 text-[10px]">(${getTeamName(rostersData.find(roster => roster.roster_id === p.original_roster_id)?.owner_id)})</span>`;
+                return `<div class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs"><span class="font-bold text-gray-300">${p.year} <span class="${pickColor} font-bold">Round ${p.round}</span></span>${origLabel}</div>`;
             }).join("") || `<span class="text-gray-500 italic text-sm">No draft capital</span>`;
 
             document.getElementById('team-modal').classList.remove('hidden');
@@ -539,8 +580,12 @@
                         let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
                         let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
                         
-                        if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
-                        if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
+                        if(t.adds) {
+                            for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); }
+                        }
+                        if(t.draft_picks) {
+                            t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); });
+                        }
 
                         let isBlockbuster = (r1GetsPlayers.length + r1GetsPicks.length + r2GetsPlayers.length + r2GetsPicks.length) >= 4 || (t.draft_picks && t.draft_picks.some(p => p.round === 1));
                         let tradeLabel = isBlockbuster ? "🚨 BLOCKBUSTER TRADE" : "🤝 TRADE EXCHANGE";
@@ -672,7 +717,6 @@
                         const p1s = g[0].points > g[1].points ? "text-green-400 font-black" : "text-gray-300";
                         const p2s = g[1].points > g[0].points ? "text-green-400 font-black" : "text-gray-300";
                         
-                        // Tug of war bars
                         const totalPts = (g[0].points + g[1].points) || 1;
                         const t1Pct = (g[0].points / totalPts) * 100;
                         const t2Pct = (g[1].points / totalPts) * 100;
@@ -708,7 +752,8 @@
             if(matchups.length === 0 || matchups[0][0].points === 0) { feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">Scores are currently zero. Waiting for Week ${week} to begin...</p></div>`; return; }
 
             let highGame = null; let maxPts = 0; let closeGame = null; let minDiff = 999; let blowoutGame = null; let maxDiff = 0;
-            let toiletGame = null; let minCombined = 9999; let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
+            let toiletGame = null; let minCombined = 9999;
+            let blunderer = null; let blunderPlayerId = null; let maxBenchPts = 0;
 
             matchups.forEach(g => {
                 const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
@@ -732,7 +777,6 @@
 
             let html = ""; const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
-            // Headline Randomizers
             if(highGame) {
                 let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
                 let star = getStarPlayer(winner); let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
@@ -740,7 +784,12 @@
                 const titles = [ `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wLink}`, `TOTAL DOMINATION: ${star.name} CARRIES ${wLink} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`, `OFFENSIVE CLINIC: ${wLink} PUTS ON A MASTERCLASS IN MASSACRE OVER ${lLink}` ];
                 const bodies = [ `Nobody was stopping <strong>${wLink}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lLink} (${loser.points.toFixed(2)}) completely in the dust.`, `${lLink} got completely rolled over. <strong>${wLink}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, `A certified blowout display. <strong>${wLink}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lLink} shell-shocked.` ];
                 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">
+                    ${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}
+                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p>
+                </article>`;
             }
 
             if(closeGame && closeGame !== highGame && minDiff < 15) {
@@ -750,7 +799,11 @@
                 const titles = [ `NAIL-BITER: ${wLink} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lLink}`, `HEARTBREAK IN THE FFF: ${lLink} COMES UP JUST SHORT TO ${wLink}`, `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wLink}` ];
                 const bodies = [ `Talk about a high-stress finish. <strong>${wLink}</strong> barely escaped with their lives, edging out ${lLink} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, `An agonizing finish for ${lLink}. <strong>${wLink}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, `The matchup of the week lived up to the hype. <strong>${wLink}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lLink} is left wondering what could have been.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p></article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
+                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'nail_title', week)}</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'nail_body', week)}</p>
+                </article>`;
             }
 
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
@@ -760,7 +813,11 @@
                 const titles = [ `MASSACRE: ${wLink} ABSOLUTELY EMBARRASSES ${lLink} BY ${maxDiff.toFixed(2)}`, `BLOWOUT ALERT: ${lLink} GETS SYSTEMATICALLY DISMANTLED`, `NO MERCY: ${wLink} DROPS THE HAMMER ON ${lLink}` ];
                 const bodies = [ `It was ugly from the opening kickoff. <strong>${wLink}</strong> absolutely dismantled ${lLink} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, `A complete demolition. <strong>${wLink}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lLink} failed to put up any resistance whatsoever.`, `This wasn't even a contest. <strong>${wLink}</strong> violated every rule of sportsmanship, continuing to pour it on ${lLink} until the clock hit triple zeroes.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p></article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
+                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'blow_title', week)}</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'blow_body', week)}</p>
+                </article>`;
             }
             
             if(blunderer && maxBenchPts >= 15) {
@@ -769,7 +826,13 @@
                 const titles = [ `ROSTER MALPRACTICE: ${bLink} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`, `BENCH BLUNDER: ${bLink} WASTES A MONSTER PERFORMANCE FROM ${starName}`, `COACHING DISASTER: ${bLink} OUTSMARTS THEMSELVES IN THE WORST WAY` ];
                 const bodies = [ `What were you thinking? <strong>${bLink}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, `Congrats to <strong>${bLink}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, `Someone revoke their coaching credentials. <strong>${bLink}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'"><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'">
+                    <h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2>
+                    <p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
+                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p>
+                </article>`;
             }
 
             if(toiletGame && minCombined > 0 && minCombined < 170) {
@@ -778,7 +841,12 @@
                 const titles = [ `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`, `EYE BLEACH REQUIRED: ${t1Link} & ${t2Link} COMBINE FOR PURE TRASH`, `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Link} AND ${t2Link}` ];
                 const bodies = [ `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, `Did either of these managers even look at their lineups on Sunday? <strong>${t1Link}</strong> and <strong>${t2Link}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Link}</strong> and <strong>${t2Link}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.` ];
 
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p></article>`;
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div>
+                    <h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'toilet_title', week)}</h2>
+                    <p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p>
+                    <p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'toilet_body', week)}</p>
+                </article>`;
             }
 
             feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
@@ -960,15 +1028,7 @@
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                            let pickPlayerStr = "";
-                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
-                                let pickMade = window.allDraftPicks[p.season].find(pick => parseInt(pick.round) === parseInt(p.round) && parseInt(pick.roster_id) === parseInt(p.roster_id));
-                                if (pickMade) {
-                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
-                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
-                                }
-                            }
-                            return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span></div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
@@ -1006,11 +1066,9 @@
             const chevron = document.getElementById(`${type}-chevron-${id}`);
             const isOpening = !content.classList.contains('open');
 
-            // Close all others of same type
             document.querySelectorAll(`.${type}-acc`).forEach(el => { el.classList.remove('open'); });
             document.querySelectorAll(`.chevron`).forEach(el => { if(el.id.startsWith(`${type}-chevron`)) el.classList.remove('open'); });
 
-            // Open targeted one if it was opening
             if(isOpening) {
                 content.classList.add('open'); chevron.classList.add('open');
             }
@@ -1109,10 +1167,10 @@
             });
 
             const avgMargin = (Math.abs(aPoints - bPoints) / games.length).toFixed(2);
-            let leaderText = aWins > bWins ? `${getTeamLink(a)} leads the all-time series` : bWins > aWins ? `${getTeamLink(b)} leads the all-time series` : "The all-time series is tied";
+            let leaderText = aWins > bWins ? `<span class="text-cyan-400">${getTeamName(a)}</span> leads the all-time series` : bWins > aWins ? `<span class="text-cyan-400">${getTeamName(b)}</span> leads the all-time series` : "The all-time series is tied";
 
             resContainer.innerHTML = `
-                <div class="text-center mb-4"><span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">${leaderText}</span></div>
+                <div class="text-center mb-4"><span class="font-bold uppercase tracking-widest text-xs">${leaderText}</span></div>
                 <div class="grid grid-cols-3 text-center gap-2 items-center mb-6">
                     <div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${aWins > bWins ? 'border-green-500' : 'border-slate-600'}">
                         <div class="text-3xl font-black text-white">${aWins}</div><div class="text-[10px] text-gray-400 font-bold uppercase truncate px-1">${getTeamName(a)}</div>
@@ -1150,7 +1208,7 @@
         function loadAnnouncements() {
             const posts = JSON.parse(localStorage.getItem('fff_announcements') || '[]');
             let html = '';
-            posts.forEach(p => { html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement(${p.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`; });
+            posts.forEach(p => { html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement(${p.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow z-10">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`; });
             document.getElementById('commish-announcements-feed').innerHTML = html;
         }
 
