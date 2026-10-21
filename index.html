@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FFF Network</title>
     
+    <!-- PWA / App Store Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b111e">
@@ -362,7 +363,7 @@
                         playerDictionary[id] = { name: (data[id].first_name && data[id].last_name) ? `${data[id].first_name.charAt(0)}. ${data[id].last_name}` : "Player", pos: data[id].position || "UNK", team: data[id].team || "FA" };
                     }
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Player map cache failed", e); }
         }
 
         function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Unknown Team"; }
@@ -389,7 +390,11 @@
             document.getElementById('tm-record').innerText = `${roster.settings.wins}-${roster.settings.losses}`;
 
             const tro = globalTrophies[ownerId] || {j:0,t:0,b:0};
-            document.getElementById('tm-trophies').innerHTML = `<div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">🏆</div><div class="text-[10px] text-gray-400 uppercase font-bold">Juggs</div><div class="text-white font-black">${tro.j}</div></div><div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(234,88,12,0.5)]">🚽</div><div class="text-[10px] text-gray-400 uppercase font-bold">Toilets</div><div class="text-white font-black">${tro.t}</div></div><div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">🤡</div><div class="text-[10px] text-gray-400 uppercase font-bold">Blunders</div><div class="text-white font-black">${tro.b}</div></div>`;
+            document.getElementById('tm-trophies').innerHTML = `
+                <div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">🏆</div><div class="text-[10px] text-gray-400 uppercase font-bold">Juggs</div><div class="text-white font-black">${tro.j}</div></div>
+                <div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(234,88,12,0.5)]">🚽</div><div class="text-[10px] text-gray-400 uppercase font-bold">Toilets</div><div class="text-white font-black">${tro.t}</div></div>
+                <div class="bg-slate-900 rounded p-2 flex-1"><div class="text-2xl mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">🤡</div><div class="text-[10px] text-gray-400 uppercase font-bold">Blunders</div><div class="text-white font-black">${tro.b}</div></div>
+            `;
 
             const buildPlayerItem = (id) => {
                 const p = playerDictionary[id]; const pName = p ? p.name : "Unknown Player";
@@ -416,8 +421,8 @@
                 const trends = await res.json();
                 let html = "";
                 trends.forEach(t => {
-                    const p = playerDictionary[t.player_id]; const pName = p ? p.name : "Unknown Player";
-                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${p?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
+                    const pName = playerDictionary[t.player_id]?.name || "Unknown Player";
+                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
                 });
                 document.getElementById('trending-feed').innerHTML = html || "<div class='text-gray-500 italic'>No trends found.</div>";
             } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Sleeper trend database unavailable.</div>"; }
@@ -432,8 +437,13 @@
                     if (t.type === 'trade') {
                         let r1 = t.roster_ids[0], r2 = t.roster_ids[1];
                         let r1GetsPlayers = [], r1GetsPicks = [], r2GetsPlayers = [], r2GetsPicks = [];
-                        if(t.adds) { for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); } }
-                        if(t.draft_picks) { t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); }); }
+                        
+                        if(t.adds) {
+                            for(let pid in t.adds) { if(t.adds[pid] === r1) r1GetsPlayers.push(pid); else if(t.adds[pid] === r2) r2GetsPlayers.push(pid); }
+                        }
+                        if(t.draft_picks) {
+                            t.draft_picks.forEach(p => { if(p.owner_id === r1) r1GetsPicks.push(p); else if(p.owner_id === r2) r2GetsPicks.push(p); });
+                        }
 
                         const buildAssetList = (pIds, picks) => {
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
@@ -441,8 +451,16 @@
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
 
-                        wireHTML += `<div class="glass-panel p-3 rounded-lg border border-blue-500/50 mb-3 shadow-[0_0_10px_rgba(59,130,246,0.1)]"><div class="text-[10px] text-blue-400 font-black uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">🤝 Blockbuster Trade</div><div class="grid grid-cols-2 gap-2 divide-x divide-slate-700"><div><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r1)?.owner_id)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div><div class="pl-2"><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r2)?.owner_id)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div></div></div>`;
+                        wireHTML += `
+                            <div class="glass-panel p-3 rounded-lg border border-blue-500/50 mb-3 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                                <div class="text-[10px] text-blue-400 font-black uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">🤝 Blockbuster Trade</div>
+                                <div class="grid grid-cols-2 gap-2 divide-x divide-slate-700">
+                                    <div><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r1)?.owner_id)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div>
+                                    <div class="pl-2"><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r2)?.owner_id)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div>
+                                </div>
+                            </div>`;
                         tickerStr = `🤝 ${getTeamName(rostersData.find(r=>r.roster_id===r1)?.owner_id)} & ${getTeamName(rostersData.find(r=>r.roster_id===r2)?.owner_id)} executed a trade`;
+                    
                     } else if (t.type === 'waiver' || t.type === 'free_agent') {
                         let ownerId = rostersData.find(r => r.roster_id === t.roster_ids[0])?.owner_id;
                         let added = t.adds ? Object.keys(t.adds).map(id => playerDictionary[id]?.name || "a player").join(", ") : "";
@@ -646,7 +664,15 @@
                 
                 fetchDraftHistory(leaguesToProcess);
 
-                let records = { highTeam: { score: 0 }, lowTeam: { score: 9999 }, winStreak: { streak: 0 }, loseStreak: { streak: 0 } };
+                // FIXED: Initialized highPlayer properly to prevent crashes
+                let records = { 
+                    highTeam: { score: 0, owner: null, year: '', week: '' }, 
+                    lowTeam: { score: 9999, owner: null, year: '', week: '' }, 
+                    highPlayer: { score: 0, name: '', owner: null, year: '', week: '' }, 
+                    winStreak: { streak: 0, owner: null, year: '' }, 
+                    loseStreak: { streak: 0, owner: null, year: '' } 
+                };
+                
                 let cumulativeWLT = {}; let activeStreaks = {};
 
                 for (let l of leaguesToProcess) {
@@ -700,6 +726,11 @@
                                 if(team.players_points && team.starters) {
                                     for(let pid in team.players_points) {
                                         if(!team.starters.includes(pid) && team.players_points[pid] >= 15) globalTrophies[r2o[team.roster_id]].b++;
+                                        
+                                        // Single Highest Player
+                                        if(team.players_points[pid] > records.highPlayer.score) {
+                                            records.highPlayer = {score: team.players_points[pid], name: playerDictionary[pid]?.name || 'Unknown', owner: r2o[team.roster_id], year: l.season, week: weekNum};
+                                        }
                                     }
                                 }
                             });
@@ -720,7 +751,7 @@
                     });
                 }
 
-                document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
+                document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-cyan-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Player Score</div><div class="text-3xl font-black text-cyan-400">${records.highPlayer.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${records.highPlayer.name} <span class="text-gray-400 text-xs font-normal">(${getTeamLink(records.highPlayer.owner)})</span></div><div class="text-xs text-gray-500">${records.highPlayer.year} - Week ${records.highPlayer.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
                 
                 let html = ""; Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { const d = cumulativeWLT[id], total = d.w + d.l; const style = i === 0 ? "text-yellow-500 font-black" : "text-white font-bold"; html += `<tr class="border-t border-slate-700"><td class="p-4 ${style}">${getTeamLink(id)}</td><td class="p-4 text-center font-mono text-cyan-400">${d.w}-${d.l}</td><td class="p-4 text-center text-gray-300">${total > 0 ? ((d.w/total)*100).toFixed(1)+"%" : "0.0%"}</td></tr>`; });
                 document.getElementById('all-time-body').innerHTML = html;
@@ -743,13 +774,11 @@
 
         async function fetchDraftHistory(leagues) {
             try {
-                // Ensure current year is included by creating a mock league object for the active year
                 const currentYear = new Date().getFullYear();
                 if(!leagues.find(l => l.season == currentYear)) {
                     leagues.push({ id: LEAGUE_ID, season: currentYear });
                 }
                 
-                // Sort leagues descending (newest drafts first)
                 leagues.sort((a,b) => b.season - a.season);
 
                 let html = '';
@@ -781,7 +810,6 @@
                         </div>`;
                     }).join('');
                     
-                    // ACCORDION HEADER
                     html += `
                     <div class="glass-panel rounded-xl border border-slate-700 overflow-hidden">
                         <button onclick="toggleDraft(${l.season})" class="w-full flex justify-between items-center p-5 hover:bg-slate-800 transition focus:outline-none">
