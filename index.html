@@ -103,7 +103,6 @@
                 </table>
             </div>
 
-            <!-- NEW: POWER RANKINGS -->
             <h3 class="text-2xl font-black text-white mb-2">True Contender Power Rankings</h3>
             <p class="text-gray-400 text-sm mb-6">Algorithmically generated based on Total Points, Win %, and Luck Factors (Points Against).</p>
             <div id="power-rankings-container" class="space-y-3">
@@ -142,7 +141,6 @@
                 </div>
             </div>
 
-            <!-- NEW: HEAD TO HEAD RIVALRY ENGINE -->
             <h3 class="text-2xl font-black text-white mt-10 mb-2">Head-to-Head Rivalry Engine</h3>
             <p class="text-gray-400 text-sm mb-4">Settle the debate. Compare all-time historical matchups between any two franchises.</p>
             <div class="glass-panel p-6 rounded-xl border border-slate-700 mb-8 shadow-lg">
@@ -168,12 +166,14 @@
                             <th class="p-4 text-center font-bold tracking-wider">WIN %</th>
                         </tr>
                     </thead>
-                    <tbody id="all-time-body" class="divide-y divide-slate-700"></tbody>
+                    <tbody id="all-time-body" class="divide-y divide-slate-700">
+                        <tr><td colspan="3" class="p-8 text-center text-gray-500 animate-pulse">Compiling historical records...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- EDITOR DESK TAB (Streamlined) -->
+        <!-- EDITOR DESK TAB -->
         <div id="editor" class="tab-content max-w-2xl mx-auto space-y-8 pb-10">
             <div class="glass-panel p-6 rounded-xl border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 <h2 class="text-2xl font-black text-white mb-2">Commish Announcements</h2>
@@ -209,7 +209,7 @@
         let playerDictionary = {};
         let draftYears = [2027, 2028, 2029]; 
         let draftRounds = [1, 2, 3, 4, 5, 6];
-        let globalAllMatchups = []; // Stores every historical game for Rivalry Engine
+        let globalAllMatchups = []; 
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -230,7 +230,7 @@
 
         async function runDataPipeline() {
             try {
-                fetchPlayers();
+                await fetchPlayers();
                 const stateRes = await fetch('https://api.sleeper.app/v1/state/nfl');
                 const state = await stateRes.json();
                 currentNFLWeek = state.week || 1;
@@ -246,11 +246,11 @@
                 rostersData = await rostersRes.json();
 
                 renderStandings();
-                renderPowerRankings(); // NEW
+                renderPowerRankings();
                 fetchAndRenderScoreboard(currentNFLWeek);
                 fetchTransactions(currentNFLWeek);
                 compileDraftCapital();
-                generateTradeBlock();
+                generateTradeBlock(); // Rebuilt resilient Trade Block parser
                 
                 if(league.previous_league_id) compileAllTimeRecords(LEAGUE_ID, currentNFLWeek);
 
@@ -268,15 +268,35 @@
 
         function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Unknown Team"; }
 
+        // DEEP TRADE BLOCK SCANNER
         function generateTradeBlock() {
             let blockHTML = "";
             rostersData.forEach(r => {
-                if(r.metadata && (r.metadata.trade_block || r.metadata.trade_block_p)) {
-                    let blockStr = r.metadata.trade_block || r.metadata.trade_block_p;
-                    if (blockStr) {
-                        let players = blockStr.split(",").map(id => playerDictionary[id.trim()] || "Unknown").join(", ");
-                        if (players.length > 0) blockHTML += `<div class="border-b border-slate-700/50 pb-2"><span class="text-white font-bold">${getTeamName(r.owner_id)}</span> <span class="text-gray-400 text-xs block mt-1">Shopping: <span class="text-purple-400">${players}</span></span></div>`;
+                let shoppedPlayers = new Set();
+                
+                if (r.metadata) {
+                    for (let key in r.metadata) {
+                        if (key.toLowerCase().includes('trade_block')) {
+                            let val = r.metadata[key];
+                            try {
+                                // Try parsing as JSON array if Sleeper updated format
+                                let arr = JSON.parse(val);
+                                if (Array.isArray(arr)) arr.forEach(id => { if (playerDictionary[id]) shoppedPlayers.add(playerDictionary[id]); });
+                            } catch (e) {
+                                // Fallback to standard comma-separated string
+                                if (typeof val === 'string') {
+                                    val.split(',').forEach(id => {
+                                        let cleanId = id.trim();
+                                        if (playerDictionary[cleanId]) shoppedPlayers.add(playerDictionary[cleanId]);
+                                    });
+                                }
+                            }
+                        }
                     }
+                }
+                
+                if (shoppedPlayers.size > 0) {
+                    blockHTML += `<div class="border-b border-slate-700/50 pb-2"><span class="text-white font-bold">${getTeamName(r.owner_id)}</span> <span class="text-gray-400 text-xs block mt-1">Shopping: <span class="text-purple-400 font-bold">${Array.from(shoppedPlayers).join(", ")}</span></span></div>`;
                 }
             });
             document.getElementById('trade-block-feed').innerHTML = blockHTML || "<div class='text-gray-500 italic'>No players officially placed on the block.</div>";
@@ -343,9 +363,7 @@
             let rankings = rostersData.map(r => {
                 const pf = r.settings.fpts + (r.settings.fpts_decimal/100);
                 const pa = r.settings.fpts_against + (r.settings.fpts_against_decimal/100);
-                const wins = r.settings.wins;
-                // Power Index Formula: (PF * 0.5) + (Wins * 10) + ((PF - PA) * 0.1)
-                const score = (pf * 0.5) + (wins * 10) + ((pf - pa) * 0.1);
+                const score = (pf * 0.5) + (r.settings.wins * 10) + ((pf - pa) * 0.1);
                 return { owner: r.owner_id, score: score, pf: pf };
             }).sort((a,b) => b.score - a.score);
             
@@ -385,8 +403,15 @@
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
                 generateAlgorithmicHeadlines(completedMatchups, week);
-            } catch (e) { }
+            } catch (e) {}
         }
+
+        // STAR PLAYER IDENTIFIER HELPER
+        const getStarPlayer = (teamMatchupObj) => {
+            if(!teamMatchupObj.players_points || Object.keys(teamMatchupObj.players_points).length === 0) return { name: "A star player", pts: 0 };
+            let topId = Object.keys(teamMatchupObj.players_points).reduce((a, b) => teamMatchupObj.players_points[a] > teamMatchupObj.players_points[b] ? a : b);
+            return { name: playerDictionary[topId] || "A star player", pts: teamMatchupObj.players_points[topId] };
+        };
 
         function generateAlgorithmicHeadlines(matchups, week) {
             const feed = document.getElementById('news-feed');
@@ -402,17 +427,43 @@
 
             let html = ""; const getTName = (rId) => getTeamName(rostersData.find(r => r.roster_id === rId)?.owner_id);
 
+            // JUGGERNAUT HEADLINE (Includes Star Player)
             if(highGame) {
-                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-2xl sm:text-3xl font-black text-white mb-2 uppercase tracking-tight">JUGGERNAUT: ${getTName(winner.roster_id)} Drops ${winner.points.toFixed(2)} Points</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">Nobody was stopping <strong>${getTName(winner.roster_id)}</strong> this week. They secured the league's highest score with a massive ${winner.points.toFixed(2)} point performance, leaving ${getTName(loser.roster_id)} (${loser.points.toFixed(2)}) completely in the dust.</p></article>`;
+                let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; 
+                let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+                let star = getStarPlayer(winner);
+                
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-black text-white mb-2 uppercase tracking-tight">JUGGERNAUT: ${star.name} Drops ${star.pts.toFixed(1)} to Propel ${getTName(winner.roster_id)}</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">Nobody was stopping <strong>${getTName(winner.roster_id)}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${getTName(loser.roster_id)} (${loser.points.toFixed(2)}) completely in the dust.</p>
+                </article>`;
             }
+
+            // NAIL-BITER HEADLINE
             if(closeGame && closeGame !== highGame && minDiff < 15) {
-                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">NAIL-BITER: ${getTName(winner.roster_id)} Survives by ${minDiff.toFixed(2)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">In the most stressful matchup of the week, <strong>${getTName(winner.roster_id)}</strong> managed to scrape by ${getTName(loser.roster_id)}. Every single yard mattered in this ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} finish.</p></article>`;
+                let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; 
+                let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+                let star = getStarPlayer(winner);
+
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6">
+                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">NAIL-BITER: ${getTName(winner.roster_id)} Survives by ${minDiff.toFixed(2)}</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">In the most stressful matchup of the week, <strong>${getTName(winner.roster_id)}</strong> managed to scrape by ${getTName(loser.roster_id)}. Every single yard mattered in this ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} finish, but ${star.name}'s clutch ${star.pts.toFixed(2)} points ultimately sealed the victory.</p>
+                </article>`;
             }
+
+            // BLOWOUT HEADLINE
             if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30) {
-                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
-                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">BLOWOUT ALERT: ${getTName(loser.roster_id)} Destroyed</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p><p class="text-gray-300 leading-relaxed text-sm">It got ugly fast. <strong>${getTName(winner.roster_id)}</strong> absolutely dismantled ${getTName(loser.roster_id)} by a crushing margin of ${maxDiff.toFixed(2)} points. Back to the drawing board.</p></article>`;
+                let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; 
+                let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+                let star = getStarPlayer(winner);
+
+                html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg">
+                    <h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">BLOWOUT ALERT: ${getTName(loser.roster_id)} Destroyed</h2>
+                    <p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • ALGORITHM</p>
+                    <p class="text-gray-300 leading-relaxed text-sm">It got ugly fast. <strong>${getTName(winner.roster_id)}</strong> absolutely dismantled ${getTName(loser.roster_id)} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound, exploding for ${star.pts.toFixed(2)} points to guarantee the blowout.</p>
+                </article>`;
             }
             feed.innerHTML = html || `<article class="glass-panel p-6 rounded-xl border border-slate-700"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`;
         }
@@ -454,7 +505,7 @@
                             let t1 = g[0], t2 = g[1]; let o1 = r2o[t1.roster_id], o2 = r2o[t2.roster_id];
                             if(!o1 || !o2 || t1.points === 0) return;
 
-                            globalAllMatchups.push({ o1: o1, p1: t1.points, o2: o2, p2: t2.points, year: l.season, week: weekNum }); // Store for Rivalry Engine
+                            globalAllMatchups.push({ o1: o1, p1: t1.points, o2: o2, p2: t2.points, year: l.season, week: weekNum }); 
 
                             if (t1.points > t2.points) { cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; } else if (t2.points > t1.points) { cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; }
 
@@ -488,64 +539,29 @@
             } catch (e) { document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500">Failed to compile historical database.</div>`; }
         }
 
-        // ==========================================
-        // RIVALRY ENGINE
-        // ==========================================
         function populateRivalryDropdowns(ownerIds) {
             let opts = '<option value="" disabled selected>Select Franchise</option>';
-            ownerIds.sort((a,b) => getTeamName(a).localeCompare(getTeamName(b))).forEach(id => {
-                opts += `<option value="${id}">${getTeamName(id)}</option>`;
-            });
-            document.getElementById('rival-a').innerHTML = opts;
-            document.getElementById('rival-b').innerHTML = opts;
+            ownerIds.sort((a,b) => getTeamName(a).localeCompare(getTeamName(b))).forEach(id => { opts += `<option value="${id}">${getTeamName(id)}</option>`; });
+            document.getElementById('rival-a').innerHTML = opts; document.getElementById('rival-b').innerHTML = opts;
         }
 
         function calculateRivalry() {
-            const a = document.getElementById('rival-a').value;
-            const b = document.getElementById('rival-b').value;
+            const a = document.getElementById('rival-a').value, b = document.getElementById('rival-b').value;
             if(!a || !b) { alert("Please select two franchises."); return; }
             if(a === b) { alert("Select two different franchises to compare."); return; }
 
             const games = globalAllMatchups.filter(m => (m.o1 === a && m.o2 === b) || (m.o1 === b && m.o2 === a));
-            const resContainer = document.getElementById('rivalry-results');
-            resContainer.classList.remove('hidden');
-            
-            if(games.length === 0) {
-                resContainer.innerHTML = `<div class="text-gray-400 italic text-center text-sm py-4">No historical matchups found between these franchises.</div>`;
-                return;
-            }
+            const resContainer = document.getElementById('rivalry-results'); resContainer.classList.remove('hidden');
+            if(games.length === 0) { resContainer.innerHTML = `<div class="text-gray-400 italic text-center text-sm py-4">No historical matchups found between these franchises.</div>`; return; }
 
             let aWins = 0, bWins = 0, aPoints = 0, bPoints = 0;
-            games.forEach(g => {
-                let pA = g.o1 === a ? g.p1 : g.p2;
-                let pB = g.o1 === b ? g.p1 : g.p2;
-                aPoints += pA; bPoints += pB;
-                if(pA > pB) aWins++; else if(pB > pA) bWins++;
-            });
-
+            games.forEach(g => { let pA = g.o1 === a ? g.p1 : g.p2; let pB = g.o1 === b ? g.p1 : g.p2; aPoints += pA; bPoints += pB; if(pA > pB) aWins++; else if(pB > pA) bWins++; });
             const avgMargin = (Math.abs(aPoints - bPoints) / games.length).toFixed(2);
             let leaderText = aWins > bWins ? `${getTeamName(a)} leads the all-time series` : bWins > aWins ? `${getTeamName(b)} leads the all-time series` : "The all-time series is tied";
 
-            resContainer.innerHTML = `
-                <div class="text-center mb-4"><span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">${leaderText}</span></div>
-                <div class="grid grid-cols-3 text-center gap-2 items-center">
-                    <div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${aWins > bWins ? 'border-green-500' : 'border-slate-600'}">
-                        <div class="text-3xl font-black text-white">${aWins}</div>
-                        <div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(a)}</div>
-                    </div>
-                    <div class="text-gray-500 font-black text-xl">- WINS -</div>
-                    <div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${bWins > aWins ? 'border-green-500' : 'border-slate-600'}">
-                        <div class="text-3xl font-black text-white">${bWins}</div>
-                        <div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(b)}</div>
-                    </div>
-                </div>
-                <div class="mt-5 text-center text-sm text-gray-400">Total Matchups: <span class="text-white font-bold">${games.length}</span> &nbsp;|&nbsp; Avg Margin: <span class="text-white font-bold">${avgMargin} pts</span></div>
-            `;
+            resContainer.innerHTML = `<div class="text-center mb-4"><span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">${leaderText}</span></div><div class="grid grid-cols-3 text-center gap-2 items-center"><div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${aWins > bWins ? 'border-green-500' : 'border-slate-600'}"><div class="text-3xl font-black text-white">${aWins}</div><div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(a)}</div></div><div class="text-gray-500 font-black text-xl">- WINS -</div><div class="glass-panel p-3 rounded bg-slate-800 border-b-4 ${bWins > aWins ? 'border-green-500' : 'border-slate-600'}"><div class="text-3xl font-black text-white">${bWins}</div><div class="text-xs text-gray-400 font-bold uppercase truncate px-1">${getTeamName(b)}</div></div></div><div class="mt-5 text-center text-sm text-gray-400">Total Matchups: <span class="text-white font-bold">${games.length}</span> &nbsp;|&nbsp; Avg Margin: <span class="text-white font-bold">${avgMargin} pts</span></div>`;
         }
 
-        // ==========================================
-        // COMMISH ANNOUNCEMENTS 
-        // ==========================================
         function publishAnnouncement() {
             const t = document.getElementById('post-title').value.trim(), b = document.getElementById('post-body').value.trim();
             if (!t || !b) { alert("Title and message required."); return; }
@@ -558,18 +574,11 @@
         function loadAnnouncements() {
             const posts = JSON.parse(localStorage.getItem('fff_announcements') || '[]');
             let html = '';
-            posts.forEach(p => {
-                html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement(${p.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`;
-            });
+            posts.forEach(p => { html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement(${p.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`; });
             document.getElementById('commish-announcements-feed').innerHTML = html;
         }
 
-        function deleteAnnouncement(id) {
-            if(confirm("Permanently delete this announcement?")) {
-                localStorage.setItem('fff_announcements', JSON.stringify(JSON.parse(localStorage.getItem('fff_announcements') || '[]').filter(p => p.id !== id)));
-                loadAnnouncements();
-            }
-        }
+        function deleteAnnouncement(id) { if(confirm("Permanently delete this announcement?")) { localStorage.setItem('fff_announcements', JSON.stringify(JSON.parse(localStorage.getItem('fff_announcements') || '[]').filter(p => p.id !== id))); loadAnnouncements(); } }
 
         window.addEventListener('DOMContentLoaded', () => { runDataPipeline(); });
     </script>
