@@ -49,29 +49,34 @@
     <!-- TOP HEADER -->
     <header class="glass-panel sticky top-0 z-40 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
-                    <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
-                        FFF
-                    </div>
-                    <span class="text-xl font-black tracking-wider text-white">NETWORK</span>
+            
+            <!-- Left Side: Logo & Name (Commish Lock) -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
+                <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+                    FFF
                 </div>
-                <!-- PWA Install Button -->
-                <button id="install-btn" onclick="installPWA()" class="hidden bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-                    +🏡 <span class="hidden sm:inline">App</span>
-                </button>
-                <button onclick="forceSync()" class="p-2 text-cyan-400 hover:text-white transition focus:outline-none" aria-label="Sync Data">
-                    <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                </button>
+                <span class="text-xl font-black tracking-wider text-white">NETWORK</span>
             </div>
             
-            <div class="hidden sm:flex space-x-4 text-sm font-bold uppercase tracking-widest">
+            <!-- Desktop Only Nav -->
+            <div class="hidden sm:flex space-x-4 text-sm font-bold uppercase tracking-widest flex-1 justify-center">
                 <button onclick="switchTab('news')" class="desk-nav text-cyan-400 hover:text-cyan-300 transition">News</button>
                 <button onclick="switchTab('standings')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Playoffs</button>
                 <button onclick="switchTab('draft-capital')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Assets</button>
                 <button onclick="switchTab('records')" class="desk-nav text-gray-400 hover:text-cyan-300 transition">Records</button>
                 <button id="editor-desk-btn" onclick="switchTab('editor')" class="hidden desk-nav text-purple-400 hover:text-purple-300 transition">Commish</button>
             </div>
+
+            <!-- Right Side: Install & Sync Buttons -->
+            <div class="flex items-center space-x-2">
+                <button id="install-btn" onclick="installPWA()" class="hidden bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-[0_0_10px_rgba(6,182,212,0.3)] whitespace-nowrap">
+                    +🏡 <span class="hidden sm:inline">App</span>
+                </button>
+                <button onclick="forceSync()" class="p-2 text-cyan-400 hover:text-white transition focus:outline-none bg-slate-800/50 rounded-lg" aria-label="Sync Data">
+                    <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+
         </div>
     </header>
 
@@ -189,7 +194,7 @@
             <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
 
             <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history.</p>
+            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
             <div id="trade-history-container" class="space-y-4 mb-8">
                <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
             </div>
@@ -340,6 +345,7 @@
         let globalTrophies = {}; 
         let activeStreaksGlobal = {}; 
         window.allDraftPicks = window.allDraftPicks || {};
+        window.allDraftsInfo = window.allDraftsInfo || {};
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -613,7 +619,19 @@
                             let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                             str += picks.map(p => {
                                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                                return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span></div>`;
+                                let pickPlayerStr = "";
+                                if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                    let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
+                                    let pickMade = window.allDraftPicks[p.season].find(pick => {
+                                        let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
+                                        return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
+                                    });
+                                    if (pickMade) {
+                                        let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
+                                        pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
+                                    }
+                                }
+                                return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                             }).join("");
                             return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                         };
