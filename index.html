@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FFF Network</title>
     
-    <!-- PWA / App Store Setup -->
+    <!-- PWA Setup -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,7 +34,6 @@
         .chevron { transition: transform 0.3s ease; }
         .chevron.open { transform: rotate(180deg); }
 
-        /* Bottom Nav Mobile Styles */
         .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 0.5rem 0; color: #9ca3af; transition: color 0.2s; }
         .nav-btn.active { color: #22d3ee; }
         .nav-btn svg { width: 1.25rem; height: 1.25rem; margin-bottom: 0.125rem; }
@@ -49,7 +48,6 @@
     <!-- TOP HEADER -->
     <header class="glass-panel sticky top-0 z-40 px-4 py-3 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            
             <div class="flex items-center space-x-3 cursor-pointer" onclick="unlockEditor()">
                 <div id="league-logo" class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold border-2 border-cyan-400 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.5)]">
                     FFF
@@ -73,7 +71,6 @@
                     <svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
-
         </div>
     </header>
 
@@ -95,6 +92,9 @@
                     <div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic loader-node">Syncing matchups...</div>
                 </div>
             </div>
+
+            <!-- WEEKLY PODIUM -->
+            <div id="weekly-podium" class="hidden grid grid-cols-3 gap-2 sm:gap-4 mb-6"></div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
@@ -122,7 +122,7 @@
             </div>
         </div>
 
-        <!-- STANDINGS & PLAYOFFS TAB -->
+        <!-- STANDINGS TAB -->
         <div id="standings" class="tab-content">
             <h2 class="text-3xl font-black text-white mb-2">The Playoff Picture</h2>
             <p class="text-gray-400 text-sm mb-6">Current seeding, active streaks, and hunt status for the FFF Championship.</p>
@@ -159,73 +159,100 @@
         </div>
 
         <!-- RECORDS TAB -->
-        <div id="records" class="tab-content space-y-8">
-            <div class="text-center mb-10 pt-4">
+        <div id="records" class="tab-content space-y-6">
+            <div class="text-center pt-2 mb-4">
                 <h2 class="text-4xl font-black text-white tracking-tight">THE DYNASTY LEDGER</h2>
                 <div class="h-1 w-24 bg-cyan-500 mx-auto mt-4 rounded"></div>
             </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
-                <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                    <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 1</div>
-                    <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
-                    <h3 class="text-2xl font-black text-white">GM Shane S.</h3>
-                    <p class="text-yellow-400 font-semibold text-sm mt-1">Inaugural Champion</p>
+
+            <!-- HISTORICAL LOADER -->
+            <div id="historical-loader" class="text-center py-20 hidden">
+                <svg class="w-12 h-12 mx-auto text-cyan-500 animate-spin mb-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Excavating Historical Archives...</p>
+                <p class="text-slate-600 text-[10px] mt-2 italic">(This data is cached locally and will load instantly next time)</p>
+            </div>
+
+            <div id="records-content" class="hidden">
+                <!-- SUB-NAV PILLS -->
+                <div class="flex space-x-2 overflow-x-auto hide-scrollbar mb-6 border-b border-slate-700/50 pb-2">
+                    <button onclick="switchRecordTab('overview')" id="rec-nav-overview" class="rec-nav px-4 py-2 text-cyan-400 font-bold text-xs uppercase tracking-widest whitespace-nowrap border-b-2 border-cyan-400 transition">Overview</button>
+                    <button onclick="switchRecordTab('positions')" id="rec-nav-positions" class="rec-nav px-4 py-2 text-gray-500 hover:text-gray-300 font-bold text-xs uppercase tracking-widest whitespace-nowrap border-b-2 border-transparent transition">Positional Greats</button>
+                    <button onclick="switchRecordTab('trades')" id="rec-nav-trades" class="rec-nav px-4 py-2 text-gray-500 hover:text-gray-300 font-bold text-xs uppercase tracking-widest whitespace-nowrap border-b-2 border-transparent transition">Trade Ledger</button>
+                    <button onclick="switchRecordTab('drafts')" id="rec-nav-drafts" class="rec-nav px-4 py-2 text-gray-500 hover:text-gray-300 font-bold text-xs uppercase tracking-widest whitespace-nowrap border-b-2 border-transparent transition">Draft Vault</button>
+                    <button onclick="switchRecordTab('rivalry')" id="rec-nav-rivalry" class="rec-nav px-4 py-2 text-gray-500 hover:text-gray-300 font-bold text-xs uppercase tracking-widest whitespace-nowrap border-b-2 border-transparent transition">Rivalry Engine</button>
                 </div>
-                <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                    <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 2</div>
-                    <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
-                    <h3 class="text-2xl font-black text-white">GM Joey C.</h3>
-                    <p class="text-yellow-400 font-semibold text-sm mt-1">Reigning Champion</p>
+
+                <!-- OVERVIEW TAB -->
+                <div id="rec-tab-overview" class="rec-tab space-y-8">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                            <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 1</div>
+                            <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
+                            <h3 class="text-2xl font-black text-white">GM Shane S.</h3>
+                            <p class="text-yellow-400 font-semibold text-sm mt-1">Inaugural Champion</p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-yellow-500/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                            <div class="absolute top-0 right-0 bg-gradient-to-l from-yellow-600 to-yellow-400 text-black font-bold text-[10px] px-4 py-1 rounded-bl-lg tracking-widest uppercase">Season 2</div>
+                            <div class="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🏆</div>
+                            <h3 class="text-2xl font-black text-white">GM Joey C.</h3>
+                            <p class="text-yellow-400 font-semibold text-sm mt-1">Reigning Champion</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-white mb-2">League Records</h3>
+                        <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
+                        <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-white mb-4">All-Time Franchise Leaderboard</h3>
+                        <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar">
+                            <table class="w-full text-left text-sm min-w-[500px]">
+                                <thead class="bg-slate-800 text-gray-300">
+                                    <tr>
+                                        <th class="p-4 font-bold tracking-wider">FRANCHISE</th>
+                                        <th class="p-4 text-center font-bold tracking-wider">ALL-TIME W-L</th>
+                                        <th class="p-4 text-center font-bold tracking-wider">WIN %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="all-time-body" class="divide-y divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <h3 class="text-2xl font-black text-white mb-2">Positional All-Time Greats</h3>
-            <p class="text-gray-400 text-sm mb-4">The highest single-game scoring performances in FFF history by position.</p>
-            <div id="positional-records-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
-                <div class="glass-panel p-4 rounded-xl text-center text-gray-500 animate-pulse col-span-full">Scanning positional archives...</div>
-            </div>
-
-            <h3 class="text-2xl font-black text-white mb-2">League Records</h3>
-            <p class="text-gray-400 text-sm mb-4">Auto-synced across all past and active FFF matchups.</p>
-            <div id="dynamic-records-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
-
-            <h3 class="text-2xl font-black text-white mt-10 mb-2">The Trade Ledger</h3>
-            <p class="text-gray-400 text-sm mb-4">Complete archive of every trade in FFF history, tracing traded picks to drafted players.</p>
-            <div id="trade-history-container" class="space-y-4 mb-8">
-               <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Excavating trade archives...</div>
-            </div>
-
-            <h3 class="text-2xl font-black text-white mt-10 mb-2">Historic Draft Vault</h3>
-            <p class="text-gray-400 text-sm mb-4">Past 1st and 2nd Round Rookie Selections.</p>
-            <div id="draft-history-container" class="space-y-4 mb-8">
-               <div class="glass-panel p-6 rounded-xl text-center text-gray-500 animate-pulse loader-node">Loading draft archives...</div>
-            </div>
-
-            <h3 class="text-2xl font-black text-white mt-10 mb-2">Head-to-Head Rivalry Engine</h3>
-            <p class="text-gray-400 text-sm mb-4">Settle the debate. Compare all-time historical matchups between any two franchises.</p>
-            <div class="glass-panel p-6 rounded-xl border border-slate-700 mb-8 shadow-lg">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <select id="rival-a" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
-                    <select id="rival-b" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
+                <!-- POSITIONAL GREATS TAB -->
+                <div id="rec-tab-positions" class="rec-tab hidden">
+                    <h3 class="text-xl font-black text-white mb-2">Positional All-Time Greats</h3>
+                    <p class="text-gray-400 text-sm mb-6">The highest single-game scoring performances in FFF history by position.</p>
+                    <div id="positional-records-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"></div>
                 </div>
-                <div id="rivalry-results" class="mt-2 hidden pt-4 border-t border-slate-700"></div>
-            </div>
 
-            <h3 class="text-2xl font-black text-white mb-4">All-Time Franchise Leaderboard</h3>
-            <div class="glass-panel rounded-xl overflow-x-auto hide-scrollbar">
-                <table class="w-full text-left text-sm min-w-[500px]">
-                    <thead class="bg-slate-800 text-gray-300">
-                        <tr>
-                            <th class="p-4 font-bold tracking-wider">FRANCHISE</th>
-                            <th class="p-4 text-center font-bold tracking-wider">ALL-TIME W-L</th>
-                            <th class="p-4 text-center font-bold tracking-wider">WIN %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="all-time-body" class="divide-y divide-slate-700">
-                        <tr><td colspan="3" class="p-8 text-center text-gray-500 animate-pulse loader-node">Compiling historical records...</td></tr>
-                    </tbody>
-                </table>
+                <!-- TRADE LEDGER TAB -->
+                <div id="rec-tab-trades" class="rec-tab hidden">
+                    <h3 class="text-xl font-black text-white mb-2">The Trade Ledger</h3>
+                    <p class="text-gray-400 text-sm mb-6">Complete archive of every trade in FFF history.</p>
+                    <div id="trade-history-container" class="space-y-4 mb-8"></div>
+                </div>
+
+                <!-- DRAFT VAULT TAB -->
+                <div id="rec-tab-drafts" class="rec-tab hidden">
+                    <h3 class="text-xl font-black text-white mb-2">Historic Draft Vault</h3>
+                    <p class="text-gray-400 text-sm mb-6">Past 1st and 2nd Round Rookie Selections.</p>
+                    <div id="draft-history-container" class="space-y-4 mb-8"></div>
+                </div>
+
+                <!-- RIVALRY ENGINE TAB -->
+                <div id="rec-tab-rivalry" class="rec-tab hidden">
+                    <h3 class="text-xl font-black text-white mb-2">Head-to-Head Rivalry Engine</h3>
+                    <p class="text-gray-400 text-sm mb-6">Settle the debate. Compare all-time historical matchups between any two franchises.</p>
+                    <div class="glass-panel p-6 rounded-xl border border-slate-700 mb-8 shadow-lg">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <select id="rival-a" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
+                            <select id="rival-b" onchange="updateRivalryDropdowns()" class="bg-slate-900 border border-slate-700 text-white p-3 rounded-lg focus:border-cyan-500 focus:outline-none"></select>
+                        </div>
+                        <div id="rivalry-results" class="mt-2 hidden pt-4 border-t border-slate-700"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -344,6 +371,41 @@
         window.allDraftPicks = window.allDraftPicks || {};
         window.allDraftsInfo = window.allDraftsInfo || {};
 
+        let historicalDataLoaded = false;
+        let historicalDataLoading = false;
+
+        // INDEXED DB CACHE SYSTEM (PREVENTS 5MB LOCALSTORAGE CRASH)
+        const DB_NAME = "FFF_Network_DB";
+        let db;
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = e => {
+                    db = e.target.result;
+                    if(!db.objectStoreNames.contains('cache')) db.createObjectStore('cache', {keyPath: 'id'});
+                };
+                req.onsuccess = e => { db = e.target.result; resolve(); };
+                req.onerror = e => reject(e);
+            });
+        }
+        async function getCache(id) {
+            if(!db) await initDB();
+            return new Promise(resolve => {
+                const tx = db.transaction('cache', 'readonly');
+                const req = tx.objectStore('cache').get(id);
+                req.onsuccess = () => resolve(req.result ? req.result.data : null);
+                req.onerror = () => resolve(null);
+            });
+        }
+        async function setCache(id, data) {
+            if(!db) await initDB();
+            return new Promise(resolve => {
+                const tx = db.transaction('cache', 'readwrite');
+                tx.objectStore('cache').put({id, data});
+                tx.oncomplete = () => resolve();
+            });
+        }
+
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -361,9 +423,7 @@
         }
 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(console.error);
-            });
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(console.error); });
         }
 
         function switchTab(tabId) {
@@ -380,19 +440,24 @@
             const activeMobBtn = document.getElementById(mobBtnId);
             if(activeMobBtn) activeMobBtn.classList.add('active');
             
+            if(tabId === 'records' && !historicalDataLoaded && !historicalDataLoading) {
+                loadHistoricalDataBackground();
+            }
             window.scrollTo(0,0);
         }
 
-        function unlockEditor() { 
-            document.getElementById('pin-modal').classList.remove('hidden'); 
-            setTimeout(() => document.getElementById('pin-input').focus(), 100); 
+        function switchRecordTab(tab) {
+            document.querySelectorAll('.rec-tab').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.rec-nav').forEach(btn => { btn.classList.remove('text-cyan-400', 'border-cyan-400'); btn.classList.add('text-gray-500', 'border-transparent'); });
+            
+            document.getElementById(`rec-tab-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`rec-nav-${tab}`);
+            activeBtn.classList.remove('text-gray-500', 'border-transparent');
+            activeBtn.classList.add('text-cyan-400', 'border-cyan-400');
         }
-        
-        function closeModal() { 
-            document.getElementById('pin-modal').classList.add('hidden'); 
-            document.getElementById('pin-input').value = ''; 
-        }
-        
+
+        function unlockEditor() { document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
+        function closeModal() { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
         function verifyPin() {
             const input = document.getElementById('pin-input').value.trim().toLowerCase();
             if (input === 'commish') {
@@ -400,14 +465,9 @@
                 if(deskBtn) deskBtn.classList.remove('hidden'); 
                 const mobBtn = document.getElementById('mob-nav-editor');
                 if(mobBtn) mobBtn.classList.remove('hidden');
-                closeModal(); 
-                switchTab('editor');
-            } else { 
-                alert("ACCESS DENIED."); 
-                document.getElementById('pin-input').value = ''; 
-            }
+                closeModal(); switchTab('editor');
+            } else { alert("ACCESS DENIED."); document.getElementById('pin-input').value = ''; }
         }
-        
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
         async function forceSync() {
@@ -418,9 +478,8 @@
         }
 
         async function runDataPipeline() {
-            globalAllMatchups = []; globalAllTrades = []; globalTrophies = {}; activeStreaksGlobal = {}; globalDraftPicks = {}; globalPowerRankings = {};
-            
             try {
+                await initDB();
                 const [stateRes, usersRes, leagueRes, rostersRes] = await Promise.all([
                     fetch('https://api.sleeper.app/v1/state/nfl'),
                     fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/users`),
@@ -452,16 +511,17 @@
                 loadAnnouncements();
                 await fetchPlayersWithCache();
 
-                if(league.previous_league_id) {
-                    await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
-                }
-
                 renderStandings(); 
                 renderPowerRankings();
                 await fetchAndRenderScoreboard(currentNFLWeek);
                 fetchTransactions(actualSleeperWeek); 
                 fetchTrendingPlayers();
                 await compileDraftCapital();
+
+                // LAZY LOAD HISTORICAL DB SILENTLY
+                if(league.previous_league_id && !historicalDataLoaded && !historicalDataLoading) {
+                    setTimeout(loadHistoricalDataBackground, 500);
+                }
 
             } catch (e) { 
                 console.error("Data Pipeline Error:", e); 
@@ -472,17 +532,34 @@
             }
         }
 
+        async function loadHistoricalDataBackground() {
+            historicalDataLoading = true;
+            document.getElementById('historical-loader').classList.remove('hidden');
+            document.getElementById('records-content').classList.add('hidden');
+            
+            try {
+                await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
+                historicalDataLoaded = true;
+                document.getElementById('historical-loader').classList.add('hidden');
+                document.getElementById('records-content').classList.remove('hidden');
+            } catch (e) {
+                console.error("History DB Error", e);
+                document.getElementById('historical-loader').innerHTML = `<p class="text-red-500 font-bold text-sm">Database Archive Failure.</p>`;
+            }
+            historicalDataLoading = false;
+        }
+
         async function fetchPlayersWithCache() {
             try {
-                const cacheName = 'fff-players-v2';
-                const url = 'https://api.sleeper.app/v1/players/nfl';
-                let cache = await caches.open(cacheName);
-                let response = await cache.match(url);
-                if (!response) { await cache.add(url); response = await cache.match(url); }
-                const data = await response.json();
-                for (const id in data) {
-                    if(data[id].active === true || data[id].team !== null) {
-                        playerDictionary[id] = { name: (data[id].first_name && data[id].last_name) ? `${data[id].first_name.charAt(0)}. ${data[id].last_name}` : "Player", pos: data[id].position || "UNK", team: data[id].team || "FA" };
+                let cached = await getCache('fff-players-v2');
+                if(!cached) {
+                    const res = await fetch('https://api.sleeper.app/v1/players/nfl');
+                    cached = await res.json();
+                    await setCache('fff-players-v2', cached);
+                }
+                for (const id in cached) {
+                    if(cached[id].active === true || cached[id].team !== null) {
+                        playerDictionary[id] = { name: (cached[id].first_name && cached[id].last_name) ? `${cached[id].first_name.charAt(0)}. ${cached[id].last_name}` : "Player", pos: cached[id].position || "UNK", team: cached[id].team || "FA" };
                     }
                 }
             } catch (e) {}
@@ -726,6 +803,57 @@
             fetchAndRenderScoreboard(w); 
         }
 
+        function renderWeeklyPodium(matchups, week) {
+            if(matchups.length === 0 || matchups[0][0].points === 0) {
+                document.getElementById('weekly-podium').classList.add('hidden');
+                return;
+            }
+            let maxTeam = null, minTeam = null, maxPts = -1, minPts = 9999;
+            let maxPlayer = {id: null, pts: -1, owner: null};
+
+            matchups.forEach(g => {
+                [g[0], g[1]].forEach(t => {
+                    if (t.points > maxPts) { maxPts = t.points; maxTeam = t; }
+                    if (t.points < minPts && t.points > 0) { minPts = t.points; minTeam = t; }
+                    if (t.players_points && t.starters) {
+                        t.starters.forEach(pid => {
+                            if(t.players_points[pid] > maxPlayer.pts) {
+                                maxPlayer = {id: pid, pts: t.players_points[pid], owner: t.roster_id};
+                            }
+                        });
+                    }
+                });
+            });
+
+            if(!maxTeam || !minTeam) return;
+
+            const ownerIdMVP = rostersData.find(r => r.roster_id === maxTeam.roster_id)?.owner_id;
+            const ownerIdSnooze = rostersData.find(r => r.roster_id === minTeam.roster_id)?.owner_id;
+
+            let html = `
+                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-yellow-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(234,179,8,0.1)] relative overflow-hidden">
+                    <div class="absolute top-0 w-full bg-yellow-900/30 text-[8px] sm:text-[10px] font-black text-yellow-400 uppercase tracking-widest py-1 border-b border-yellow-700/50">Manager of the Week</div>
+                    <div class="text-2xl sm:text-3xl mt-6 mb-1 drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">👑</div>
+                    <div class="text-lg font-black text-white">${maxPts.toFixed(2)}</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdMVP)}</div>
+                </div>
+                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden">
+                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50">Offensive MVP</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-500 mt-6 mb-1 object-cover bg-slate-800">
+                    <div class="text-lg font-black text-white">${maxPlayer.pts.toFixed(2)}</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
+                </div>
+                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(220,38,38,0.1)] relative overflow-hidden">
+                    <div class="absolute top-0 w-full bg-red-900/30 text-[8px] sm:text-[10px] font-black text-red-400 uppercase tracking-widest py-1 border-b border-red-700/50">Snooze Button</div>
+                    <div class="text-2xl sm:text-3xl mt-6 mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">💤</div>
+                    <div class="text-lg font-black text-red-400">${minPts.toFixed(2)}</div>
+                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdSnooze)}</div>
+                </div>
+            `;
+            document.getElementById('weekly-podium').innerHTML = html;
+            document.getElementById('weekly-podium').classList.remove('hidden');
+        }
+
         async function fetchAndRenderScoreboard(week) {
             document.getElementById('scoreboard-container').innerHTML = `<div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Fetching Week ${week}...</div>`;
             try {
@@ -754,6 +882,7 @@
                     }
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
+                renderWeeklyPodium(completedMatchups, week);
                 generateAlgorithmicHeadlines(completedMatchups, week);
             } catch (e) {}
         }
@@ -966,7 +1095,7 @@
                 }
             }
 
-            // ALL MATCHUPS SLATE
+            // ALL MATCHUPS SLATE (THE ACCORDION)
             let allMatchupsHtml = "";
             matchups.forEach(g => {
                 let t1 = g[0], t2 = g[1];
@@ -978,7 +1107,7 @@
                 let tagColor = "text-cyan-500";
                 let tagText = `WEEK ${week} ${phase}`;
                 
-                // Use roster ID in salt to guarantee unique selections per matchup within the same category
+                // Add unique roster ID to the salt so every card gets a different randomizer pull
                 let saltTitle = 'slate_title_' + t1.roster_id;
                 let saltBody = 'slate_body_' + t1.roster_id;
 
@@ -1134,9 +1263,9 @@
             try {
                 let leaguesToProcess = []; let currId = activeLeagueId;
                 while (currId) {
-                    let cached = localStorage.getItem(`fff_league_meta_${currId}`);
-                    let meta = cached ? JSON.parse(cached) : await (await fetch(`https://api.sleeper.app/v1/league/${currId}`)).json();
-                    if (!cached) localStorage.setItem(`fff_league_meta_${currId}`, JSON.stringify({ id: meta.league_id, season: meta.season, previous_league_id: meta.previous_league_id }));
+                    let cached = await getCache(`fff_meta_${currId}`);
+                    let meta = cached || await (await fetch(`https://api.sleeper.app/v1/league/${currId}`)).json();
+                    if (!cached) await setCache(`fff_meta_${currId}`, { id: meta.league_id, season: meta.season, previous_league_id: meta.previous_league_id });
                     leaguesToProcess.push(meta); currId = meta.previous_league_id;
                 }
                 leaguesToProcess.reverse();
@@ -1166,41 +1295,45 @@
                     let r2o = {};
                     rData.forEach(r => { r2o[r.roster_id] = r.owner_id; if(r.owner_id && !cumulativeWLT[r.owner_id]) cumulativeWLT[r.owner_id] = {w:0, l:0}; });
 
-                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 18;
+                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 17; // Cap historical processing at week 17 for playoffs
                     let weekPromises = [];
                     for(let w = 1; w <= endWeek; w++) {
-                        let cacheKey = `fff_matchups_v2_${l.id}_w${w}`; 
-                        if(l.id !== activeLeagueId && localStorage.getItem(cacheKey)) {
-                            weekPromises.push(Promise.resolve(JSON.parse(localStorage.getItem(cacheKey))));
-                        } else {
-                            weekPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/matchups/${w}`).then(r => r.json()).then(d => { 
-                                if(l.id !== activeLeagueId) {
-                                    const min = d.map(m => {
-                                        let pPts = {};
-                                        if(m.players_points) {
-                                            for(let pid in m.players_points) if(m.players_points[pid] > 10) pPts[pid] = m.players_points[pid];
-                                        }
-                                        return { matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: pPts, starters: m.starters };
-                                    });
-                                    localStorage.setItem(cacheKey, JSON.stringify(min)); 
-                                }
-                                return d; 
-                            }));
+                        let cacheKey = `fff_matchups_${l.id}_w${w}`; 
+                        if(l.id !== activeLeagueId) {
+                            let cached = await getCache(cacheKey);
+                            if(cached) {
+                                weekPromises.push(Promise.resolve(cached));
+                                continue;
+                            }
                         }
+                        weekPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/matchups/${w}`).then(r => r.json()).then(async d => { 
+                            if(l.id !== activeLeagueId) {
+                                const min = d.map(m => {
+                                    let pPts = {};
+                                    if(m.players_points) { for(let pid in m.players_points) if(m.players_points[pid] > 10) pPts[pid] = m.players_points[pid]; }
+                                    return { matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: pPts, starters: m.starters };
+                                });
+                                await setCache(cacheKey, min); 
+                            }
+                            return d; 
+                        }));
                     }
 
                     let transPromises = [];
                     for(let w = 1; w <= endWeek; w++) {
-                        let tCacheKey = `fff_transactions_v2_${l.id}_w${w}`;
-                        if(l.id !== activeLeagueId && localStorage.getItem(tCacheKey)) {
-                            transPromises.push(Promise.resolve(JSON.parse(localStorage.getItem(tCacheKey))));
-                        } else {
-                            transPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/transactions/${w}`).then(r => r.json()).then(d => {
-                                const minT = d.filter(t => t.type === 'trade' && t.status === 'complete').map(t => ({ roster_ids: t.roster_ids, adds: t.adds, draft_picks: t.draft_picks }));
-                                if(l.id !== activeLeagueId) localStorage.setItem(tCacheKey, JSON.stringify(minT));
-                                return minT;
-                            }).catch(e => { return []; }));
+                        let tCacheKey = `fff_transactions_${l.id}_w${w}`;
+                        if(l.id !== activeLeagueId) {
+                            let cached = await getCache(tCacheKey);
+                            if(cached) {
+                                transPromises.push(Promise.resolve(cached));
+                                continue;
+                            }
                         }
+                        transPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/transactions/${w}`).then(r => r.json()).then(async d => {
+                            const minT = d.filter(t => t.type === 'trade' && t.status === 'complete').map(t => ({ roster_ids: t.roster_ids, adds: t.adds, draft_picks: t.draft_picks }));
+                            if(l.id !== activeLeagueId) await setCache(tCacheKey, minT);
+                            return minT;
+                        }).catch(e => { return []; }));
                     }
 
                     let allWeeksMatchups = await Promise.allSettled(weekPromises);
@@ -1343,7 +1476,19 @@
                         let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
-                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span></div>`;
+                            let pickPlayerStr = "";
+                            if (window.allDraftPicks && window.allDraftPicks[p.season]) {
+                                let slotMap = window.allDraftsInfo ? window.allDraftsInfo[p.season] : null;
+                                let pickMade = window.allDraftPicks[p.season].find(pick => {
+                                    let origRoster = slotMap ? slotMap[pick.draft_slot] : pick.roster_id;
+                                    return parseInt(pick.round) === parseInt(p.round) && parseInt(origRoster) === parseInt(p.roster_id);
+                                });
+                                if (pickMade) {
+                                    let pName = playerDictionary[pickMade.player_id]?.name || (pickMade.metadata?.first_name ? `${pickMade.metadata.first_name[0]}. ${pickMade.metadata.last_name}` : "Player");
+                                    pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
+                                }
+                            }
+                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
@@ -1397,24 +1542,19 @@
 
                 let html = '';
                 for (let l of leagues) {
-                    let drafts = localStorage.getItem(`fff_drafts_${l.id}`);
-                    if(drafts) drafts = JSON.parse(drafts);
-                    else { 
-                        drafts = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/drafts`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_drafts_${l.id}`, JSON.stringify(drafts)); 
-                    }
+                    let cachedDrafts = await getCache(`fff_drafts_${l.id}`);
+                    let drafts = cachedDrafts || await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/drafts`)).json(); 
+                    if(!cachedDrafts && l.id !== LEAGUE_ID) await setCache(`fff_drafts_${l.id}`, drafts); 
                     if(!drafts || drafts.length === 0) continue;
 
                     let draftId = drafts[0].draft_id;
-                    let picks = localStorage.getItem(`fff_picks_${draftId}`);
-                    if(picks) picks = JSON.parse(picks);
-                    else { 
-                        picks = await (await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`)).json(); 
-                        if(l.id !== LEAGUE_ID) localStorage.setItem(`fff_picks_${draftId}`, JSON.stringify(picks)); 
-                    }
+                    let cachedPicks = await getCache(`fff_picks_${draftId}`);
+                    let picks = cachedPicks || await (await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`)).json(); 
+                    if(!cachedPicks && l.id !== LEAGUE_ID) await setCache(`fff_picks_${draftId}`, picks); 
 
                     if(!picks || picks.length === 0) continue;
                     window.allDraftPicks[l.season] = picks; 
+                    window.allDraftsInfo[l.season] = drafts[0].slot_to_roster_id || {};
 
                     let topPicks = picks.filter(p => p.round <= 2);
                     if(topPicks.length === 0) continue;
