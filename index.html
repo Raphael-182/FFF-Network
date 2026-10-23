@@ -1144,6 +1144,29 @@
                     html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-cyan-700 shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'prev_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • PREVIEW</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'prev_body', week)}</p></article>`;
                     highlightCount++;
                 }
+            } else if (phase === "LIVE") {
+                let highestPts = 0; let liveLeader = null; let star = null;
+                matchups.forEach(g => {
+                    if(g[0].points > highestPts) { highestPts = g[0].points; liveLeader = g[0]; star = getStarPlayer(g[0]); }
+                    if(g[1].points > highestPts) { highestPts = g[1].points; liveLeader = g[1]; star = getStarPlayer(g[1]); }
+                });
+
+                if (liveLeader && highestPts > 0) {
+                    let tLink = getTLink(liveLeader.roster_id);
+                    let tName = getTName(liveLeader.roster_id);
+                    let titles = [
+                        `LIVE LEADER: ${tName} SETTING THE PACE`,
+                        `CURRENTLY DOMINATING: ${tName} OUT FRONT`,
+                        `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`
+                    ];
+                    let bodies = [
+                        `As the games unfold, <strong>${tLink}</strong> is currently sitting at the top of the leaderboard with ${highestPts.toFixed(2)} points.`,
+                        `The week is still young, but <strong>${tLink}</strong> has jumped out to an early lead, currently boasting ${highestPts.toFixed(2)} points.`,
+                        `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tLink}</strong> is currently holding the top spot for Week ${week}.`
+                    ];
+                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 overflow-hidden">${star && star.id && star.pts > 0 ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'live_title', week)}</h2><p class="text-red-500 text-xs font-bold mb-4 tracking-widest uppercase animate-pulse">WEEK ${week} AUTOREPORT • LIVE UPDATE</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'live_body', week)}</p></article>`;
+                    highlightCount++;
+                }
             } else {
                 let highGame = null, maxPts = 0, closeGame = null, minDiff = 999, blowoutGame = null, maxDiff = 0;
                 let toiletGame = null, minCombined = 9999, blunderer = null, blunderPlayerId = null, maxBenchPts = 0;
@@ -1356,6 +1379,30 @@
                         cardTitle = pickSeeded(pTitles, saltTitle, week);
                         cardBody = pickSeeded(pBodies, saltBody, week);
                     }
+                } else if (phase === "LIVE") {
+                    let leader = t1.points >= t2.points ? t1 : t2; 
+                    let trailer = t1.points < t2.points ? t1 : t2;
+                    let leadLink = getTLink(leader.roster_id), trailLink = getTLink(trailer.roster_id);
+                    let leadName = getTName(leader.roster_id), trailName = getTName(trailer.roster_id);
+                    let diff = leader.points - trailer.points;
+
+                    const lTitles = [
+                        `LIVE UPDATE: ${leadName} LEADS ${trailName}`,
+                        `IN PROGRESS: ${leadName} OUT FRONT`,
+                        `CURRENT SCORE: ${leadName} HAS THE EDGE`,
+                        `MATCHUP LIVE: ${leadName} PACING ${trailName}`,
+                        `WEEK ${week} ACTION: ${leadName} PULLING AHEAD`
+                    ];
+                    const lBodies = [
+                        `As the action unfolds, ${leadLink} is currently holding a ${diff.toFixed(2)}-point lead over ${trailLink}.`,
+                        `${leadLink} is pacing the matchup right now with ${leader.points.toFixed(2)} points, but there is still plenty of football left to play.`,
+                        `The matchup is live. ${leadLink} (${leader.points.toFixed(2)}) is currently edging out ${trailLink} (${trailer.points.toFixed(2)}).`,
+                        `It's a developing situation on the scoreboard. ${leadLink} has the current advantage, but ${trailLink} remains in striking distance.`,
+                        `Points are on the board. ${leadLink} has established an early lead of ${diff.toFixed(2)} points over ${trailLink}.`
+                    ];
+                    cardTitle = pickSeeded(lTitles, saltTitle, week);
+                    cardBody = pickSeeded(lBodies, saltBody, week);
+                    tagColor = "text-red-500";
                 } else {
                     let winner = t1.points > t2.points ? t1 : t2; let loser = t1.points > t2.points ? t2 : t1;
                     let wLink = getTLink(winner.roster_id), lLink = getTLink(loser.roster_id);
@@ -1417,7 +1464,7 @@
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
-                        tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
+                        tagColor = "text-green-500";
                     }
                 }
 
