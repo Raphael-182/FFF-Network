@@ -85,7 +85,10 @@
         <div id="news" class="tab-content active space-y-6">
             <div class="mb-6">
                 <div class="flex justify-between items-end mb-3">
-                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Scoreboard</h3>
+                    <div class="flex items-center space-x-2">
+                        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Scoreboard</h3>
+                        <span id="live-badge" class="hidden bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded animate-pulse tracking-widest shadow-[0_0_8px_rgba(220,38,38,0.8)]">LIVE</span>
+                    </div>
                     <select id="public-week-selector" onchange="changePublicWeek()" class="bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-bold rounded px-2 py-1 focus:outline-none"></select>
                 </div>
                 <div id="scoreboard-container" class="flex overflow-x-auto space-x-4 hide-scrollbar pb-2">
@@ -373,8 +376,30 @@
 
         let historicalDataLoaded = false;
         let historicalDataLoading = false;
+        let livePollingInterval = null;
 
-        // INDEXED DB CACHE SYSTEM (PREVENTS 5MB LOCALSTORAGE CRASH)
+        // Native Haptic Engine
+        function triggerHaptic() {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+        }
+
+        // Live Auto-Polling Logic
+        function startLivePolling() {
+            const day = new Date().getDay(); 
+            // 0 = Sunday, 1 = Monday, 4 = Thursday
+            if (day === 0 || day === 1 || day === 4) {
+                document.getElementById('live-badge').classList.remove('hidden');
+                if (!livePollingInterval) {
+                    livePollingInterval = setInterval(() => {
+                        fetchAndRenderScoreboard(currentNFLWeek, true);
+                    }, 60000); 
+                }
+            }
+        }
+
+        // INDEXED DB CACHE SYSTEM
         const DB_NAME = "FFF_Network_DB";
         let db;
         function initDB() {
@@ -414,6 +439,7 @@
         });
 
         async function installPWA() {
+            triggerHaptic();
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
@@ -427,6 +453,7 @@
         }
 
         function switchTab(tabId) {
+            triggerHaptic();
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.desk-nav').forEach(btn => { btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -447,6 +474,7 @@
         }
 
         function switchRecordTab(tab) {
+            triggerHaptic();
             document.querySelectorAll('.rec-tab').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.rec-nav').forEach(btn => { btn.classList.remove('text-cyan-400', 'border-cyan-400'); btn.classList.add('text-gray-500', 'border-transparent'); });
             
@@ -456,9 +484,10 @@
             activeBtn.classList.add('text-cyan-400', 'border-cyan-400');
         }
 
-        function unlockEditor() { document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
-        function closeModal() { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
+        function unlockEditor() { triggerHaptic(); document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
+        function closeModal() { triggerHaptic(); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
         function verifyPin() {
+            triggerHaptic();
             const input = document.getElementById('pin-input').value.trim().toLowerCase();
             if (input === 'commish') {
                 const deskBtn = document.getElementById('editor-desk-btn');
@@ -471,6 +500,7 @@
         document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
         async function forceSync() {
+            triggerHaptic();
             const icon = document.getElementById('sync-icon');
             icon.classList.add('spin-active');
             await runDataPipeline();
@@ -514,6 +544,12 @@
                 renderStandings(); 
                 renderPowerRankings();
                 await fetchAndRenderScoreboard(currentNFLWeek);
+                
+                // Initialize polling if applicable
+                if (document.getElementById('public-week-selector').value == actualSleeperWeek) {
+                    startLivePolling();
+                }
+
                 fetchTransactions(actualSleeperWeek); 
                 fetchTrendingPlayers();
                 await compileDraftCapital();
@@ -594,6 +630,7 @@
         }
 
         function openTeamModal(ownerId) {
+            triggerHaptic();
             const user = usersData[ownerId];
             const roster = rostersData.find(r => r.owner_id === ownerId);
             if(!user || !roster) return;
@@ -630,7 +667,7 @@
                 if(groupedRoster[pos].length > 0) {
                     let pList = groupedRoster[pos].map(id => {
                         const pName = playerDictionary[id]?.name || "Unknown";
-                        return `<div class="flex items-center space-x-2 py-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600 object-cover"><span class="truncate text-white text-sm">${pName} <span class="text-[10px] text-gray-500">${playerDictionary[id]?.team||''}</span></span></div>`;
+                        return `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 py-1 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600 object-cover"><span class="truncate text-white text-sm hover:text-cyan-300 transition">${pName} <span class="text-[10px] text-gray-500">${playerDictionary[id]?.team||''}</span></span></a>`;
                     }).join("");
                     rosterHtml += `<div class="mb-3"><h5 class="text-[10px] font-black text-cyan-500 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">${pos}</h5><div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">${pList}</div></div>`;
                 }
@@ -650,6 +687,7 @@
         }
 
         function closeTeamModal() { 
+            triggerHaptic();
             document.getElementById('team-modal-content').classList.add('scale-95');
             setTimeout(() => document.getElementById('team-modal').classList.add('hidden'), 200); 
         }
@@ -661,7 +699,7 @@
                 let html = "";
                 trends.forEach(t => {
                     const pName = playerDictionary[t.player_id]?.name || "Unknown Player";
-                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
+                    html += `<a href="https://sleeper.com/players/nfl/${t.player_id}" target="_blank" class="border-b border-slate-700/50 pb-2 flex justify-between items-center hover:opacity-75 transition"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate hover:text-cyan-300 transition">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></a>`;
                 });
                 document.getElementById('trending-feed').innerHTML = html || "<div class='text-gray-500 italic'>No trends found.</div>";
             } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Sleeper trend database unavailable.</div>"; }
@@ -690,7 +728,7 @@
                         let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
 
                         const buildAssetList = (pIds, picks) => {
-                            let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                            let str = pIds.map(id => `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 my-1.5 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate hover:text-cyan-300 transition">${playerDictionary[id]?.name || 'Player'}</span></a>`).join("");
                             str += picks.map(p => {
                                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                                 let pickPlayerStr = "";
@@ -799,8 +837,20 @@
         }
 
         function changePublicWeek() {
+            triggerHaptic();
             const w = document.getElementById('public-week-selector').value;
+            
+            if (livePollingInterval) {
+                clearInterval(livePollingInterval);
+                livePollingInterval = null;
+            }
+            document.getElementById('live-badge').classList.add('hidden');
+            
             fetchAndRenderScoreboard(w); 
+            
+            if (parseInt(w) === actualSleeperWeek) {
+                startLivePolling();
+            }
         }
 
         function renderWeeklyPodium(matchups, week) {
@@ -837,12 +887,12 @@
                     <div class="text-lg font-black text-white">${maxPts.toFixed(2)}</div>
                     <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdMVP)}</div>
                 </div>
-                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden">
-                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50">Offensive MVP</div>
-                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-500 mt-6 mb-1 object-cover bg-slate-800">
+                <a href="https://sleeper.com/players/nfl/${maxPlayer.id}" target="_blank" class="glass-panel p-3 sm:p-4 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden hover:border-cyan-400 transition group">
+                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50 group-hover:bg-cyan-600 group-hover:text-white transition">Offensive MVP</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-500 mt-6 mb-1 object-cover bg-slate-800 group-hover:border-cyan-300 transition">
                     <div class="text-lg font-black text-white">${maxPlayer.pts.toFixed(2)}</div>
-                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
-                </div>
+                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1 group-hover:text-cyan-300 transition">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
+                </a>
                 <div class="glass-panel p-3 sm:p-4 rounded-xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(220,38,38,0.1)] relative overflow-hidden">
                     <div class="absolute top-0 w-full bg-red-900/30 text-[8px] sm:text-[10px] font-black text-red-400 uppercase tracking-widest py-1 border-b border-red-700/50">Snooze Button</div>
                     <div class="text-2xl sm:text-3xl mt-6 mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">💤</div>
@@ -854,8 +904,8 @@
             document.getElementById('weekly-podium').classList.remove('hidden');
         }
 
-        async function fetchAndRenderScoreboard(week) {
-            document.getElementById('scoreboard-container').innerHTML = `<div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Fetching Week ${week}...</div>`;
+        async function fetchAndRenderScoreboard(week, isSilent = false) {
+            if (!isSilent) document.getElementById('scoreboard-container').innerHTML = `<div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Fetching Week ${week}...</div>`;
             try {
                 const data = await (await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/matchups/${week}`)).json();
                 let games = {}, html = "", completedMatchups = [];
@@ -883,7 +933,10 @@
                 });
                 document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
                 renderWeeklyPodium(completedMatchups, week);
-                generateAlgorithmicHeadlines(completedMatchups, week);
+                
+                if (!isSilent) {
+                    generateAlgorithmicHeadlines(completedMatchups, week);
+                }
             } catch (e) {}
         }
 
@@ -1000,7 +1053,7 @@
                         `Every manager's worst nightmare. <strong>${wLink}</strong> clicked on all cylinders, riding ${star.name} to an insurmountable ${winner.points.toFixed(2)} points.`,
                         `It's a miracle the servers didn't crash from all the points <strong>${wLink}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lLink}.`
                     ];
-                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
+                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<a href="https://sleeper.com/players/nfl/${star.id}" target="_blank"><img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover hover:scale-105 transition" onerror="this.style.display='none'"></a>` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
                     highlightCount++;
                 }
 
@@ -1068,7 +1121,7 @@
                         `The fantasy gods are punishing <strong>${bLink}</strong> for this one. You don't leave ${maxBenchPts.toFixed(2)} points from ${starName} riding the pine without consequences.`,
                         `Absolute malpractice from the manager's chair. <strong>${bLink}</strong> is going to lose sleep over benching ${starName}.`
                     ];
-                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'"><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
+                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><a href="https://sleeper.com/players/nfl/${blunderPlayerId}" target="_blank"><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover hover:scale-105 transition" onerror="this.style.display='none'"></a><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
                     highlightCount++;
                 }
 
@@ -1107,7 +1160,6 @@
                 let tagColor = "text-cyan-500";
                 let tagText = `WEEK ${week} ${phase}`;
                 
-                // Add unique roster ID to the salt so every card gets a different randomizer pull
                 let saltTitle = 'slate_title_' + t1.roster_id;
                 let saltBody = 'slate_body_' + t1.roster_id;
 
@@ -1295,7 +1347,7 @@
                     let r2o = {};
                     rData.forEach(r => { r2o[r.roster_id] = r.owner_id; if(r.owner_id && !cumulativeWLT[r.owner_id]) cumulativeWLT[r.owner_id] = {w:0, l:0}; });
 
-                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 17; // Cap historical processing at week 17 for playoffs
+                    let endWeek = (l.id === activeLeagueId) ? activeWeek : 17; 
                     let weekPromises = [];
                     for(let w = 1; w <= endWeek; w++) {
                         let cacheKey = `fff_matchups_${l.id}_w${w}`; 
@@ -1310,7 +1362,9 @@
                             if(l.id !== activeLeagueId) {
                                 const min = d.map(m => {
                                     let pPts = {};
-                                    if(m.players_points) { for(let pid in m.players_points) if(m.players_points[pid] > 10) pPts[pid] = m.players_points[pid]; }
+                                    if(m.players_points) {
+                                        for(let pid in m.players_points) if(m.players_points[pid] > 10) pPts[pid] = m.players_points[pid];
+                                    }
                                     return { matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: pPts, starters: m.starters };
                                 });
                                 await setCache(cacheKey, min); 
@@ -1420,14 +1474,14 @@
                     if(rec.score > 0) {
                         let pName = playerDictionary[rec.id]?.name || "Unknown";
                         posHtml += `
-                        <div class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
-                            <div class="absolute top-0 w-full bg-cyan-900/30 text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-slate-700">${pos}</div>
-                            <img src="https://sleepercdn.com/content/nfl/players/thumb/${rec.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-14 h-14 rounded-full border-2 border-slate-500 mt-6 mb-2 object-cover bg-slate-800">
+                        <a href="https://sleeper.com/players/nfl/${rec.id}" target="_blank" class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col items-center text-center shadow-lg relative overflow-hidden hover:border-cyan-500 transition group cursor-pointer">
+                            <div class="absolute top-0 w-full bg-cyan-900/30 text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-slate-700 group-hover:bg-cyan-600 group-hover:text-white transition">${pos}</div>
+                            <img src="https://sleepercdn.com/content/nfl/players/thumb/${rec.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-14 h-14 rounded-full border-2 border-slate-500 mt-6 mb-2 object-cover bg-slate-800 group-hover:border-cyan-400 transition">
                             <div class="text-2xl font-black text-white">${rec.score.toFixed(2)}</div>
-                            <div class="text-xs font-bold text-white mt-1 w-full truncate px-1">${pName}</div>
+                            <div class="text-xs font-bold text-white mt-1 w-full truncate px-1 group-hover:text-cyan-300 transition">${pName}</div>
                             <div class="text-[10px] text-gray-400 mt-1 uppercase w-full truncate px-1">${getTeamName(rec.owner)}</div>
                             <div class="text-[10px] text-gray-500">${rec.year} - Wk ${rec.week}</div>
-                        </div>`;
+                        </a>`;
                     }
                 });
                 document.getElementById('positional-records-container').innerHTML = posHtml || `<div class="text-gray-500 italic text-sm p-4 col-span-full">Not enough data to calculate positional records.</div>`;
@@ -1473,7 +1527,7 @@
                     let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
 
                     const buildAssetList = (pIds, picks) => {
-                        let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                        let str = pIds.map(id => `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 my-1.5 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate hover:text-cyan-300 transition">${playerDictionary[id]?.name || 'Player'}</span></a>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                             let pickPlayerStr = "";
@@ -1488,20 +1542,17 @@
                                     pickPlayerStr = ` <span class="text-cyan-400 text-[10px] block truncate ml-4 font-semibold">(Pick ${pickMade.round}.${pickMade.draft_slot < 10 ? '0'+pickMade.draft_slot : pickMade.draft_slot}: ${pName})</span>`;
                                 }
                             }
-                            return `<div class="text-xs font-bold my-1.5 leading-tight"><span class="text-gray-400">🎯 ${p.season}</span> <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
+                            return `<div class="text-xs font-bold my-1 leading-tight text-gray-300">🎯 ${p.season} <span class="${pickColor}">Rd ${p.round}</span>${pickPlayerStr}</div>`;
                         }).join("");
                         return str || '<span class="text-gray-500 text-xs italic">Nothing</span>';
                     };
 
                     tradesHtml += `
-                        <div class="glass-panel p-4 rounded-xl border ${borderColor} mb-4">
-                            <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
-                                <span class="text-[10px] ${labelColor} font-black uppercase tracking-widest">${tradeLabel}</span>
-                                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Week ${t.week}</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 divide-x divide-slate-700">
-                                <div><div class="text-sm font-bold text-white mb-2 truncate border-b border-slate-700/50 pb-1">${getTeamLink(t.o1)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div>
-                                <div class="pl-4"><div class="text-sm font-bold text-white mb-2 truncate border-b border-slate-700/50 pb-1">${getTeamLink(t.o2)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div>
+                        <div class="glass-panel p-3 rounded-lg border ${borderColor} mb-3">
+                            <div class="text-[10px] ${labelColor} font-black uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">${tradeLabel}</div>
+                            <div class="grid grid-cols-2 gap-2 divide-x divide-slate-700">
+                                <div><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r1)?.owner_id)}</div>${buildAssetList(r1GetsPlayers, r1GetsPicks)}</div>
+                                <div class="pl-2"><div class="text-xs font-bold text-white mb-1 truncate">${getTeamLink(rostersData.find(r=>r.roster_id===r2)?.owner_id)}</div>${buildAssetList(r2GetsPlayers, r2GetsPicks)}</div>
                             </div>
                         </div>`;
                 });
@@ -1522,6 +1573,7 @@
         }
 
         function toggleAccordion(type, id) {
+            triggerHaptic();
             const content = document.getElementById(`${type}-content-${id}`);
             const chevron = document.getElementById(`${type}-chevron-${id}`);
             const isOpening = !content.classList.contains('open');
@@ -1562,7 +1614,7 @@
                     let picksHtml = topPicks.map(p => {
                         let pName = playerDictionary[p.player_id]?.name || (p.metadata?.first_name ? p.metadata.first_name + " " + p.metadata.last_name : "Unknown");
                         return `<div class="flex justify-between items-center text-sm border-b border-slate-700/50 py-2">
-                            <div class="flex items-center space-x-2"><span class="text-gray-400 font-mono w-8">${p.round}.${p.draft_slot < 10 ? '0'+p.draft_slot : p.draft_slot}</span> <img src="https://sleepercdn.com/content/nfl/players/thumb/${p.player_id}.jpg" class="w-6 h-6 rounded-full border border-slate-600 object-cover" onerror="this.style.display='none'"> <span class="text-white font-bold">${pName}</span></div>
+                            <a href="https://sleeper.com/players/nfl/${p.player_id}" target="_blank" class="flex items-center space-x-2 hover:opacity-75 transition"><span class="text-gray-400 font-mono w-8">${p.round}.${p.draft_slot < 10 ? '0'+p.draft_slot : p.draft_slot}</span> <img src="https://sleepercdn.com/content/nfl/players/thumb/${p.player_id}.jpg" class="w-6 h-6 rounded-full border border-slate-600 object-cover" onerror="this.style.display='none'"> <span class="text-white font-bold hover:text-cyan-300 transition">${pName}</span></a>
                             <div class="text-[10px] uppercase truncate max-w-[80px] sm:max-w-[120px]">${getTeamLink(rostersData.find(r => r.roster_id === p.roster_id)?.owner_id)}</div>
                         </div>`;
                     }).join('');
