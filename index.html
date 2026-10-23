@@ -303,17 +303,17 @@
 
     <!-- FRANCHISE DASHBOARD MODAL -->
     <div id="team-modal" onclick="if(event.target === this) closeTeamModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-4 transition-opacity duration-300">
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200" id="team-modal-content">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200 relative" id="team-modal-content">
+            <button onclick="closeTeamModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl font-black leading-none z-50">&times;</button>
             <div class="flex justify-between items-start mb-4 border-b border-slate-700 pb-4">
                 <div class="flex items-center space-x-4">
                     <img id="tm-avatar" src="" class="w-16 h-16 rounded-full border-2 border-cyan-400 object-cover hidden">
                     <div id="tm-avatar-fallback" class="w-16 h-16 rounded-full border-2 border-cyan-400 bg-cyan-900 flex items-center justify-center font-black text-xl text-white"></div>
                     <div>
-                        <h3 id="tm-name" class="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">Team Name</h3>
+                        <h3 id="tm-name" class="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none pr-6">Team Name</h3>
                         <div id="tm-manager" class="text-sm text-cyan-400 font-bold mt-1 uppercase tracking-widest">Manager</div>
                     </div>
                 </div>
-                <button onclick="closeTeamModal()" class="text-gray-400 hover:text-white text-3xl font-black leading-none">&times;</button>
             </div>
             
             <div class="flex-1 overflow-y-auto hide-scrollbar space-y-6 pr-2 pb-4">
@@ -344,31 +344,31 @@
     </div>
 
     <!-- MATCHUP DASHBOARD MODAL -->
-    <div id="matchup-modal" onclick="if(event.target === this) closeMatchupModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-4 transition-opacity duration-300">
-        <div class="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-600 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200" id="matchup-modal-content">
+    <div id="matchup-modal" onclick="if(event.target === this) closeMatchupModal()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] px-2 sm:px-4 transition-opacity duration-300">
+        <div class="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-600 max-w-2xl w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200 relative" id="matchup-modal-content">
             
-            <div class="relative flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
-                <button onclick="closeMatchupModal()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white text-3xl font-black leading-none z-10">&times;</button>
-                
+            <button onclick="closeMatchupModal()" class="absolute top-3 right-4 text-gray-400 hover:text-white text-3xl font-black leading-none z-50">&times;</button>
+            
+            <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4 pt-2">
                 <div class="flex-1 flex flex-col items-center">
-                    <img id="mu-t1-avatar" src="" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-slate-500 object-cover mb-2 bg-slate-900">
-                    <div id="mu-t1-score" class="text-2xl font-black text-white">0.00</div>
+                    <img id="mu-t1-avatar" src="" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-slate-500 object-cover mb-2 bg-slate-900">
+                    <div id="mu-t1-score" class="text-3xl font-black text-white">0.00</div>
                     <div id="mu-t1-name" class="text-[10px] sm:text-xs font-bold text-gray-400 truncate w-full text-center px-1 uppercase tracking-widest mt-1">Team 1</div>
                 </div>
                 
-                <div class="px-2 sm:px-4 flex flex-col items-center mt-4">
-                    <div class="bg-slate-900 border border-slate-700 text-slate-500 text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Matchup</div>
+                <div class="px-2 flex flex-col items-center justify-center mt-2">
+                    <div class="text-slate-500 text-sm font-black italic uppercase tracking-widest opacity-50">VS</div>
                 </div>
                 
                 <div class="flex-1 flex flex-col items-center">
-                    <img id="mu-t2-avatar" src="" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-slate-500 object-cover mb-2 bg-slate-900">
-                    <div id="mu-t2-score" class="text-2xl font-black text-white">0.00</div>
+                    <img id="mu-t2-avatar" src="" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-slate-500 object-cover mb-2 bg-slate-900">
+                    <div id="mu-t2-score" class="text-3xl font-black text-white">0.00</div>
                     <div id="mu-t2-name" class="text-[10px] sm:text-xs font-bold text-gray-400 truncate w-full text-center px-1 uppercase tracking-widest mt-1">Team 2</div>
                 </div>
             </div>
             
             <div class="flex justify-between items-center mb-2 px-1">
-                <h4 class="text-sm font-black text-white">Starters</h4>
+                <h4 class="text-sm font-black text-white">Starting Lineup</h4>
             </div>
             
             <div id="mu-starters" class="flex-1 overflow-y-auto hide-scrollbar pb-4 pr-1"></div>
@@ -743,8 +743,8 @@
             let p1s = t1.points > t2.points ? "text-green-400" : "text-white";
             let p2s = t2.points > t1.points ? "text-green-400" : "text-white";
             
-            document.getElementById('mu-t1-score').className = `text-2xl font-black ${p1s}`;
-            document.getElementById('mu-t2-score').className = `text-2xl font-black ${p2s}`;
+            document.getElementById('mu-t1-score').className = `text-3xl font-black ${p1s}`;
+            document.getElementById('mu-t2-score').className = `text-3xl font-black ${p2s}`;
             document.getElementById('mu-t1-score').innerText = t1.points.toFixed(2);
             document.getElementById('mu-t2-score').innerText = t2.points.toFixed(2);
             
@@ -756,8 +756,11 @@
                 let pid1 = s1[i] || "0";
                 let pid2 = s2[i] || "0";
                 
-                let p1Pts = (t1.players_points && t1.players_points[pid1]) ? t1.players_points[pid1].toFixed(2) : "0.00";
-                let p2Pts = (t2.players_points && t2.players_points[pid2]) ? t2.players_points[pid2].toFixed(2) : "0.00";
+                let p1PtsRaw = (t1.players_points && t1.players_points[pid1]) ? t1.players_points[pid1] : 0;
+                let p2PtsRaw = (t2.players_points && t2.players_points[pid2]) ? t2.players_points[pid2] : 0;
+                
+                let p1Pts = p1PtsRaw.toFixed(2);
+                let p2Pts = p2PtsRaw.toFixed(2);
                 
                 let p1Name = pid1 === "0" ? "Empty" : (playerDictionary[pid1]?.name || "Player");
                 let p2Name = pid2 === "0" ? "Empty" : (playerDictionary[pid2]?.name || "Player");
@@ -770,23 +773,43 @@
                 let badgePos = p1Pos || p2Pos || "FLEX";
                 if(badgePos === "") badgePos = "FLEX";
 
+                let badgeColor = "bg-cyan-900/50 border-cyan-800/50 text-cyan-400";
+                if(badgePos === 'QB') badgeColor = "bg-pink-900/30 border-pink-700/50 text-pink-400";
+                if(badgePos === 'RB') badgeColor = "bg-green-900/30 border-green-700/50 text-green-400";
+                if(badgePos === 'WR') badgeColor = "bg-blue-900/30 border-blue-700/50 text-blue-400";
+                if(badgePos === 'TE') badgeColor = "bg-orange-900/30 border-orange-700/50 text-orange-400";
+                if(badgePos === 'K') badgeColor = "bg-purple-900/30 border-purple-700/50 text-purple-400";
+                if(badgePos === 'DEF') badgeColor = "bg-slate-700/50 border-slate-600 text-gray-300";
+
+                let pts1Class = p1PtsRaw > p2PtsRaw ? "text-green-400 font-black" : "text-gray-300";
+                let pts2Class = p2PtsRaw > p1PtsRaw ? "text-green-400 font-black" : "text-gray-300";
+
                 if (pid1 === "0") p1Pts = "-";
                 if (pid2 === "0") p2Pts = "-";
+
+                let img1 = pid1 === "0" ? "" : `<img src="https://sleepercdn.com/content/nfl/players/thumb/${pid1}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-slate-600 mr-2 sm:mr-3 object-cover bg-slate-800">`;
+                let img2 = pid2 === "0" ? "" : `<img src="https://sleepercdn.com/content/nfl/players/thumb/${pid2}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-slate-600 ml-2 sm:ml-3 object-cover bg-slate-800">`;
                 
                 startersHtml += `
-                <div class="flex items-center justify-between py-2 border-b border-slate-700/50">
-                    <div class="flex flex-col w-1/3 text-left">
-                        <span class="text-xs font-bold ${pid1 === '0' ? 'text-gray-600' : 'text-white'} truncate">${p1Name}</span>
-                        <span class="text-[9px] text-gray-500">${p1Pos} ${p1Team}</span>
+                <div class="flex items-center justify-between py-2 sm:py-3 border-b border-slate-700/50">
+                    <div class="flex items-center w-[38%] text-left">
+                        ${img1}
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-xs font-bold ${pid1 === '0' ? 'text-gray-600' : 'text-white'} truncate pr-1">${p1Name}</span>
+                            <span class="text-[9px] text-gray-500 truncate">${p1Pos} ${p1Team}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-center space-x-1 sm:space-x-2 w-1/3">
-                        <span class="text-xs text-gray-300 font-mono w-8 text-right">${p1Pts}</span>
-                        <div class="bg-cyan-900/50 border border-cyan-800/50 text-cyan-400 text-[9px] font-black px-1 py-0.5 rounded w-8 text-center">${badgePos}</div>
-                        <span class="text-xs text-gray-300 font-mono w-8 text-left">${p2Pts}</span>
+                    <div class="flex items-center justify-center space-x-1 sm:space-x-2 w-[24%]">
+                        <span class="text-xs ${pts1Class} font-mono w-8 text-right">${p1Pts}</span>
+                        <div class="${badgeColor} text-[9px] font-black px-1 sm:px-2 py-0.5 rounded border text-center w-8 sm:w-10 shadow-sm">${badgePos}</div>
+                        <span class="text-xs ${pts2Class} font-mono w-8 text-left">${p2Pts}</span>
                     </div>
-                    <div class="flex flex-col w-1/3 text-right">
-                        <span class="text-xs font-bold ${pid2 === '0' ? 'text-gray-600' : 'text-white'} truncate">${p2Name}</span>
-                        <span class="text-[9px] text-gray-500">${p2Pos} ${p2Team}</span>
+                    <div class="flex items-center justify-end w-[38%] text-right">
+                        <div class="flex flex-col min-w-0 items-end">
+                            <span class="text-xs font-bold ${pid2 === '0' ? 'text-gray-600' : 'text-white'} truncate pl-1">${p2Name}</span>
+                            <span class="text-[9px] text-gray-500 truncate">${p2Pos} ${p2Team}</span>
+                        </div>
+                        ${img2}
                     </div>
                 </div>`;
             }
