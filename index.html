@@ -556,6 +556,11 @@
                 const dayOfWeek = new Date().getDay(); 
                 if (dayOfWeek === 2 || dayOfWeek === 3) currentNFLWeek = Math.max(1, actualSleeperWeek - 1);
                 else currentNFLWeek = actualSleeperWeek;
+                
+                window.maxCompletedWeekForHistory = currentNFLWeek;
+                if ([0, 1, 4, 5, 6].includes(dayOfWeek)) {
+                    window.maxCompletedWeekForHistory = Math.max(0, currentNFLWeek - 1);
+                }
 
                 populateWeekSelectors();
 
@@ -602,7 +607,7 @@
             document.getElementById('records-content').classList.add('hidden');
             
             try {
-                await compileAllTimeRecords(LEAGUE_ID, currentNFLWeek); 
+                await compileAllTimeRecords(LEAGUE_ID, window.maxCompletedWeekForHistory); 
                 historicalDataLoaded = true;
                 document.getElementById('historical-loader').classList.add('hidden');
                 document.getElementById('records-content').classList.remove('hidden');
@@ -1160,7 +1165,7 @@
                         `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`
                     ];
                     let bodies = [
-                        `As the games unfold, <strong>${tLink}</strong> is currently sitting at the top of the leaderboard with ${highestPts.toFixed(2)} points.`,
+                        `As the action unfolds, <strong>${tLink}</strong> is currently holding a commanding presence with ${highestPts.toFixed(2)} points.`,
                         `The week is still young, but <strong>${tLink}</strong> has jumped out to an early lead, currently boasting ${highestPts.toFixed(2)} points.`,
                         `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tLink}</strong> is currently holding the top spot for Week ${week}.`
                     ];
@@ -1464,7 +1469,7 @@
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
-                        tagColor = "text-green-500";
+                        tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
                     }
                 }
 
@@ -1581,7 +1586,14 @@
                         Object.values(games).forEach(g => {
                             if (g.length !== 2) return;
                             let t1 = g[0], t2 = g[1]; let o1 = r2o[t1.roster_id], o2 = r2o[t2.roster_id];
-                            if(!o1 || !o2 || t1.points === 0) return;
+                            if(!o1 || !o2) return;
+
+                            if (t1.points > records.highTeam.score) records.highTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                            if (t2.points > records.highTeam.score) records.highTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+                            if (t1.points < records.lowTeam.score && t1.points > 0.00) records.lowTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                            if (t2.points < records.lowTeam.score && t2.points > 0.00) records.lowTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+
+                            if (t1.points === 0 && t2.points === 0) return;
 
                             globalAllMatchups.push({ o1: o1, p1: t1.points, o2: o2, p2: t2.points, year: l.season, week: weekNum }); 
 
@@ -1616,11 +1628,6 @@
                                     });
                                 }
                             });
-
-                            if(t1.points > records.highTeam.score) records.highTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
-                            if(t2.points > records.highTeam.score) records.highTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
-                            if(t1.points < records.lowTeam.score) records.lowTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
-                            if(t2.points < records.lowTeam.score) records.lowTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
 
                             let wId = t1.points > t2.points ? o1 : o2; let lId = t1.points < t2.points ? o1 : o2;
                             [o1, o2].forEach(o => {
