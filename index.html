@@ -93,13 +93,13 @@
                     </div>
                     <select id="public-week-selector" onchange="changePublicWeek()" class="bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-bold rounded px-2 py-1 focus:outline-none"></select>
                 </div>
-                <div id="scoreboard-container" class="flex overflow-x-auto space-x-4 hide-scrollbar pb-2">
+                <div id="scoreboard-container" class="flex overflow-x-auto space-x-4 hide-scrollbar pb-4 pt-1">
                     <div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic loader-node">Syncing matchups...</div>
                 </div>
             </div>
 
             <!-- WEEKLY PODIUM -->
-            <div id="weekly-podium" class="hidden grid grid-cols-3 gap-2 sm:gap-4 mb-6"></div>
+            <div id="weekly-podium" class="hidden grid-cols-3 gap-2 sm:gap-4 mb-10 mt-6 items-end"></div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
@@ -700,7 +700,7 @@
                 if(groupedRoster[pos].length > 0) {
                     let pList = groupedRoster[pos].map(id => {
                         const pName = playerDictionary[id]?.name || "Unknown";
-                        return `<div class="flex items-center space-x-2 py-1"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600 object-cover"><span class="truncate text-white text-sm">${pName} <span class="text-[10px] text-gray-500">${playerDictionary[id]?.team||''}</span></span></div>`;
+                        return `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 py-1 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-600 object-cover"><span class="truncate text-white text-sm hover:text-cyan-300 transition">${pName} <span class="text-[10px] text-gray-500">${playerDictionary[id]?.team||''}</span></span></a>`;
                     }).join("");
                     rosterHtml += `<div class="mb-3"><h5 class="text-[10px] font-black text-cyan-500 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">${pos}</h5><div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">${pList}</div></div>`;
                 }
@@ -837,7 +837,7 @@
                 let html = "";
                 trends.forEach(t => {
                     const pName = playerDictionary[t.player_id]?.name || "Unknown Player";
-                    html += `<div class="border-b border-slate-700/50 pb-2 flex justify-between items-center"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
+                    html += `<a href="https://sleeper.com/players/nfl/${t.player_id}" target="_blank" class="border-b border-slate-700/50 pb-2 flex justify-between items-center hover:opacity-75 transition"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate hover:text-cyan-300 transition">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></a>`;
                 });
                 document.getElementById('trending-feed').innerHTML = html || "<div class='text-gray-500 italic'>No trends found.</div>";
             } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Sleeper trend database unavailable.</div>"; }
@@ -866,7 +866,7 @@
                         let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
 
                         const buildAssetList = (pIds, picks) => {
-                            let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                            let str = pIds.map(id => `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 my-1.5 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate hover:text-cyan-300 transition">${playerDictionary[id]?.name || 'Player'}</span></a>`).join("");
                             str += picks.map(p => {
                                 let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                                 let pickPlayerStr = "";
@@ -1019,27 +1019,33 @@
             const ownerIdSnooze = rostersData.find(r => r.roster_id === minTeam.roster_id)?.owner_id;
 
             let html = `
-                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-yellow-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(234,179,8,0.1)] relative overflow-hidden">
-                    <div class="absolute top-0 w-full bg-yellow-900/30 text-[8px] sm:text-[10px] font-black text-yellow-400 uppercase tracking-widest py-1 border-b border-yellow-700/50">Manager of the Week</div>
-                    <div class="text-2xl sm:text-3xl mt-6 mb-1 drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">👑</div>
-                    <div class="text-lg font-black text-white">${maxPts.toFixed(2)}</div>
+                <!-- LEFT: Offensive MVP -->
+                <a href="https://sleeper.com/players/nfl/${maxPlayer.id}" target="_blank" class="glass-panel p-2 sm:p-3 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden hover:border-cyan-400 transition group h-[120px] sm:h-[140px] justify-end">
+                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50 group-hover:bg-cyan-600 group-hover:text-white transition">Offensive MVP</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-500 mt-4 mb-1 object-cover bg-slate-800 group-hover:border-cyan-300 transition">
+                    <div class="text-base sm:text-lg font-black text-white">${maxPlayer.pts.toFixed(2)}</div>
+                    <div class="text-[9px] sm:text-xs font-bold text-gray-300 truncate w-full px-1 group-hover:text-cyan-300 transition">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
+                </a>
+                
+                <!-- CENTER: Manager of the Week (Elevated) -->
+                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-yellow-500/50 flex flex-col items-center text-center shadow-[0_0_20px_rgba(234,179,8,0.2)] relative overflow-hidden transform -translate-y-3 sm:-translate-y-4 h-[135px] sm:h-[160px] justify-end bg-gradient-to-t from-yellow-900/20 to-transparent z-10">
+                    <div class="absolute top-0 w-full bg-yellow-900/50 text-[8px] sm:text-[10px] font-black text-yellow-400 uppercase tracking-widest py-1 border-b border-yellow-700/50">Manager of the Week</div>
+                    <div class="text-3xl sm:text-4xl mt-4 mb-1 drop-shadow-[0_0_8px_rgba(255,215,0,0.6)]">👑</div>
+                    <div class="text-xl sm:text-2xl font-black text-white">${maxPts.toFixed(2)}</div>
                     <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdMVP)}</div>
                 </div>
-                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden">
-                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50">Offensive MVP</div>
-                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-500 mt-6 mb-1 object-cover bg-slate-800">
-                    <div class="text-lg font-black text-white">${maxPlayer.pts.toFixed(2)}</div>
-                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
-                </div>
-                <div class="glass-panel p-3 sm:p-4 rounded-xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(220,38,38,0.1)] relative overflow-hidden">
+
+                <!-- RIGHT: Snooze Button -->
+                <div class="glass-panel p-2 sm:p-3 rounded-xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(220,38,38,0.1)] relative overflow-hidden h-[120px] sm:h-[140px] justify-end">
                     <div class="absolute top-0 w-full bg-red-900/30 text-[8px] sm:text-[10px] font-black text-red-400 uppercase tracking-widest py-1 border-b border-red-700/50">Snooze Button</div>
-                    <div class="text-2xl sm:text-3xl mt-6 mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">💤</div>
-                    <div class="text-lg font-black text-red-400">${minPts.toFixed(2)}</div>
-                    <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdSnooze)}</div>
+                    <div class="text-xl sm:text-2xl mt-4 mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">💤</div>
+                    <div class="text-base sm:text-lg font-black text-red-400">${minPts.toFixed(2)}</div>
+                    <div class="text-[9px] sm:text-xs font-bold text-gray-300 truncate w-full px-1">${getTeamName(ownerIdSnooze)}</div>
                 </div>
             `;
             document.getElementById('weekly-podium').innerHTML = html;
             document.getElementById('weekly-podium').classList.remove('hidden');
+            document.getElementById('weekly-podium').classList.add('grid');
         }
 
         async function fetchAndRenderScoreboard(week, isSilent = false) {
@@ -1055,18 +1061,49 @@
                         completedMatchups.push(g);
                         let o1 = rostersData.find(r => r.roster_id === g[0].roster_id)?.owner_id;
                         let o2 = rostersData.find(r => r.roster_id === g[1].roster_id)?.owner_id;
-                        const p1s = g[0].points > g[1].points ? "text-green-400 font-black" : "text-gray-300";
-                        const p2s = g[1].points > g[0].points ? "text-green-400 font-black" : "text-gray-300";
+                        let u1 = usersData[o1];
+                        let u2 = usersData[o2];
+                        let av1 = u1?.avatar ? `https://sleepercdn.com/avatars/thumbs/${u1.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                        let av2 = u2?.avatar ? `https://sleepercdn.com/avatars/thumbs/${u2.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                        let o1Name = getTeamName(o1);
+                        let o2Name = getTeamName(o2);
+                        
+                        const p1s = g[0].points > g[1].points ? "text-green-400" : "text-gray-300";
+                        const p2s = g[1].points > g[0].points ? "text-green-400" : "text-gray-300";
+                        const p1w = g[0].points > g[1].points ? "font-black" : "font-bold";
+                        const p2w = g[1].points > g[0].points ? "font-black" : "font-bold";
                         
                         const totalPts = (g[0].points + g[1].points) || 1;
                         const t1Pct = (g[0].points / totalPts) * 100;
                         const t2Pct = (g[1].points / totalPts) * 100;
 
                         html += `
-                        <div onclick="openMatchupModal(${g[0].matchup_id})" class="min-w-[260px] glass-panel p-3 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center space-y-2 cursor-pointer hover:border-cyan-500 transition">
-                            <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o1, p1s)}</span><span class="text-sm font-mono ${p1s}">${g[0].points.toFixed(2)}</span></div>
-                            <div class="flex h-1 w-full bg-slate-800 rounded overflow-hidden"><div class="${g[0].points > g[1].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t1Pct}%"></div><div class="${g[1].points > g[0].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t2Pct}%"></div></div>
-                            <div class="flex justify-between items-center"><span class="text-sm font-bold truncate pr-2">${getTeamLink(o2, p2s)}</span><span class="text-sm font-mono ${p2s}">${g[1].points.toFixed(2)}</span></div>
+                        <div onclick="openMatchupModal(${g[0].matchup_id})" class="min-w-[280px] glass-panel p-4 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center cursor-pointer hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition relative group">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex items-center space-x-2 w-2/3 pr-2">
+                                    <img src="${av1}" class="w-6 h-6 rounded-full border border-slate-600 object-cover bg-slate-900">
+                                    <span class="text-sm ${p1w} ${p1s} truncate">${o1Name}</span>
+                                </div>
+                                <span class="text-lg font-black font-mono ${p1s}">${g[0].points.toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="relative flex h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-2">
+                                <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-900 z-10 transform -translate-x-1/2"></div>
+                                <div class="${g[0].points > g[1].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t1Pct}%"></div>
+                                <div class="${g[1].points > g[0].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t2Pct}%"></div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-2 w-2/3 pr-2">
+                                    <img src="${av2}" class="w-6 h-6 rounded-full border border-slate-600 object-cover bg-slate-900">
+                                    <span class="text-sm ${p2w} ${p2s} truncate">${o2Name}</span>
+                                </div>
+                                <span class="text-lg font-black font-mono ${p2s}">${g[1].points.toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="absolute top-1/2 -translate-y-1/2 right-3 opacity-0 group-hover:opacity-100 transition text-cyan-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
                         </div>`;
                     }
                 });
@@ -1215,7 +1252,7 @@
                         `Every manager's worst nightmare. <strong>${wLink}</strong> clicked on all cylinders, riding ${star.name} to an insurmountable ${winner.points.toFixed(2)} points.`,
                         `It's a miracle the servers didn't crash from all the points <strong>${wLink}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lLink}.`
                     ];
-                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
+                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden">${star.id ? `<a href="https://sleeper.com/players/nfl/${star.id}" target="_blank"><img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover hover:scale-105 transition" onerror="this.style.display='none'"></a>` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm">${pickSeeded(bodies, 'jug_body', week)}</p></article>`;
                     highlightCount++;
                 }
 
@@ -1283,7 +1320,7 @@
                         `The fantasy gods are punishing <strong>${bLink}</strong> for this one. You don't leave ${maxBenchPts.toFixed(2)} points from ${starName} riding the pine without consequences.`,
                         `Absolute malpractice from the manager's chair. <strong>${bLink}</strong> is going to lose sleep over benching ${starName}.`
                     ];
-                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover" onerror="this.style.display='none'"><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
+                    html += `<article class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><a href="https://sleeper.com/players/nfl/${blunderPlayerId}" target="_blank"><img src="https://sleepercdn.com/content/nfl/players/thumb/${blunderPlayerId}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 relative z-10 object-cover hover:scale-105 transition" onerror="this.style.display='none'"></a><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10">${pickSeeded(bodies, 'blund_body', week)}</p></article>`;
                     highlightCount++;
                 }
 
@@ -1469,15 +1506,18 @@
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
-                        tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
+                        tagColor = "text-green-500";
                     }
                 }
 
                 allMatchupsHtml += `
-                <div class="glass-panel p-4 rounded-lg border border-slate-700/50 hover:bg-slate-800/30 transition shadow-sm">
+                <div onclick="openMatchupModal(${t1.matchup_id})" class="glass-panel p-4 rounded-lg border border-slate-700/50 hover:bg-slate-800/30 hover:border-cyan-500/50 transition shadow-sm cursor-pointer relative group">
                     <div class="text-[10px] font-black ${tagColor} uppercase tracking-widest mb-1.5">${tagText}</div>
-                    <h4 class="font-bold text-white text-sm mb-1.5">${cardTitle}</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">${cardBody}</p>
+                    <h4 class="font-bold text-white text-sm mb-1.5 pr-6">${cardTitle}</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed pr-2">${cardBody}</p>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
                 </div>`;
             });
 
@@ -1715,7 +1755,7 @@
                     let borderColor = isBlockbuster ? "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]" : "border-slate-600 shadow-lg";
 
                     const buildAssetList = (pIds, picks) => {
-                        let str = pIds.map(id => `<div class="flex items-center space-x-2 my-1.5"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate">${playerDictionary[id]?.name || 'Player'}</span></div>`).join("");
+                        let str = pIds.map(id => `<a href="https://sleeper.com/players/nfl/${id}" target="_blank" class="flex items-center space-x-2 my-1.5 hover:opacity-75 transition"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-5 h-5 rounded-full object-cover border border-slate-600"><span class="text-green-400 font-bold text-xs truncate hover:text-cyan-300 transition">${playerDictionary[id]?.name || 'Player'}</span></a>`).join("");
                         str += picks.map(p => {
                             let pickColor = p.round === 1 ? "text-yellow-400" : p.round === 2 ? "text-slate-300" : p.round === 3 ? "text-orange-400" : "text-gray-500";
                             let pickPlayerStr = "";
@@ -1802,7 +1842,7 @@
                     let picksHtml = topPicks.map(p => {
                         let pName = playerDictionary[p.player_id]?.name || (p.metadata?.first_name ? p.metadata.first_name + " " + p.metadata.last_name : "Unknown");
                         return `<div class="flex justify-between items-center text-sm border-b border-slate-700/50 py-2">
-                            <div class="flex items-center space-x-2"><span class="text-gray-400 font-mono w-8">${p.round}.${p.draft_slot < 10 ? '0'+p.draft_slot : p.draft_slot}</span> <img src="https://sleepercdn.com/content/nfl/players/thumb/${p.player_id}.jpg" class="w-6 h-6 rounded-full border border-slate-600 object-cover" onerror="this.style.display='none'"> <span class="text-white font-bold">${pName}</span></div>
+                            <a href="https://sleeper.com/players/nfl/${p.player_id}" target="_blank" class="flex items-center space-x-2 hover:opacity-75 transition"><span class="text-gray-400 font-mono w-8">${p.round}.${p.draft_slot < 10 ? '0'+p.draft_slot : p.draft_slot}</span> <img src="https://sleepercdn.com/content/nfl/players/thumb/${p.player_id}.jpg" class="w-6 h-6 rounded-full border border-slate-600 object-cover" onerror="this.style.display='none'"> <span class="text-white font-bold hover:text-cyan-300 transition">${pName}</span></a>
                             <div class="text-[10px] uppercase truncate max-w-[80px] sm:max-w-[120px]">${getTeamLink(rostersData.find(r => r.roster_id === p.roster_id)?.owner_id)}</div>
                         </div>`;
                     }).join('');
