@@ -306,28 +306,36 @@
         <div class="bg-slate-800 rounded-2xl border border-slate-600 max-w-sm w-full shadow-2xl flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-200 relative overflow-hidden" id="player-modal-content">
             <button onclick="closePlayerModal()" class="absolute top-3 right-4 text-gray-400 hover:text-white text-3xl font-black leading-none z-50">&times;</button>
             
-            <div class="p-6 pb-4 border-b border-slate-700 text-center relative overflow-hidden bg-slate-900">
-                <div class="absolute inset-0 bg-cyan-900/10"></div>
+            <div id="pm-header-bg" class="p-6 pb-4 border-b border-slate-700 text-center relative overflow-hidden bg-slate-900">
+                <div id="pm-overlay" class="absolute inset-0 bg-cyan-900/10"></div>
                 <img id="pm-avatar" src="" class="w-20 h-20 rounded-full border-2 border-cyan-400 object-cover mx-auto mb-3 relative z-10 bg-slate-800 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
                 <h2 id="pm-name" class="text-xl font-black text-white uppercase tracking-tight relative z-10">Player Name</h2>
                 <p id="pm-subtitle" class="text-cyan-400 font-bold text-xs uppercase tracking-widest relative z-10">POS • TEAM</p>
             </div>
 
-            <div class="grid grid-cols-4 gap-px bg-slate-700 border-b border-slate-700">
-                <div class="bg-slate-800 p-2 text-center flex flex-col justify-center"><div class="text-[9px] text-gray-500 uppercase font-bold mb-0.5">AGE</div><div id="pm-age" class="text-xs text-white font-bold">--</div></div>
-                <div class="bg-slate-800 p-2 text-center flex flex-col justify-center"><div class="text-[9px] text-gray-500 uppercase font-bold mb-0.5">HT</div><div id="pm-ht" class="text-xs text-white font-bold">--</div></div>
-                <div class="bg-slate-800 p-2 text-center flex flex-col justify-center"><div class="text-[9px] text-gray-500 uppercase font-bold mb-0.5">WT</div><div id="pm-wt" class="text-xs text-white font-bold">--</div></div>
-                <div class="bg-slate-800 p-2 text-center flex flex-col justify-center"><div class="text-[9px] text-gray-500 uppercase font-bold mb-0.5">EXP</div><div id="pm-exp" class="text-xs text-white font-bold">--</div></div>
+            <div class="flex justify-around bg-slate-700/50 border-b border-slate-700 py-3 px-2">
+                <div class="flex flex-col items-center"><span class="text-[9px] text-gray-500 uppercase font-bold mb-1">AGE</span><span id="pm-age" class="text-xs text-white font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-600">--</span></div>
+                <div class="flex flex-col items-center"><span class="text-[9px] text-gray-500 uppercase font-bold mb-1">HT</span><span id="pm-ht" class="text-xs text-white font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-600">--</span></div>
+                <div class="flex flex-col items-center"><span class="text-[9px] text-gray-500 uppercase font-bold mb-1">WT</span><span id="pm-wt" class="text-xs text-white font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-600">--</span></div>
+                <div class="flex flex-col items-center"><span class="text-[9px] text-gray-500 uppercase font-bold mb-1">EXP</span><span id="pm-exp" class="text-xs text-white font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-600">--</span></div>
             </div>
 
-            <div class="p-4 grid grid-cols-2 gap-4 border-b border-slate-700 bg-slate-800/50">
-                 <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-center shadow-inner">
-                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Season Pts</div>
-                     <div id="pm-tot-pts" class="text-2xl font-black text-green-400">0.0</div>
+            <div class="p-4 grid grid-cols-2 gap-3 border-b border-slate-700 bg-slate-800/50">
+                 <div class="bg-slate-900 p-2 rounded-lg border border-slate-700 text-center shadow-inner flex flex-col justify-center">
+                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Total Pts</div>
+                     <div id="pm-tot-pts" class="text-xl font-black text-white">0.0</div>
                  </div>
-                 <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-center shadow-inner">
-                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Pts</div>
-                     <div id="pm-avg-pts" class="text-2xl font-black text-cyan-400">0.0</div>
+                 <div class="bg-slate-900 p-2 rounded-lg border border-slate-700 text-center shadow-inner flex flex-col justify-center">
+                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Avg Pts</div>
+                     <div id="pm-avg-pts" class="text-xl font-black text-white">0.0</div>
+                 </div>
+                 <div class="bg-slate-900 p-2 rounded-lg border border-slate-700 text-center shadow-inner flex flex-col justify-center">
+                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Season High</div>
+                     <div id="pm-high-pts" class="text-xl font-black text-green-400">0.0</div>
+                 </div>
+                 <div class="bg-slate-900 p-2 rounded-lg border border-slate-700 text-center shadow-inner flex flex-col justify-center">
+                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Season Low</div>
+                     <div id="pm-low-pts" class="text-xl font-black text-red-400">0.0</div>
                  </div>
             </div>
 
@@ -746,8 +754,28 @@
             
             let p = playerDictionary[pid];
             document.getElementById('pm-name').innerText = p.name;
+            
+            let posColor = "text-cyan-400";
+            let borderColor = "border-cyan-400";
+            let shadowColor = "shadow-[0_0_15px_rgba(6,182,212,0.3)]";
+            let overlayColor = "bg-cyan-900/10";
+            let barColor = "bg-cyan-500";
+
+            if (p.pos === 'QB') { posColor = "text-pink-400"; borderColor = "border-pink-400"; shadowColor = "shadow-[0_0_15px_rgba(244,114,182,0.3)]"; overlayColor = "bg-pink-900/10"; barColor = "bg-pink-500"; }
+            else if (p.pos === 'RB') { posColor = "text-green-400"; borderColor = "border-green-400"; shadowColor = "shadow-[0_0_15px_rgba(74,222,128,0.3)]"; overlayColor = "bg-green-900/10"; barColor = "bg-green-500"; }
+            else if (p.pos === 'WR') { posColor = "text-blue-400"; borderColor = "border-blue-400"; shadowColor = "shadow-[0_0_15px_rgba(96,165,250,0.3)]"; overlayColor = "bg-blue-900/10"; barColor = "bg-blue-500"; }
+            else if (p.pos === 'TE') { posColor = "text-orange-400"; borderColor = "border-orange-400"; shadowColor = "shadow-[0_0_15px_rgba(251,146,60,0.3)]"; overlayColor = "bg-orange-900/10"; barColor = "bg-orange-500"; }
+            else if (p.pos === 'K') { posColor = "text-purple-400"; borderColor = "border-purple-400"; shadowColor = "shadow-[0_0_15px_rgba(192,132,252,0.3)]"; overlayColor = "bg-purple-900/10"; barColor = "bg-purple-500"; }
+            
+            document.getElementById('pm-subtitle').className = `${posColor} font-bold text-xs uppercase tracking-widest relative z-10`;
             document.getElementById('pm-subtitle').innerText = `${p.pos} • ${p.team}`;
-            document.getElementById('pm-avatar').src = `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg`;
+            
+            let av = document.getElementById('pm-avatar');
+            av.src = `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg`;
+            av.className = `w-20 h-20 rounded-full border-2 ${borderColor} object-cover mx-auto mb-3 relative z-10 bg-slate-800 ${shadowColor}`;
+            
+            document.getElementById('pm-overlay').className = `absolute inset-0 ${overlayColor}`;
+
             document.getElementById('pm-age').innerText = p.age;
             document.getElementById('pm-ht').innerText = p.ht;
             document.getElementById('pm-wt').innerText = p.wt;
@@ -757,19 +785,38 @@
             let logHtml = '';
             
             if (stats && Object.keys(stats.weeks).length > 0) {
-                document.getElementById('pm-tot-pts').innerText = stats.total.toFixed(2);
                 let gamesPlayed = Object.keys(stats.weeks).length;
-                document.getElementById('pm-avg-pts').innerText = (stats.total / gamesPlayed).toFixed(2);
+                let avg = stats.total / gamesPlayed;
+                let high = Math.max(...Object.values(stats.weeks));
+                let low = Math.min(...Object.values(stats.weeks));
                 
+                document.getElementById('pm-tot-pts').innerText = stats.total.toFixed(2);
+                document.getElementById('pm-avg-pts').innerText = avg.toFixed(2);
+                document.getElementById('pm-high-pts').innerText = high.toFixed(2);
+                document.getElementById('pm-low-pts').innerText = low.toFixed(2);
+                
+                let scaleMax = high < 20 ? 20 : high;
+
                 let weeks = Object.keys(stats.weeks).map(Number).sort((a,b) => b - a);
                 weeks.forEach(w => {
                     let pts = stats.weeks[w];
-                    let pClass = pts >= 15 ? 'text-green-400 font-black' : (pts >= 10 ? 'text-cyan-400 font-bold' : (pts <= 5 ? 'text-red-400' : 'text-gray-300'));
-                    logHtml += `<div class="flex justify-between items-center bg-slate-900/50 p-3 rounded border border-slate-700/50"><span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Week ${w}</span><span class="text-sm font-mono ${pClass}">${pts.toFixed(2)}</span></div>`;
+                    let pct = (pts / scaleMax) * 100;
+                    let pClass = pts >= 15 ? 'text-green-400 font-black' : (pts >= 10 ? 'text-white font-bold' : (pts <= 5 ? 'text-red-400' : 'text-gray-400'));
+                    
+                    logHtml += `
+                    <div class="flex flex-col bg-slate-900/50 p-3 rounded-lg border border-slate-700/50 relative overflow-hidden">
+                        <div class="absolute left-0 bottom-0 h-1 ${barColor} opacity-50 rounded-r" style="width: ${pct}%"></div>
+                        <div class="flex justify-between items-center relative z-10">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Week ${w}</span>
+                            <span class="text-sm font-mono ${pClass}">${pts.toFixed(2)}</span>
+                        </div>
+                    </div>`;
                 });
             } else {
                 document.getElementById('pm-tot-pts').innerText = "0.00";
                 document.getElementById('pm-avg-pts').innerText = "0.00";
+                document.getElementById('pm-high-pts').innerText = "0.00";
+                document.getElementById('pm-low-pts').innerText = "0.00";
                 logHtml = `<div class="text-gray-500 italic text-xs text-center py-6">No fantasy points recorded this season.</div>`;
             }
             
