@@ -1009,7 +1009,15 @@
                 let html = "";
                 trends.forEach(t => {
                     const pName = playerDictionary[t.player_id]?.name || "Unknown Player";
-                    html += `<div onclick="openPlayerModal('${t.player_id}')" class="border-b border-slate-700/50 pb-2 flex justify-between items-center hover:opacity-75 transition cursor-pointer"><div class="flex items-center"><img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover"><span class="text-white font-bold truncate hover:text-cyan-300 transition">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span></div><span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${t.count}</span></div>`;
+                    let countFormatted = Number(t.count).toLocaleString();
+                    html += `
+                    <div onclick="openPlayerModal('${t.player_id}')" class="border-b border-slate-700/50 pb-2 flex justify-between items-center hover:opacity-75 transition cursor-pointer group">
+                        <div class="flex items-center">
+                            <img src="https://sleepercdn.com/content/nfl/players/thumb/${t.player_id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-600 mr-3 object-cover group-hover:border-cyan-400 transition">
+                            <span class="text-white font-bold truncate group-hover:text-cyan-300 transition">${pName} <span class="text-gray-500 text-xs font-normal">${playerDictionary[t.player_id]?.pos || ''}</span></span>
+                        </div>
+                        <span class="text-green-400 text-xs font-mono bg-green-900/30 px-2 py-1 rounded">+${countFormatted}</span>
+                    </div>`;
                 });
                 document.getElementById('trending-feed').innerHTML = html || "<div class='text-gray-500 italic'>No trends found.</div>";
             } catch(e) { document.getElementById('trending-feed').innerHTML = "<div class='text-red-500 italic p-2 text-center text-xs'>Sleeper trend database unavailable.</div>"; }
@@ -1019,6 +1027,13 @@
             try {
                 const transactions = await (await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/transactions/${week}`)).json();
                 let wireHTML = "", tickerArr = [];
+                
+                const formatWaiverPlayer = (id, isAdd) => {
+                    let pName = playerDictionary[id]?.name || "Player";
+                    let color = isAdd ? "text-green-400 hover:text-green-300" : "text-red-400 hover:text-red-300";
+                    return `<span onclick="openPlayerModal('${id}')" class="inline-flex items-center space-x-1 cursor-pointer hover:opacity-75 transition align-middle mx-1 bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50 shadow-sm"><img src="https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-4 h-4 rounded-full border border-slate-600 bg-slate-800 object-cover"><span class="${color} font-bold text-xs">${pName}</span></span>`;
+                };
+
                 transactions.filter(t => t.status === 'complete').forEach(t => {
                     let tickerStr = "";
                     if (t.type === 'trade') {
@@ -1070,11 +1085,20 @@
                     
                     } else if (t.type === 'waiver' || t.type === 'free_agent') {
                         let ownerId = rostersData.find(r => r.roster_id === t.roster_ids[0])?.owner_id;
-                        let added = t.adds ? Object.keys(t.adds).map(id => playerDictionary[id]?.name || "a player").join(", ") : "";
-                        let dropped = t.drops ? Object.keys(t.drops).map(id => playerDictionary[id]?.name || "a player").join(", ") : "";
-                        let actionText = (added && dropped) ? `added <span class="text-green-400 font-bold">${added}</span> and dropped <span class="text-red-400">${dropped}</span>` : added ? `added <span class="text-green-400 font-bold">${added}</span>` : `dropped <span class="text-red-400">${dropped}</span>`;
-                        wireHTML += `<div class="border-b border-slate-700/50 pb-2"><span class="text-cyan-400 font-black">🔁 WAIVER:</span> <span class="text-gray-300 font-bold">${getTeamLink(ownerId)}</span> ${actionText}.</div>`;
-                        tickerStr = `🔁 ${getTeamName(ownerId)} ${added ? 'added ' + added : 'made roster moves'}`;
+                        let added = t.adds ? Object.keys(t.adds).map(id => formatWaiverPlayer(id, true)).join(" and ") : "";
+                        let dropped = t.drops ? Object.keys(t.drops).map(id => formatWaiverPlayer(id, false)).join(" and ") : "";
+                        
+                        let actionText = (added && dropped) ? `added ${added} and dropped ${dropped}` : added ? `added ${added}` : `dropped ${dropped}`;
+                        let badgeLabel = t.type === 'waiver' ? 'WAIVER CLAIM' : 'FREE AGENT ADD';
+                        
+                        wireHTML += `
+                        <div class="border-b border-slate-700/50 pb-3 mb-3 last:border-0 last:mb-0 last:pb-0">
+                            <span class="text-[10px] text-cyan-400 font-black uppercase tracking-widest block mb-1.5">🔁 ${badgeLabel}</span>
+                            <div class="text-sm text-gray-300 leading-relaxed font-medium"><span class="font-bold text-white">${getTeamLink(ownerId)}</span> ${actionText}.</div>
+                        </div>`;
+                        
+                        let txtAdd = t.adds ? Object.keys(t.adds).map(id => playerDictionary[id]?.name || "a player").join(", ") : "";
+                        tickerStr = `🔁 ${getTeamName(ownerId)} ${txtAdd ? 'added ' + txtAdd : 'made roster moves'}`;
                     }
                     if(tickerStr) tickerArr.push(tickerStr);
                 });
@@ -1678,7 +1702,7 @@
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
-                        tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
+                        tagColor = "text-green-500";
                     }
                 }
 
