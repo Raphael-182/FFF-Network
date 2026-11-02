@@ -1358,12 +1358,19 @@ function generateAlgorithmicHeadlines(matchups, week) {
 async function compileAllTimeRecords(activeLeagueId, activeWeek) {
     try {
         let leaguesToProcess = []; let currId = activeLeagueId;
-        while (currId) {
+                while (currId) {
             let cached = await getCache(`fff_meta_${currId}`);
             let meta = cached || await (await fetch(`https://api.sleeper.app/v1/league/${currId}`)).json();
             if (!cached) await setCache(`fff_meta_${currId}`, { id: meta.league_id, season: meta.season, previous_league_id: meta.previous_league_id });
-            leaguesToProcess.push(meta); currId = meta.previous_league_id;
+            
+            // THE FIREWALL
+            let startYear = parseInt(localStorage.getItem('fff_start_year') || '2000');
+            if (parseInt(meta.season) < startYear) { break; }
+            
+            leaguesToProcess.push(meta); 
+            currId = meta.previous_league_id;
         }
+
         leaguesToProcess.reverse();
         
         await fetchDraftHistory(leaguesToProcess);
