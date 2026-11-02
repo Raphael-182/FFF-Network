@@ -22,14 +22,17 @@ let historicalDataLoaded = false;
 let historicalDataLoading = false;
 let livePollingInterval = null;
 
+// Native Haptic Engine
 function triggerHaptic() {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(15);
     }
 }
 
+// Live Auto-Polling Logic
 function startLivePolling() {
     const day = new Date().getDay(); 
+    // 0 = Sunday, 1 = Monday, 4 = Thursday
     if (day === 0 || day === 1 || day === 4) {
         document.getElementById('live-badge').classList.remove('hidden');
         if (!livePollingInterval) {
@@ -40,6 +43,7 @@ function startLivePolling() {
     }
 }
 
+// INDEXED DB CACHE SYSTEM
 const DB_NAME = "FFF_Network_DB";
 let db;
 function initDB() {
@@ -71,6 +75,7 @@ async function setCache(id, data) {
     });
 }
 
+// PWA Setup
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -92,6 +97,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(console.error); });
 }
 
+// Navigation Controls
 function switchTab(tabId) {
     triggerHaptic();
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -124,6 +130,7 @@ function switchRecordTab(tab) {
     activeBtn.classList.add('text-cyan-400', 'border-cyan-400');
 }
 
+// Commissioner Modal
 function unlockEditor() { triggerHaptic(); document.getElementById('pin-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('pin-input').focus(), 100); }
 function closeModal() { triggerHaptic(); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-input').value = ''; }
 function verifyPin() {
@@ -139,6 +146,7 @@ function verifyPin() {
 }
 document.getElementById('pin-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') verifyPin(); });
 
+// Core Data Pipeline
 async function forceSync() {
     triggerHaptic();
     const icon = document.getElementById('sync-icon');
@@ -186,6 +194,7 @@ async function runDataPipeline() {
         loadAnnouncements();
         await fetchPlayersWithCache();
         
+        // Pre-compile current season logs for the player modal
         let currentSeasonPromises = [];
         window.playerSeasonLogs = {};
         for (let w = 1; w <= currentNFLWeek; w++) {
@@ -282,6 +291,7 @@ async function fetchPlayersWithCache() {
     } catch (e) {}
 }
 
+// Helpers
 function getTeamName(ownerId) { return ownerId && usersData[ownerId] ? (usersData[ownerId].metadata?.team_name || usersData[ownerId].display_name) : "Former Franchise"; }
 
 function getTeamLink(ownerId, extraClasses="") {
@@ -310,6 +320,7 @@ function getCurrentSeasonStreak(ownerId) {
     return `<span class="text-[10px] font-bold ml-1 ${streakType === 'W' ? 'text-green-400' : 'text-red-400'}">(${streakType}${count})</span>`;
 }
 
+// PLAYER DASHBOARD MODAL LOGIC
 function openPlayerModal(pid) {
     triggerHaptic();
     if(!pid || pid === "0" || !playerDictionary[pid]) return;
@@ -393,6 +404,7 @@ function closePlayerModal() {
     setTimeout(() => document.getElementById('player-modal').classList.add('hidden'), 200);
 }
 
+// TEAM MODAL LOGIC
 function openTeamModal(ownerId) {
     triggerHaptic();
     const user = usersData[ownerId];
@@ -456,6 +468,7 @@ function closeTeamModal() {
     setTimeout(() => document.getElementById('team-modal').classList.add('hidden'), 200); 
 }
 
+// MATCHUP MODAL LOGIC
 function openMatchupModal(matchupId) {
     triggerHaptic();
     if(!window.currentViewedMatchups) return;
@@ -564,6 +577,7 @@ function closeMatchupModal() {
     setTimeout(() => document.getElementById('matchup-modal').classList.add('hidden'), 200);
 }
 
+// News Feed Renderers
 async function fetchTrendingPlayers() {
     try {
         const res = await fetch('https://api.sleeper.app/v1/players/nfl/trending/add?lookback_hours=24&limit=5');
@@ -764,6 +778,789 @@ function renderPowerRankings() {
         </div>`;
     });
     document.getElementById('power-rankings-container').innerHTML = html;
+}
+
+function populateWeekSelectors() {
+    let opts = ''; for(let i=1; i<=18; i++) opts += `<option value="${i}" ${i === currentNFLWeek ? 'selected' : ''}>Week ${i}</option>`;
+    document.getElementById('public-week-selector').innerHTML = opts;
+}
+
+function changePublicWeek() {
+    triggerHaptic();
+    const w = document.getElementById('public-week-selector').value;
+    
+    if (livePollingInterval) {
+        clearInterval(livePollingInterval);
+        livePollingInterval = null;
+    }
+    document.getElementById('live-badge').classList.add('hidden');
+    
+    fetchAndRenderScoreboard(w); 
+    
+    if (parseInt(w) === actualSleeperWeek) {
+        startLivePolling();
+    }
+}
+
+function renderWeeklyPodium(matchups, week) {
+    if(matchups.length === 0 || matchups[0][0].points === 0) {
+        document.getElementById('weekly-podium').classList.add('hidden');
+        return;
+    }
+    let maxTeam = null, minTeam = null, maxPts = -1, minPts = 9999;
+    let maxPlayer = {id: null, pts: -1, owner: null};
+
+    matchups.forEach(g => {
+        [g[0], g[1]].forEach(t => {
+            if (t.points > maxPts) { maxPts = t.points; maxTeam = t; }
+            if (t.points < minPts && t.points > 0) { minPts = t.points; minTeam = t; }
+            if (t.players_points && t.starters) {
+                t.starters.forEach(pid => {
+                    if(t.players_points[pid] > maxPlayer.pts) {
+                        maxPlayer = {id: pid, pts: t.players_points[pid], owner: t.roster_id};
+                    }
+                });
+            }
+        });
+    });
+
+    if(!maxTeam || !minTeam) return;
+
+    const ownerIdMVP = rostersData.find(r => r.roster_id === maxTeam.roster_id)?.owner_id;
+    const ownerIdSnooze = rostersData.find(r => r.roster_id === minTeam.roster_id)?.owner_id;
+
+    let html = `
+        <!-- LEFT: Offensive MVP -->
+        <div onclick="openPlayerModal('${maxPlayer.id}')" class="cursor-pointer glass-panel p-2 sm:p-3 rounded-xl border border-cyan-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.1)] relative overflow-hidden hover:border-cyan-400 transition group h-[120px] sm:h-[140px] justify-end">
+            <div class="absolute top-0 w-full bg-cyan-900/30 text-[8px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-cyan-700/50 group-hover:bg-cyan-600 group-hover:text-white transition">Offensive MVP</div>
+            <img src="https://sleepercdn.com/content/nfl/players/thumb/${maxPlayer.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-500 mt-4 mb-1 object-cover bg-slate-800 group-hover:border-cyan-300 transition">
+            <div class="text-base sm:text-lg font-black text-white">${maxPlayer.pts.toFixed(2)}</div>
+            <div class="text-[9px] sm:text-xs font-bold text-gray-300 truncate w-full px-1 group-hover:text-cyan-300 transition">${playerDictionary[maxPlayer.id]?.name || 'Player'}</div>
+        </div>
+        
+        <!-- CENTER: Manager of the Week (Elevated) -->
+        <div onclick="openTeamModal('${ownerIdMVP}')" class="cursor-pointer glass-panel p-3 sm:p-4 rounded-xl border border-yellow-500/50 flex flex-col items-center text-center shadow-[0_0_20px_rgba(234,179,8,0.2)] relative overflow-hidden transform -translate-y-3 sm:-translate-y-4 h-[135px] sm:h-[160px] justify-end bg-gradient-to-t from-yellow-900/20 to-transparent z-10 hover:border-yellow-400 transition group">
+            <div class="absolute top-0 w-full bg-yellow-900/50 text-[8px] sm:text-[10px] font-black text-yellow-400 uppercase tracking-widest py-1 border-b border-yellow-700/50 group-hover:bg-yellow-600 group-hover:text-black transition">Manager of the Week</div>
+            <div class="text-3xl sm:text-4xl mt-4 mb-1 drop-shadow-[0_0_8px_rgba(255,215,0,0.6)]">👑</div>
+            <div class="text-xl sm:text-2xl font-black text-white group-hover:text-yellow-100 transition">${maxPts.toFixed(2)}</div>
+            <div class="text-[10px] sm:text-xs font-bold text-gray-300 truncate w-full px-1 group-hover:text-yellow-300 transition">${getTeamName(ownerIdMVP)}</div>
+        </div>
+
+        <!-- RIGHT: Snooze Button -->
+        <div onclick="openTeamModal('${ownerIdSnooze}')" class="cursor-pointer glass-panel p-2 sm:p-3 rounded-xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_15px_rgba(220,38,38,0.1)] relative overflow-hidden h-[120px] sm:h-[140px] justify-end hover:border-red-400 transition group">
+            <div class="absolute top-0 w-full bg-red-900/30 text-[8px] sm:text-[10px] font-black text-red-400 uppercase tracking-widest py-1 border-b border-red-700/50 group-hover:bg-red-600 group-hover:text-white transition">Snooze Button</div>
+            <div class="text-xl sm:text-2xl mt-4 mb-1 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]">💤</div>
+            <div class="text-base sm:text-lg font-black text-red-400 group-hover:text-red-300 transition">${minPts.toFixed(2)}</div>
+            <div class="text-[9px] sm:text-xs font-bold text-gray-300 truncate w-full px-1 group-hover:text-red-300 transition">${getTeamName(ownerIdSnooze)}</div>
+        </div>
+    `;
+    document.getElementById('weekly-podium').innerHTML = html;
+    document.getElementById('weekly-podium').classList.remove('hidden');
+    document.getElementById('weekly-podium').classList.add('grid');
+}
+
+async function fetchAndRenderScoreboard(week, isSilent = false) {
+    if (!isSilent) document.getElementById('scoreboard-container').innerHTML = `<div class="min-w-[280px] glass-panel p-4 rounded-xl text-center text-sm text-gray-400 italic">Fetching Week ${week}...</div>`;
+    try {
+        const data = await (await fetch(`https://api.sleeper.app/v1/league/${LEAGUE_ID}/matchups/${week}`)).json();
+        window.currentViewedMatchups = data;
+        let games = {}, html = "", completedMatchups = [];
+        data.forEach(m => { if (!games[m.matchup_id]) games[m.matchup_id] = []; games[m.matchup_id].push(m); });
+
+        Object.values(games).forEach(g => {
+            if (g.length === 2) {
+                completedMatchups.push(g);
+                let o1 = rostersData.find(r => r.roster_id === g[0].roster_id)?.owner_id;
+                let o2 = rostersData.find(r => r.roster_id === g[1].roster_id)?.owner_id;
+                let u1 = usersData[o1];
+                let u2 = usersData[o2];
+                let av1 = u1?.avatar ? `https://sleepercdn.com/avatars/thumbs/${u1.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                let av2 = u2?.avatar ? `https://sleepercdn.com/avatars/thumbs/${u2.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                let o1Name = getTeamName(o1);
+                let o2Name = getTeamName(o2);
+                
+                const p1s = g[0].points > g[1].points ? "text-green-400" : "text-gray-300";
+                const p2s = g[1].points > g[0].points ? "text-green-400" : "text-gray-300";
+                const p1w = g[0].points > g[1].points ? "font-black" : "font-bold";
+                const p2w = g[1].points > g[0].points ? "font-black" : "font-bold";
+                
+                const totalPts = (g[0].points + g[1].points) || 1;
+                const t1Pct = (g[0].points / totalPts) * 100;
+                const t2Pct = (g[1].points / totalPts) * 100;
+
+                html += `
+                <div onclick="openMatchupModal(${g[0].matchup_id})" class="min-w-[280px] glass-panel p-4 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-center cursor-pointer hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition relative group">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center space-x-2 w-2/3 pr-2">
+                            <img src="${av1}" class="w-6 h-6 rounded-full border border-slate-600 object-cover bg-slate-900">
+                            <span class="text-sm ${p1w} ${p1s} truncate">${o1Name}</span>
+                        </div>
+                        <span class="text-lg font-black font-mono ${p1s}">${g[0].points.toFixed(2)}</span>
+                    </div>
+                    
+                    <div class="relative flex h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-2">
+                        <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-900 z-10 transform -translate-x-1/2"></div>
+                        <div class="${g[0].points > g[1].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t1Pct}%"></div>
+                        <div class="${g[1].points > g[0].points ? 'bg-green-500' : 'bg-slate-500'}" style="width: ${t2Pct}%"></div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2 w-2/3 pr-2">
+                            <img src="${av2}" class="w-6 h-6 rounded-full border border-slate-600 object-cover bg-slate-900">
+                            <span class="text-sm ${p2w} ${p2s} truncate">${o2Name}</span>
+                        </div>
+                        <span class="text-lg font-black font-mono ${p2s}">${g[1].points.toFixed(2)}</span>
+                    </div>
+                    
+                    <div class="absolute top-1/2 -translate-y-1/2 right-3 opacity-0 group-hover:opacity-100 transition text-cyan-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
+                    </div>
+                </div>`;
+            }
+        });
+        document.getElementById('scoreboard-container').innerHTML = html || `<div class="text-gray-500 text-sm italic p-2">No matchups found.</div>`;
+        renderWeeklyPodium(completedMatchups, week);
+        
+        if (!isSilent) {
+            generateAlgorithmicHeadlines(completedMatchups, week);
+        }
+    } catch (e) {}
+}
+
+const getStarPlayer = (teamMatchupObj) => {
+    if(!teamMatchupObj.players_points || Object.keys(teamMatchupObj.players_points).length === 0) return { name: "A star player", pts: 0, id: null };
+    let topId = Object.keys(teamMatchupObj.players_points).reduce((a, b) => teamMatchupObj.players_points[a] > teamMatchupObj.players_points[b] ? a : b);
+    return { name: playerDictionary[topId]?.name || "A star player", pts: teamMatchupObj.players_points[topId], id: topId };
+};
+
+const pickSeeded = (arr, salt, weekNum) => {
+    let str = `${LEAGUE_ID}_${weekNum}_${salt}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    return arr[Math.abs(hash) % arr.length];
+};
+
+function generateAlgorithmicHeadlines(matchups, week) {
+    const feed = document.getElementById('news-feed');
+    if(matchups.length === 0) { 
+        feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No matchup data available for this week.</p></div>`; 
+        return; 
+    }
+
+    const totalWeekPts = matchups.reduce((sum, g) => sum + (g[0].points || 0) + (g[1].points || 0), 0);
+    const d = new Date();
+    const day = d.getDay(); 
+    const isCurrentWeek = (parseInt(week) === parseInt(actualSleeperWeek));
+    
+    let phase = "RECAP";
+    if (parseInt(week) > parseInt(actualSleeperWeek)) {
+        phase = "PREVIEW";
+    } else if (isCurrentWeek) {
+        if (totalWeekPts === 0) {
+            phase = "PREVIEW";
+        } else if (day >= 4 || day === 0 || day === 1) {
+            phase = "LIVE";
+        } else {
+            phase = "RECAP";
+        }
+    }
+
+    const getTName = (rId) => getTeamName(rostersData.find(r => r.roster_id === rId)?.owner_id);
+    const getTPI = (rId) => {
+        let oId = rostersData.find(r => r.roster_id === rId)?.owner_id;
+        return globalPowerRankings[oId]?.score || 0;
+    };
+
+    let html = "";
+    let highlightCount = 0;
+
+    if (phase === "PREVIEW") {
+        let highestCombinedPI = 0;
+        let motw = null;
+        matchups.forEach(g => {
+            let pi1 = getTPI(g[0].roster_id), pi2 = getTPI(g[1].roster_id);
+            if (pi1 + pi2 > highestCombinedPI) { highestCombinedPI = pi1 + pi2; motw = g; }
+        });
+        if (motw) {
+            let t1Name = getTName(motw[0].roster_id), t2Name = getTName(motw[1].roster_id);
+            let titles = [
+                `MATCHUP OF THE WEEK: ${t1Name} CLASHES WITH ${t2Name}`, 
+                `HEAVYWEIGHT SHOWDOWN: ${t1Name} TAKES ON ${t2Name}`, 
+                `CAN'T MISS ACTION: ${t1Name} BATTLES ${t2Name}`
+            ];
+            let bodies = [
+                `All eyes are on this highly anticipated matchup. Based on current power indexes, this is expected to be a grueling battle between two of the league's top rosters.`, 
+                `This is what fantasy football is all about. ${t1Name} and ${t2Name} are set for a monumental collision that could shake up the playoff picture.`, 
+                `Set your lineups and grab your popcorn. ${t1Name} meets ${t2Name} in a matchup that has massive implications for the FFF power rankings.`
+            ];
+            html += `<article onclick="openMatchupModal(${motw[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-cyan-700 shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6 cursor-pointer hover:border-cyan-400 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'prev_title', week)}</h2><p class="text-cyan-50 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • PREVIEW</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'prev_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+    } else if (phase === "LIVE") {
+        let highestPts = 0; let liveLeader = null; let star = null;
+        matchups.forEach(g => {
+            if(g[0].points > highestPts) { highestPts = g[0].points; liveLeader = g[0]; star = getStarPlayer(g[0]); }
+            if(g[1].points > highestPts) { highestPts = g[1].points; liveLeader = g[1]; star = getStarPlayer(g[1]); }
+        });
+
+        if (liveLeader && highestPts > 0) {
+            let tName = getTName(liveLeader.roster_id);
+            let titles = [
+                `LIVE LEADER: ${tName} SETTING THE PACE`,
+                `CURRENTLY DOMINATING: ${tName} OUT FRONT`,
+                `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`
+            ];
+            let bodies = [
+                `As the action unfolds, <strong>${tName}</strong> is currently holding a commanding presence with ${highestPts.toFixed(2)} points.`,
+                `The week is still young, but <strong>${tName}</strong> has jumped out to an early lead, currently boasting ${highestPts.toFixed(2)} points.`,
+                `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tName}</strong> is currently holding the top spot for Week ${week}.`
+            ];
+            html += `<article onclick="openMatchupModal(${liveLeader.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 overflow-hidden cursor-pointer hover:border-red-500 transition group relative">${star && star.id && star.pts > 0 ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'live_title', week)}</h2><p class="text-red-500 text-xs font-bold mb-4 tracking-widest uppercase animate-pulse">WEEK ${week} AUTOREPORT • LIVE UPDATE</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'live_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+    } else {
+        let highGame = null, maxPts = 0, closeGame = null, minDiff = 999, blowoutGame = null, maxDiff = 0;
+        let toiletGame = null, minCombined = 9999, blunderer = null, blunderPlayerId = null, maxBenchPts = 0;
+
+        matchups.forEach(g => {
+            const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
+            const comb = g[0].points + g[1].points;
+            
+            if (gMax > maxPts) { maxPts = gMax; highGame = g; }
+            if (diff < minDiff && diff > 0) { minDiff = diff; closeGame = g; }
+            if (diff > maxDiff) { maxDiff = diff; blowoutGame = g; }
+            if (comb < minCombined && comb > 0) { minCombined = comb; toiletGame = g; }
+
+            [g[0], g[1]].forEach(team => {
+                let roster = rostersData.find(r => r.roster_id === team.roster_id);
+                if(!roster || !roster.players || !team.starters) return;
+                let bench = roster.players.filter(p => !team.starters.includes(p));
+                bench.forEach(pid => {
+                    let pts = team.players_points ? (team.players_points[pid] || 0) : 0;
+                    if(pts > maxBenchPts) { maxBenchPts = pts; blunderer = team; blunderPlayerId = pid; }
+                });
+            });
+        });
+
+        if(highGame && highlightCount < 3) {
+            let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
+            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
+            
+            const titles = [ 
+                `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wName}`, 
+                `TOTAL DOMINATION: ${star.name} CARRIES ${wName} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`, 
+                `OFFENSIVE CLINIC: ${wName} PUTS ON A MASTERCLASS OVER ${lName}`,
+                `UNSTOPPABLE FORCE: ${wName} CATCHES FIRE, LEAVES ${lName} IN THE DUST`,
+                `SCORING EXPLOSION: ${star.name} ERUPTS AS ${wName} SETS THE LEAGUE ON FIRE`,
+                `NO CEILING: ${wName} HITS ${winner.points.toFixed(2)} PTS IN RUTHLESS BEATDOWN OF ${lName}`
+            ];
+            const bodies = [ 
+                `Nobody was stopping <strong>${wName}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lName} (${loser.points.toFixed(2)}) completely in the dust.`, 
+                `${lName} got completely rolled over. <strong>${wName}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, 
+                `A certified blowout display. <strong>${wName}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lName} shell-shocked.`,
+                `Every manager's worst nightmare. <strong>${wName}</strong> clicked on all cylinders, riding ${star.name} to an insurmountable ${winner.points.toFixed(2)} points.`,
+                `It's a miracle the servers didn't crash from all the points <strong>${wName}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lName}.`
+            ];
+            html += `<article onclick="openMatchupModal(${highGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden cursor-pointer hover:border-cyan-500 transition group relative">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'jug_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+
+        if(closeGame && closeGame !== highGame && minDiff < 15 && highlightCount < 3) {
+            let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
+            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
+
+            const titles = [ 
+                `NAIL-BITER: ${wName} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lName}`, 
+                `HEARTBREAK IN THE FFF: ${lName} COMES UP JUST SHORT TO ${wName}`, 
+                `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wName}`,
+                `PHOTO FINISH: ${wName} ESCAPES WITH THE NARROWEST OF VICTORIES`,
+                `EVERY YARD MATTERS: ${wName} EDGES OUT ${lName} BY RAZOR-THIN MARGIN`,
+                `CARDIAC ARREST: ${wName} SURVIVES LATE PUSH FROM ${lName}`
+            ];
+            const bodies = [ 
+                `Talk about a high-stress finish. <strong>${wName}</strong> barely escaped with their lives, edging out ${lName} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, 
+                `An agonizing finish for ${lName}. <strong>${wName}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, 
+                `The matchup of the week lived up to the hype. <strong>${wName}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lName} is left wondering what could have been.`,
+                `Neither team deserved to lose this one. <strong>${wName}</strong> held on by the skin of their teeth, leaving ${lName} utterly devastated by the narrow ${minDiff.toFixed(2)}-point margin.`,
+                `Check their blood pressure. <strong>${wName}</strong> survives an absolute thriller, heavily relying on ${star.name}'s heroics to seal the win over ${lName}.`
+            ];
+            html += `<article onclick="openMatchupModal(${closeGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-yellow-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'nail_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-yellow-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+
+        if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30 && highlightCount < 3) {
+            let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
+            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
+
+            const titles = [ 
+                `MASSACRE: ${wName} ABSOLUTELY EMBARRASSES ${lName} BY ${maxDiff.toFixed(2)}`, 
+                `BLOWOUT ALERT: ${lName} GETS SYSTEMATICALLY DISMANTLED`, 
+                `NO MERCY: ${wName} DROPS THE HAMMER ON ${lName}`,
+                `BLOODBATH: ${wName} TAKES ${lName} OUT TO THE WOODSHED`,
+                `LAUGHING STOCK: ${lName} LAYS A MASSIVE EGG AGAINST ${wName}`,
+                `MERCY RULE INVOKED: ${wName} ANNIHILATES ${lName}`
+            ];
+            const bodies = [ 
+                `It was ugly from the opening kickoff. <strong>${wName}</strong> absolutely dismantled ${lName} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, 
+                `A complete demolition. <strong>${wName}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lName} failed to put up any resistance whatsoever.`, 
+                `This wasn't even a contest. <strong>${wName}</strong> violated every rule of sportsmanship, continuing to pour it on ${lName} until the clock hit triple zeroes.`,
+                `A truly humiliating performance from ${lName}. <strong>${wName}</strong> didn't even have to break a sweat, coasting behind ${star.name}'s massive performance.`,
+                `Someone call a wellness check on ${lName}. They were systematically picked apart by <strong>${wName}</strong> in a brutal, one-sided affair.`
+            ];
+            html += `<article onclick="openMatchupModal(${blowoutGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-purple-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'blow_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-purple-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+        
+        if(blunderer && maxBenchPts >= 15 && highlightCount < 3) {
+            let starName = playerDictionary[blunderPlayerId]?.name || "A player"; let bName = getTName(blunderer.roster_id);
+            
+            const titles = [ 
+                `ROSTER MALPRACTICE: ${bName} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`, 
+                `BENCH BLUNDER: ${bName} WASTES A MONSTER PERFORMANCE FROM ${starName}`, 
+                `COACHING DISASTER: ${bName} OUTSMARTS THEMSELVES IN THE WORST WAY`,
+                `OVERTHINKING IT: ${bName} BENCHES ${starName} IN CRIMINAL OFFENSE`,
+                `HALL OF SHAME: ${bName} FORGETS HOW TO SET A LINEUP`,
+                `PAINFUL REGRET: ${maxBenchPts.toFixed(1)} POINTS FROM ${starName} ROTTING ON BENCH`
+            ];
+            const bodies = [ 
+                `What were you thinking? <strong>${bName}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, 
+                `Congrats to <strong>${bName}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, 
+                `Someone revoke their coaching credentials. <strong>${bName}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.`,
+                `The fantasy gods are punishing <strong>${bName}</strong> for this one. You don't leave ${maxBenchPts.toFixed(2)} points from ${starName} riding the pine without consequences.`,
+                `Absolute malpractice from the manager's chair. <strong>${bName}</strong> is going to lose sleep over benching ${starName}.`
+            ];
+            html += `<article onclick="openMatchupModal(${blunderer.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-red-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'blund_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+
+        if(toiletGame && minCombined > 0 && minCombined < 170 && highlightCount < 3) {
+            let t1Name = getTName(toiletGame[0].roster_id), t2Name = getTName(toiletGame[1].roster_id);
+            
+            const titles = [ 
+                `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`, 
+                `EYE BLEACH REQUIRED: ${t1Name} & ${t2Name} COMBINE FOR PURE TRASH`, 
+                `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Name} AND ${t2Name}`,
+                `SNOOZEFEST: ${t1Name} AND ${t2Name} ENGAGE IN A RACE TO THE BOTTOM`,
+                `MUD FIGHT: ${t1Name} BARELY OUT-SUCKS ${t2Name} IN BRUTAL WATCH`,
+                `PUNTS GALORE: A DISGUSTING DISPLAY OF FANTASY FOOTBALL`
+            ];
+            const bodies = [ 
+                `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, 
+                `Did either of these managers even look at their lineups on Sunday? <strong>${t1Name}</strong> and <strong>${t2Name}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, 
+                `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.`,
+                `Both managers should have to issue a public apology for this one. A combined ${minCombined.toFixed(2)} points of pure garbage from <strong>${t1Name}</strong> and <strong>${t2Name}</strong>.`,
+                `We strongly advise deleting the game tape. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> were equally pathetic this week, rewarding onlookers with nothing but pain.`
+            ];
+            html += `<article onclick="openMatchupModal(${toiletGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-orange-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'toilet_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-orange-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
+            highlightCount++;
+        }
+    }
+
+    // ALL MATCHUPS SLATE
+    let allMatchupsHtml = "";
+    matchups.forEach(g => {
+        let t1 = g[0], t2 = g[1];
+        let t1Name = getTName(t1.roster_id), t2Name = getTName(t2.roster_id);
+        let pi1 = getTPI(t1.roster_id), pi2 = getTPI(t2.roster_id);
+        
+        let cardTitle = "", cardBody = "";
+        let tagColor = "text-cyan-500";
+        let tagText = `WEEK ${week} ${phase}`;
+        
+        let saltTitle = 'slate_title_' + t1.roster_id;
+        let saltBody = 'slate_body_' + t1.roster_id;
+
+        if (phase === "PREVIEW") {
+            let piDiff = Math.abs(pi1 - pi2);
+            if (piDiff > 20) {
+                let favName = pi1 > pi2 ? t1Name : t2Name; let dogName = pi1 < pi2 ? t1Name : t2Name;
+                
+                const pTitles = [
+                    `DAVID VS GOLIATH: ${dogName} LOOKS TO SHOCK THE WORLD`,
+                    `UPSET ALERT: CAN ${dogName} STUN ${favName}?`,
+                    `UPHILL BATTLE: ${dogName} FACES MASSIVE TEST AGAINST ${favName}`,
+                    `HEAVY FAVORITE: ${favName} EXPECTED TO ROLL OVER ${dogName}`,
+                    `MISMATCH ON PAPER: ${favName} PROJECTED TO DOMINATE ${dogName}`
+                ];
+                const pBodies = [
+                    `The power index heavily favors ${favName} in this one, but anything can happen on any given Sunday. ${dogName} will need a massive over-performance to pull off the upset.`,
+                    `Projections show a clear advantage for ${favName}. If ${dogName} wants to walk away with a win, they will need their stars to vastly exceed expectations.`,
+                    `${favName} enters this matchup with all the momentum. ${dogName} has their work cut out for them if they want to avoid adding another tally to the loss column.`,
+                    `The numbers don't lie. ${favName} holds a significant edge in True Power Index, leaving ${dogName} desperate for a miracle on the waiver wire or a boom performance.`,
+                    `Expectations are low for ${dogName} as they prepare to face a loaded ${favName} roster. This could get ugly early if the projections hold true.`
+                ];
+                cardTitle = pickSeeded(pTitles, saltTitle, week);
+                cardBody = pickSeeded(pBodies, saltBody, week);
+                
+            } else if (pi1 > 100 && pi2 > 100) {
+                const pTitles = [
+                    `TITANS COLLIDE: ${t1Name} BATTLES ${t2Name}`,
+                    `HEAVYWEIGHT BOUT: ${t1Name} TAKES ON ${t2Name}`,
+                    `CLASH OF THE TITANS: ${t1Name} BATTLES ${t2Name}`,
+                    `BLOCKBUSTER MATCHUP: ${t1Name} GOES HEAD-TO-HEAD WITH ${t2Name}`,
+                    `MARQUEE MATCHUP: ${t1Name} AND ${t2Name} FIGHT FOR SUPREMACY`
+                ];
+                const pBodies = [
+                    `Two of the strongest rosters in the FFF face off. This is a true heavyweight bout that will test the depth and star power of both managers.`,
+                    `Grab your popcorn. ${t1Name} and ${t2Name} are both sporting elite True Power Indexes, guaranteeing fireworks when the slate kicks off.`,
+                    `This matchup features two managers at the absolute top of their game. Expect a high-scoring shootout between ${t1Name} and ${t2Name} this week.`,
+                    `Playoff implications are massive as ${t1Name} meets ${t2Name}. When two juggernauts meet, every single starting spot on the roster matters.`,
+                    `You couldn't ask for a better prime-time matchup. ${t1Name} and ${t2Name} are primed to put on an absolute clinic in fantasy football excellence.`
+                ];
+                cardTitle = pickSeeded(pTitles, saltTitle, week);
+                cardBody = pickSeeded(pBodies, saltBody, week);
+                
+            } else {
+                const pTitles = [
+                    `EVENLY MATCHED: ${t1Name} BATTLES ${t2Name}`,
+                    `TOSS-UP: ${t1Name} AND ${t2Name} TOO CLOSE TO CALL`,
+                    `DOWN TO THE WIRE: PROJECTIONS DEADLOCKED FOR ${t1Name} VS ${t2Name}`,
+                    `HARD TO PREDICT: ${t1Name} MEETS ${t2Name} IN GRUDGE MATCH`,
+                    `DEAD HEAT: ${t1Name} BATTLES ${t2Name} FOR SURVIVAL`
+                ];
+                const pBodies = [
+                    `The projections suggest a coin-flip. Both ${t1Name} and ${t2Name} are coming into this week looking for a crucial victory to shift their momentum.`,
+                    `The True Power Index separates these two teams by razor-thin margins. ${t1Name} and ${t2Name} will likely be sweating this out until Monday night.`,
+                    `A true toss-up. Neither ${t1Name} nor ${t2Name} holds a distinct advantage on paper, making this a matchup purely determined by who gets lucky on Sunday.`,
+                    `This one is entirely too close to call. ${t1Name} and ${t2Name} match up perfectly, making a single boom or bust performance the likely deciding factor.`,
+                    `With nearly identical metrics, ${t1Name} takes on ${t2Name} in what should be a gritty, highly-contested battle for positioning in the standings.`
+                ];
+                cardTitle = pickSeeded(pTitles, saltTitle, week);
+                cardBody = pickSeeded(pBodies, saltBody, week);
+            }
+        } else if (phase === "LIVE") {
+            let leader = t1.points >= t2.points ? t1 : t2; 
+            let trailer = t1.points < t2.points ? t1 : t2;
+            let leadName = getTName(leader.roster_id), trailName = getTName(trailer.roster_id);
+            let diff = leader.points - trailer.points;
+
+            const lTitles = [
+                `LIVE UPDATE: ${leadName} LEADS ${trailName}`,
+                `IN PROGRESS: ${leadName} OUT FRONT`,
+                `CURRENT SCORE: ${leadName} HAS THE EDGE`,
+                `MATCHUP LIVE: ${leadName} PACING ${trailName}`,
+                `WEEK ${week} ACTION: ${leadName} PULLING AHEAD`
+            ];
+            const lBodies = [
+                `As the action unfolds, ${leadName} is currently holding a ${diff.toFixed(2)}-point lead over ${trailName}.`,
+                `${leadName} is pacing the matchup right now with ${leader.points.toFixed(2)} points, but there is still plenty of football left to play.`,
+                `The matchup is live. ${leadName} (${leader.points.toFixed(2)}) is currently edging out ${trailName} (${trailer.points.toFixed(2)}).`,
+                `It's a developing situation on the scoreboard. ${leadName} has the current advantage, but ${trailName} remains in striking distance.`,
+                `Points are on the board. ${leadName} has established an early lead of ${diff.toFixed(2)} points over ${trailName}.`
+            ];
+            cardTitle = pickSeeded(lTitles, saltTitle, week);
+            cardBody = pickSeeded(lBodies, saltBody, week);
+            tagColor = "text-red-500";
+        } else {
+            let winner = t1.points > t2.points ? t1 : t2; let loser = t1.points > t2.points ? t2 : t1;
+            let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
+            let diff = winner.points - loser.points;
+            
+            if (diff < 10) {
+                const rTitles = [
+                    `DOWN TO THE WIRE: ${wName} SURVIVES ${lName}`,
+                    `PHOTO FINISH: ${wName} EDGES OUT ${lName}`,
+                    `BY A HAIR: ${wName} SQUEAKS PAST ${lName}`,
+                    `HEARTBREAKER: ${lName} FALLS SHORT TO ${wName}`,
+                    `NAIL-BITER: ${wName} ESCAPES WITH THE W`
+                ];
+                const rBodies = [
+                    `A stressful, back-and-forth affair ended with ${wName} edging out ${lName} by just ${diff.toFixed(2)} points. Every lineup decision mattered.`,
+                    `${lName} is left wondering what could have been after falling to ${wName} in a devastatingly close ${diff.toFixed(2)} point loss.`,
+                    `${wName} held on for dear life to secure the victory over ${lName}. A margin of ${diff.toFixed(2)} points means one dropped pass was the difference.`,
+                    `An absolute cardiac event. ${wName} escaped with the win, leaving ${lName} frustrated by a razor-thin ${diff.toFixed(2)} point defeat.`,
+                    `You can't ask for a closer matchup. ${wName} managed to scrape by ${lName} with a mere ${diff.toFixed(2)} point advantage when the dust settled.`
+                ];
+                cardTitle = pickSeeded(rTitles, saltTitle, week);
+                cardBody = pickSeeded(rBodies, saltBody, week);
+                tagColor = "text-yellow-500";
+                
+            } else if (diff > 35) {
+                const rTitles = [
+                    `NO CONTEST: ${wName} ROLLS OVER ${lName}`,
+                    `BLOWOUT: ${wName} DISMANTLES ${lName}`,
+                    `MASSACRE: ${wName} DESTROYS ${lName}`,
+                    `LAUGHER: ${wName} MAKES QUICK WORK OF ${lName}`,
+                    `ABSOLUTE BEATDOWN: ${wName} EMBARRASSES ${lName}`
+                ];
+                const rBodies = [
+                    `${wName} put on an absolute clinic, cruising to a comfortable ${diff.toFixed(2)}-point victory. ${lName} never really stood a chance in this one.`,
+                    `It was over before it started. ${wName} steamrolled ${lName}, opening up a massive ${diff.toFixed(2)} point lead and never looking back.`,
+                    `A thorough dismantling. ${wName} poured it on against ${lName}, securing an easy blowout victory by ${diff.toFixed(2)} points.`,
+                    `${lName} had absolutely no answers for ${wName} this week, getting systematically crushed in a non-competitive ${diff.toFixed(2)} point loss.`,
+                    `Total dominance. ${wName} put ${lName} out of their misery early, riding a massive lead to an eventual ${diff.toFixed(2)} point blowout.`
+                ];
+                cardTitle = pickSeeded(rTitles, saltTitle, week);
+                cardBody = pickSeeded(rBodies, saltBody, week);
+                tagColor = "text-purple-500";
+                
+            } else {
+                const rTitles = [
+                    `TAKES CARE OF BUSINESS: ${wName} DEFEATS ${lName}`,
+                    `GETS IT DONE: ${wName} HANDLES ${lName}`,
+                    `SOLID VICTORY: ${wName} OUTLASTS ${lName}`,
+                    `SECURES THE W: ${wName} BEATS ${lName}`,
+                    `CRUISING: ${wName} PULLS AWAY FROM ${lName}`
+                ];
+                const rBodies = [
+                    `${wName} executed their gameplan and secured a solid win over ${lName}, putting up ${winner.points.toFixed(2)} points to lock in the victory.`,
+                    `A clean, respectable victory for ${wName}, who comfortably outpaced ${lName} by ${diff.toFixed(2)} points to add another win to their record.`,
+                    `${wName} proved to be too much for ${lName} this week. They methodically built a lead and finished with ${winner.points.toFixed(2)} total points.`,
+                    `Nothing flashy, just good fantasy football. ${wName} did what they needed to do to secure a nice ${diff.toFixed(2)} point win against ${lName}.`,
+                    `${lName} put up a decent fight, but ${wName} ultimately pulled away late to secure the matchup with a final score of ${winner.points.toFixed(2)}.`
+                ];
+                cardTitle = pickSeeded(rTitles, saltTitle, week);
+                cardBody = pickSeeded(rBodies, saltBody, week);
+                tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
+            }
+        }
+
+        allMatchupsHtml += `
+        <div onclick="openMatchupModal(${t1.matchup_id})" class="glass-panel p-4 rounded-lg border border-slate-700/50 hover:bg-slate-800/30 hover:border-cyan-500/50 transition shadow-sm cursor-pointer relative group">
+            <div class="text-[10px] font-black ${tagColor} uppercase tracking-widest mb-1.5">${tagText}</div>
+            <h4 class="font-bold text-white text-sm mb-1.5 pr-6">${cardTitle}</h4>
+            <p class="text-xs text-gray-400 leading-relaxed pr-2 group-hover:text-gray-300 transition">${cardBody}</p>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
+            </div>
+        </div>`;
+    });
+
+    let accordionHtml = `
+    <div class="mt-2 w-full">
+        <button onclick="toggleAccordion('matchup-recap', '${week}')" class="w-full glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-center text-gray-300 hover:text-white transition focus:outline-none shadow-lg">
+            <span class="font-black uppercase tracking-widest text-sm text-cyan-400 text-left">The Full Slate: Week ${week} Matchups</span>
+            <svg id="matchup-recap-chevron-${week}" class="w-5 h-5 chevron text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        <div id="matchup-recap-content-${week}" class="draft-accordion matchup-recap-acc">
+            <div class="grid grid-cols-1 gap-3 pt-3">
+                ${allMatchupsHtml}
+            </div>
+        </div>
+    </div>`;
+
+    feed.innerHTML = (html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`) + accordionHtml;
+}
+
+async function compileAllTimeRecords(activeLeagueId, activeWeek) {
+    try {
+        let leaguesToProcess = []; let currId = activeLeagueId;
+        while (currId) {
+            let cached = await getCache(`fff_meta_${currId}`);
+            let meta = cached || await (await fetch(`https://api.sleeper.app/v1/league/${currId}`)).json();
+            if (!cached) await setCache(`fff_meta_${currId}`, { id: meta.league_id, season: meta.season, previous_league_id: meta.previous_league_id });
+            leaguesToProcess.push(meta); currId = meta.previous_league_id;
+        }
+        leaguesToProcess.reverse();
+        
+        await fetchDraftHistory(leaguesToProcess);
+
+        let records = { 
+            highTeam: { score: 0, owner: null, year: '', week: '' }, 
+            lowTeam: { score: 9999, owner: null, year: '', week: '' }, 
+            winStreak: { streak: 0, owner: null, year: '' }, 
+            loseStreak: { streak: 0, owner: null, year: '' } 
+        };
+        
+        let posRecords = {
+            'QB': { score: 0, id: null, owner: null, year: '', week: '' },
+            'RB': { score: 0, id: null, owner: null, year: '', week: '' },
+            'WR': { score: 0, id: null, owner: null, year: '', week: '' },
+            'TE': { score: 0, id: null, owner: null, year: '', week: '' },
+            'K':  { score: 0, id: null, owner: null, year: '', week: '' },
+            'DEF':{ score: 0, id: null, owner: null, year: '', week: '' }
+        };
+
+        let cumulativeWLT = {}; let activeStreaks = {};
+
+        for (let l of leaguesToProcess) {
+            let rData = await (await fetch(`https://api.sleeper.app/v1/league/${l.id}/rosters`)).json();
+            let r2o = {};
+            rData.forEach(r => { r2o[r.roster_id] = r.owner_id; if(r.owner_id && !cumulativeWLT[r.owner_id]) cumulativeWLT[r.owner_id] = {w:0, l:0}; });
+
+            let endWeek = (l.id === activeLeagueId) ? activeWeek : 17; 
+            let weekPromises = [];
+            for(let w = 1; w <= endWeek; w++) {
+                let cacheKey = `fff_matchups_${l.id}_w${w}`; 
+                if(l.id !== activeLeagueId) {
+                    let cached = await getCache(cacheKey);
+                    if(cached) {
+                        weekPromises.push(Promise.resolve(cached));
+                        continue;
+                    }
+                }
+                weekPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/matchups/${w}`).then(r => r.json()).then(async d => { 
+                    if(l.id !== activeLeagueId) {
+                        const min = d.map(m => {
+                            let pPts = {};
+                            if(m.players_points) {
+                                for(let pid in m.players_points) if(m.players_points[pid] > 10) pPts[pid] = m.players_points[pid];
+                            }
+                            return { matchup_id: m.matchup_id, roster_id: m.roster_id, points: m.points, players_points: pPts, starters: m.starters };
+                        });
+                        await setCache(cacheKey, min); 
+                    }
+                    return d; 
+                }));
+            }
+
+            let transPromises = [];
+            for(let w = 1; w <= endWeek; w++) {
+                let tCacheKey = `fff_transactions_${l.id}_w${w}`;
+                if(l.id !== activeLeagueId) {
+                    let cached = await getCache(tCacheKey);
+                    if(cached) {
+                        transPromises.push(Promise.resolve(cached));
+                        continue;
+                    }
+                }
+                transPromises.push(fetch(`https://api.sleeper.app/v1/league/${l.id}/transactions/${w}`).then(r => r.json()).then(async d => {
+                    const minT = d.filter(t => t.type === 'trade' && t.status === 'complete').map(t => ({ roster_ids: t.roster_ids, adds: t.adds, draft_picks: t.draft_picks }));
+                    if(l.id !== activeLeagueId) await setCache(tCacheKey, minT);
+                    return minT;
+                }).catch(e => { return []; }));
+            }
+
+            let allWeeksMatchups = await Promise.allSettled(weekPromises);
+            allWeeksMatchups.forEach((matchupRes, wIndex) => {
+                if(matchupRes.status !== "fulfilled") return;
+                let matchups = matchupRes.value;
+                let weekNum = wIndex + 1; let games = {};
+                matchups.forEach(m => { if (!m.matchup_id) return; if (!games[m.matchup_id]) games[m.matchup_id] = []; games[m.matchup_id].push(m); });
+
+                Object.values(games).forEach(g => {
+                    if (g.length !== 2) return;
+                    let t1 = g[0], t2 = g[1]; let o1 = r2o[t1.roster_id], o2 = r2o[t2.roster_id];
+                    if(!o1 || !o2) return;
+
+                    if (t1.points > records.highTeam.score) records.highTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                    if (t2.points > records.highTeam.score) records.highTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+                    if (t1.points < records.lowTeam.score && t1.points > 0.00) records.lowTeam = {score: t1.points, owner: o1, year: l.season, week: weekNum};
+                    if (t2.points < records.lowTeam.score && t2.points > 0.00) records.lowTeam = {score: t2.points, owner: o2, year: l.season, week: weekNum};
+
+                    if (t1.points === 0 && t2.points === 0) return;
+
+                    globalAllMatchups.push({ o1: o1, p1: t1.points, o2: o2, p2: t2.points, year: l.season, week: weekNum }); 
+
+                    if (t1.points > t2.points) { cumulativeWLT[o1].w++; cumulativeWLT[o2].l++; } else if (t2.points > t1.points) { cumulativeWLT[o2].w++; cumulativeWLT[o1].l++; }
+
+                    if (!globalTrophies[o1]) globalTrophies[o1] = {j:0, t:0, b:0};
+                    if (!globalTrophies[o2]) globalTrophies[o2] = {j:0, t:0, b:0};
+
+                    const gMax = Math.max(t1.points, t2.points);
+                    const tComb = t1.points + t2.points;
+                    const maxWeekPts = Math.max(...matchups.map(m => m.points || 0));
+                    
+                    if(gMax >= maxWeekPts && gMax > 0) { globalTrophies[t1.points > t2.points ? o1 : o2].j++; }
+                    if(tComb < 170 && tComb > 0) { globalTrophies[o1].t++; globalTrophies[o2].t++; }
+                    
+                    [t1, t2].forEach(team => {
+                        let teamOwner = r2o[team.roster_id];
+                        if(!globalTrophies[teamOwner]) globalTrophies[teamOwner] = {j:0, t:0, b:0};
+
+                        if(team.players_points && team.starters) {
+                            team.starters.forEach(pid => {
+                                let pts = team.players_points[pid] || 0;
+                                let pos = playerDictionary[pid]?.pos;
+                                if (pos && posRecords[pos]) {
+                                    if (pts > posRecords[pos].score) {
+                                        posRecords[pos] = { score: pts, id: pid, owner: teamOwner, year: l.season, week: weekNum };
+                                    }
+                                }
+                                if(!team.starters.includes(pid) && pts >= 15) {
+                                    globalTrophies[teamOwner].b++;
+                                }
+                            });
+                        }
+                    });
+
+                    let wId = t1.points > t2.points ? o1 : o2; let lId = t1.points < t2.points ? o1 : o2;
+                    [o1, o2].forEach(o => {
+                        if(o === wId) { if(!activeStreaks[o]) activeStreaks[o] = {type: 'W', count: 0}; if(activeStreaks[o].type === 'W') activeStreaks[o].count++; else activeStreaks[o] = {type: 'W', count: 1}; }
+                        else { if(!activeStreaks[o]) activeStreaks[o] = {type: 'L', count: 0}; if(activeStreaks[o].type === 'L') activeStreaks[o].count++; else activeStreaks[o] = {type: 'L', count: 1}; }
+                        if(activeStreaks[o].type === 'W' && activeStreaks[o].count > records.winStreak.streak) records.winStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
+                        if(activeStreaks[o].type === 'L' && activeStreaks[o].count > records.loseStreak.streak) records.loseStreak = {streak: activeStreaks[o].count, owner: o, year: l.season};
+                    });
+                });
+            });
+
+            let allWeeksTrans = await Promise.allSettled(transPromises);
+            allWeeksTrans.forEach((transRes, wIndex) => {
+                if(transRes.status !== "fulfilled") return;
+                let weekTrades = transRes.value;
+                let weekNum = wIndex + 1;
+                weekTrades.forEach(t => {
+                    if(t.roster_ids && t.roster_ids.length === 2) {
+                        globalAllTrades.push({ ...t, year: l.season, week: weekNum, o1: r2o[t.roster_ids[0]], o2: r2o[t.roster_ids[1]] });
+                    }
+                });
+            });
+        }
+        
+        activeStreaksGlobal = activeStreaks;
+
+        document.getElementById('dynamic-records-container').innerHTML = `<div class="glass-panel p-5 rounded-xl border border-green-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Team Score</div><div class="text-3xl font-black text-green-400">${records.highTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.highTeam.owner)}</div><div class="text-xs text-gray-500">${records.highTeam.year} - Week ${records.highTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-red-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lowest Team Score</div><div class="text-3xl font-black text-red-400">${records.lowTeam.score.toFixed(2)}</div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.lowTeam.owner)}</div><div class="text-xs text-gray-500">${records.lowTeam.year} - Week ${records.lowTeam.week}</div></div><div class="glass-panel p-5 rounded-xl border border-yellow-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Win Streak</div><div class="text-3xl font-black text-yellow-400">${records.winStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.winStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.winStreak.year}</div></div><div class="glass-panel p-5 rounded-xl border border-orange-500/30 flex flex-col justify-center"><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Longest Losing Streak</div><div class="text-3xl font-black text-orange-400">${records.loseStreak.streak} <span class="text-lg">Games</span></div><div class="text-sm font-bold text-white mt-1">${getTeamLink(records.loseStreak.owner)}</div><div class="text-xs text-gray-500">Ended in ${records.loseStreak.year}</div></div>`;
+        
+        let posHtml = "";
+        ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].forEach(pos => {
+            let rec = posRecords[pos];
+            if(rec.score > 0) {
+                let pName = playerDictionary[rec.id]?.name || "Unknown";
+                posHtml += `
+                <div onclick="openPlayerModal('${rec.id}')" class="glass-panel p-4 rounded-xl border border-slate-700 flex flex-col items-center text-center shadow-lg relative overflow-hidden hover:border-cyan-500 transition group cursor-pointer">
+                    <div class="absolute top-0 w-full bg-cyan-900/30 text-[10px] font-black text-cyan-400 uppercase tracking-widest py-1 border-b border-slate-700 group-hover:bg-cyan-600 group-hover:text-white transition">${pos}</div>
+                    <img src="https://sleepercdn.com/content/nfl/players/thumb/${rec.id}.jpg" onerror="this.src='https://sleepercdn.com/images/v2/icons/player_default.webp'" class="w-14 h-14 rounded-full border-2 border-slate-500 mt-6 mb-2 object-cover bg-slate-800 group-hover:border-cyan-400 transition">
+                    <div class="text-2xl font-black text-white">${rec.score.toFixed(2)}</div>
+                    <div class="text-xs font-bold text-white mt-1 w-full truncate px-1 group-hover:text-cyan-300 transition">${pName}</div>
+                    <div class="text-[10px] text-gray-400 mt-1 uppercase w-full truncate px-1">${getTeamName(rec.owner)}</div>
+                    <div class="text-[10px] text-gray-500">${rec.year} - Wk ${rec.week}</div>
+                </div>`;
+            }
+        });
+        document.getElementById('positional-records-container').innerHTML = posHtml || `<div class="text-gray-500 italic text-sm p-4 col-span-full">Not enough data to calculate positional records.</div>`;
+
+        let html = ""; 
+        Object.keys(cumulativeWLT).sort((a,b) => cumulativeWLT[b].w - cumulativeWLT[a].w).forEach((id, i) => { 
+            const d = cumulativeWLT[id], total = d.w + d.l; 
+            if(total === 0) return;
+            
+            let rankStr = i + 1;
+            let rankClass = "text-gray-500";
+            let bgClass = "border-transparent";
+            let glow = "";
+            
+            if (i === 0) { rankClass = "text-yellow-400"; bgClass = "border-l-4 border-yellow-500 bg-yellow-900/10"; glow = "drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]"; }
+            else if (i === 1) { rankClass = "text-slate-300"; bgClass = "border-l-4 border-slate-300 bg-slate-700/10"; glow = "drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]"; }
+            else if (i === 2) { rankClass = "text-orange-400"; bgClass = "border-l-4 border-orange-400 bg-orange-900/10"; glow = "drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]"; }
+            else { rankClass = "text-cyan-400 font-bold"; }
+
+            let ownerName = getTeamName(id);
+            let user = usersData[id];
+            let avatarHtml = user && user.avatar ? `<img src="https://sleepercdn.com/avatars/thumbs/${user.avatar}" class="w-10 h-10 rounded-full border-2 border-slate-600 object-cover bg-slate-900">` : `<div class="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center text-xs font-black text-white">${ownerName.substring(0,2).toUpperCase()}</div>`;
+
+            html += `
+            <div onclick="openTeamModal('${id}')" class="flex items-center p-3 sm:p-4 border-b border-slate-700/30 last:border-0 hover:bg-slate-700/30 transition cursor-pointer ${bgClass}">
+                <div class="w-8 text-center font-black text-xl ${rankClass} ${glow}">${rankStr}</div>
+                <div class="mx-3">${avatarHtml}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm sm:text-base font-bold text-white truncate hover:text-cyan-300 transition">${ownerName}</div>
+                    <div class="text-[10px] text-gray-400 truncate">${user ? user.display_name : 'Unknown'}</div>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <div class="text-sm sm:text-base font-mono font-black text-cyan-400">${d.w}-${d.l}</div>
+                    <div class="text-[10px] sm:text-xs text-gray-500 font-mono">${((d.w/total)*100).toFixed(1)}%</div>
+                </div>
+            </div>`; 
+        });
+        document.getElementById('all-time-body').innerHTML = html;
+        
+        populateRivalryDropdowns(Object.keys(cumulativeWLT));
+        renderTradeHistory();
+
+    } catch (e) { 
+        document.getElementById('dynamic-records-container').innerHTML = `<div class="text-red-500 p-4 text-center text-sm font-bold">Failed to compile historical database.</div>`; 
+        document.getElementById('positional-records-container').innerHTML = `<div class="text-red-500 p-4 col-span-full text-center text-sm font-bold">Failed to compile positional records.</div>`; 
+    }
 }
 
 function renderTradeHistory() {
