@@ -114,7 +114,20 @@ function switchTab(tabId) {
     if(activeMobBtn) activeMobBtn.classList.add('active');
     
     if(tabId === 'records' && !historicalDataLoaded && !historicalDataLoading) {
+        loadHistoricalDataBackground()    if(tabId === 'records' && !historicalDataLoaded && !historicalDataLoading) {
         loadHistoricalDataBackground();
+    }
+    
+    // ADD THESE 5 LINES HERE:
+    if(tabId === 'editor') {
+        renderAdminAdjustments();
+        let savedYear = localStorage.getItem('fff_start_year');
+        if(savedYear) document.getElementById('inaugural-year').value = savedYear;
+    }
+    
+    window.scrollTo(0,0);
+}
+;
     }
     window.scrollTo(0,0);
 }
