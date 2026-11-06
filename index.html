@@ -1466,8 +1466,7 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
             for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
             return arr[Math.abs(hash) % arr.length];
         };
-
-        function generateAlgorithmicHeadlines(matchups, week) {
+                function generateAlgorithmicHeadlines(matchups, week) {
             const feed = document.getElementById('news-feed');
             if(matchups.length === 0) { 
                 feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No matchup data available for this week.</p></div>`; 
@@ -1514,12 +1513,34 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                     let titles = [
                         `MATCHUP OF THE WEEK: ${t1Name} CLASHES WITH ${t2Name}`, 
                         `HEAVYWEIGHT SHOWDOWN: ${t1Name} TAKES ON ${t2Name}`, 
-                        `CAN'T MISS ACTION: ${t1Name} BATTLES ${t2Name}`
+                        `CAN'T MISS ACTION: ${t1Name} BATTLES ${t2Name}`,
+                        `PRIME TIME: ${t1Name} AND ${t2Name} SET FOR WAR`,
+                        `GAME OF THE WEEK: ${t1Name} SQUARES OFF AGAINST ${t2Name}`,
+                        `THE MAIN EVENT: ${t1Name} VS ${t2Name}`,
+                        `HIGH STAKES: ${t1Name} AND ${t2Name} COLLIDE`,
+                        `TITLE ELIMINATOR: ${t1Name} FACES ${t2Name}`,
+                        `POWER RANKINGS TEST: ${t1Name} MEETS ${t2Name}`,
+                        `GRUDGE MATCH: ${t1Name} LOOKS TO TOPPLE ${t2Name}`,
+                        `FANTASY FIREWORKS: ${t1Name} DRAWS ${t2Name}`,
+                        `BRAGGING RIGHTS: ${t1Name} BATTLES ${t2Name}`,
+                        `CRUCIAL TIE: ${t1Name} MEETS ${t2Name} ON THE GRIDIRON`,
+                        `COLLISION COURSE: ${t1Name} AND ${t2Name} FACE OFF`,
+                        `MARQUEE MATCHUP: ${t1Name} CHALLENGES ${t2Name}`
                     ];
                     let bodies = [
                         `All eyes are on this highly anticipated matchup. Based on current power indexes, this is expected to be a grueling battle between two of the league's top rosters.`, 
                         `This is what fantasy football is all about. ${t1Name} and ${t2Name} are set for a monumental collision that could shake up the playoff picture.`, 
-                        `Set your lineups and grab your popcorn. ${t1Name} meets ${t2Name} in a matchup that has massive implications for the FFF power rankings.`
+                        `Set your lineups and grab your popcorn. ${t1Name} meets ${t2Name} in a matchup that has massive implications for the FFF power rankings.`,
+                        `Projections are flying out the window for this one. When ${t1Name} and ${t2Name} meet on the gridiron, expect absolute fireworks from start to finish.`,
+                        `The algorithm has flagged this as the most competitive matchup of the slate. Both ${t1Name} and ${t2Name} bring elite talent to the table this week.`,
+                        `It doesn't get much better than this. ${t1Name} will attempt to assert dominance over ${t2Name} in a matchup that has the whole league watching.`,
+                        `Both managers have been putting in the work on the waiver wire, and it all comes down to this. ${t1Name} vs ${t2Name} is going to be an absolute thriller.`,
+                        `With playoff seeding always on the line, ${t1Name} and ${t2Name} cannot afford to leave any points on the bench in this marquee matchup.`,
+                        `Get ready for a shootout. The data suggests a massive point total as ${t1Name} goes head-to-head with a loaded ${t2Name} squad.`,
+                        `This is the matchup the schedule-makers dream about. ${t1Name} and ${t2Name} are prepared for a four-quarter bloodbath.`,
+                        `Neither manager is willing to back down. We project ${t1Name} and ${t2Name} to trade blows all Sunday afternoon.`,
+                        `Expect high anxiety. ${t1Name} and ${t2Name} are staring down the barrel of a defining matchup for their season narrative.`,
+                        `It's a battle of the heavyweights. ${t1Name} will try to impose their will against a deeply talented ${t2Name} roster.`
                     ];
                     html += `<article onclick="openMatchupModal(${motw[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-cyan-700 shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6 cursor-pointer hover:border-cyan-400 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'prev_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • PREVIEW</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'prev_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1536,12 +1557,31 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                     let titles = [
                         `LIVE LEADER: ${tName} SETTING THE PACE`,
                         `CURRENTLY DOMINATING: ${tName} OUT FRONT`,
-                        `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`
+                        `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`,
+                        `CATCH THEM IF YOU CAN: ${tName} JUMPS OUT EARLY`,
+                        `ON FIRE: ${tName} SCORCHING THE SCOREBOARD`,
+                        `IN THE DRIVER'S SEAT: ${tName} CONTROLS THE WEEK`,
+                        `EARLY ONSLAUGHT: ${tName} SHOWING NO MERCY`,
+                        `HOT START: ${tName} PUTTING THE LEAGUE ON NOTICE`,
+                        `MID-WEEK UPDATE: ${tName} COMMANDS THE LEAD`,
+                        `UNTOUCHABLE SO FAR: ${tName} RACKING UP POINTS`,
+                        `FLEXING MUSCLES: ${tName} TAKES EARLY CONTROL`,
+                        `RUNNING AWAY WITH IT: ${tName} ESTABLISHES LEAD`,
+                        `IN THE ZONE: ${tName} TOPS THE CHARTS CURRENTLY`,
+                        `DOMINANT SHOWING: ${tName} PACING THE FIELD`
                     ];
                     let bodies = [
                         `As the action unfolds, <strong>${tName}</strong> is currently holding a commanding presence with ${highestPts.toFixed(2)} points.`,
                         `The week is still young, but <strong>${tName}</strong> has jumped out to an early lead, currently boasting ${highestPts.toFixed(2)} points.`,
-                        `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tName}</strong> is currently holding the top spot for Week ${week}.`
+                        `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tName}</strong> is currently holding the top spot for Week ${week}.`,
+                        `It's looking like a great week to be a fan of <strong>${tName}</strong>. They are currently leading all scorers with ${highestPts.toFixed(2)} points on the board.`,
+                        `Nobody is having a better Sunday than <strong>${tName}</strong>. ${star && star.pts > 0 ? `${star.name} has been heavily relied upon to get them to ` : `They are sitting pretty at `}${highestPts.toFixed(2)} points.`,
+                        `The rest of the league is playing catch-up. <strong>${tName}</strong> has exploded out of the gates for ${highestPts.toFixed(2)} points.`,
+                        `Through the early slate of games, <strong>${tName}</strong> is the team to beat, setting the benchmark at ${highestPts.toFixed(2)} points.`,
+                        `The fantasy gods are smiling on <strong>${tName}</strong> right now. They've amassed ${highestPts.toFixed(2)} points and show no signs of slowing down.`,
+                        `If the week ended right now, <strong>${tName}</strong> would be taking home the hardware. They lead the FFF with ${highestPts.toFixed(2)} points.`,
+                        `Absolute domination in progress. <strong>${tName}</strong> is running up the score, currently sitting at ${highestPts.toFixed(2)} total points.`,
+                        `<strong>${tName}</strong> is putting on a clinic today. They've surged to ${highestPts.toFixed(2)} points while everyone else scrambles to keep up.`
                     ];
                     html += `<article onclick="openMatchupModal(${liveLeader.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 overflow-hidden cursor-pointer hover:border-red-500 transition group relative">${star && star.id && star.pts > 0 ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'live_title', week)}</h2><p class="text-red-500 text-xs font-bold mb-4 tracking-widest uppercase animate-pulse">WEEK ${week} AUTOREPORT • LIVE UPDATE</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'live_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1580,14 +1620,27 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `OFFENSIVE CLINIC: ${wName} PUTS ON A MASTERCLASS OVER ${lName}`,
                         `UNSTOPPABLE FORCE: ${wName} CATCHES FIRE, LEAVES ${lName} IN THE DUST`,
                         `SCORING EXPLOSION: ${star.name} ERUPTS AS ${wName} SETS THE LEAGUE ON FIRE`,
-                        `NO CEILING: ${wName} HITS ${winner.points.toFixed(2)} PTS IN RUTHLESS BEATDOWN OF ${lName}`
+                        `NO CEILING: ${wName} HITS ${winner.points.toFixed(2)} PTS IN RUTHLESS BEATDOWN OF ${lName}`,
+                        `ABSOLUTE UNIT: ${wName} CRUSHES COMPETITION WITH WEEK'S HIGH SCORE`,
+                        `RECORD PACE: ${wName} DEMOLISHES ${lName} WITH OFFENSIVE FIREPOWER`,
+                        `LIGHTING UP THE SCOREBOARD: ${wName} DROPS A HAMMER ON THE LEAGUE`,
+                        `PEAK PERFORMANCE: ${wName} FLIES HIGH TO ${winner.points.toFixed(2)} POINTS`,
+                        `SLAUGHTERHOUSE: ${wName} CARVES UP ${lName} FOR HIGHEST SCORE`,
+                        `FANTASY GODS: ${wName} ASCENDS TO TOP OF SCOREBOARD`,
+                        `AIR RAID: ${wName} BOMBS ${lName} FOR ${winner.points.toFixed(2)} POINTS`
                     ];
                     const bodies = [ 
                         `Nobody was stopping <strong>${wName}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lName} (${loser.points.toFixed(2)}) completely in the dust.`, 
                         `${lName} got completely rolled over. <strong>${wName}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, 
                         `A certified blowout display. <strong>${wName}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lName} shell-shocked.`,
                         `Every manager's worst nightmare. <strong>${wName}</strong> clicked on all cylinders, riding ${star.name} to an insurmountable ${winner.points.toFixed(2)} points.`,
-                        `It's a miracle the servers didn't crash from all the points <strong>${wName}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lName}.`
+                        `It's a miracle the servers didn't crash from all the points <strong>${wName}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lName}.`,
+                        `This is what a perfectly managed roster looks like. <strong>${wName}</strong> obliterated their projections, coasting to ${winner.points.toFixed(2)} points while ${lName} watched helplessly.`,
+                        `Someone check <strong>${wName}</strong> for performance-enhancing algorithms. They utterly destroyed ${lName} with a slate-breaking ${winner.points.toFixed(2)} total points.`,
+                        `A true offensive clinic. <strong>${wName}</strong> got a massive ${star.pts.toFixed(2)} point lift from ${star.name} to comfortably secure the week's highest score.`,
+                        `There was never a doubt. <strong>${wName}</strong> jumped out early and never looked back, burying ${lName} in a barrage of fantasy points.`,
+                        `Send condolences to ${lName}. They had the misfortune of running into <strong>${wName}</strong> on a week where their entire roster caught fire for ${winner.points.toFixed(2)} points.`,
+                        `An absolute bloodbath. <strong>${wName}</strong> spared no expense in running up the score against a defeated ${lName} squad.`
                     ];
                     html += `<article onclick="openMatchupModal(${highGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden cursor-pointer hover:border-cyan-500 transition group relative">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'jug_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1603,14 +1656,26 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wName}`,
                         `PHOTO FINISH: ${wName} ESCAPES WITH THE NARROWEST OF VICTORIES`,
                         `EVERY YARD MATTERS: ${wName} EDGES OUT ${lName} BY RAZOR-THIN MARGIN`,
-                        `CARDIAC ARREST: ${wName} SURVIVES LATE PUSH FROM ${lName}`
+                        `CARDIAC ARREST: ${wName} SURVIVES LATE PUSH FROM ${lName}`,
+                        `TRENCH WARFARE: ${wName} OUTLASTS ${lName} IN A GRIND`,
+                        `BY THE SKIN OF THEIR TEETH: ${wName} HANGS ON AGAINST ${lName}`,
+                        `INSTANT CLASSIC: ${wName} PREVAILS IN A THRILLER OVER ${lName}`,
+                        `TOO CLOSE FOR COMFORT: ${wName} SECURES NARROW W AGAINST ${lName}`,
+                        `TENSION CITY: ${wName} SNEAKS PAST ${lName}`,
+                        `MIRACLE FINISH: ${wName} STUNS ${lName} AT THE GUN`
                     ];
                     const bodies = [ 
                         `Talk about a high-stress finish. <strong>${wName}</strong> barely escaped with their lives, edging out ${lName} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, 
                         `An agonizing finish for ${lName}. <strong>${wName}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, 
                         `The matchup of the week lived up to the hype. <strong>${wName}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lName} is left wondering what could have been.`,
                         `Neither team deserved to lose this one. <strong>${wName}</strong> held on by the skin of their teeth, leaving ${lName} utterly devastated by the narrow ${minDiff.toFixed(2)}-point margin.`,
-                        `Check their blood pressure. <strong>${wName}</strong> survives an absolute thriller, heavily relying on ${star.name}'s heroics to seal the win over ${lName}.`
+                        `Check their blood pressure. <strong>${wName}</strong> survives an absolute thriller, heavily relying on ${star.name}'s heroics to seal the win over ${lName}.`,
+                        `This is why you play to the final whistle. A late swing pushed <strong>${wName}</strong> just barely past ${lName} to steal a ${diff.toFixed(2)}-point victory.`,
+                        `Absolutely brutal for ${lName}. They fought tooth and nail, only to watch <strong>${wName}</strong> escape with a microscopic ${diff.toFixed(2)} point win.`,
+                        `A single dropped pass, one missed field goal—that was the difference here. <strong>${wName}</strong> survives a gritty battle against a resilient ${lName} squad.`,
+                        `Matches like this are what define a fantasy season. <strong>${wName}</strong> clutched up when it mattered most to put away ${lName} in an instant classic.`,
+                        `Sweat was poured, tears were shed. <strong>${wName}</strong> finally took down ${lName} in a back-and-forth slugfest that won't be forgotten anytime soon.`,
+                        `A painful Monday night for ${lName} who watched their lead evaporate as <strong>${wName}</strong> pulled off the miraculous narrow victory.`
                     ];
                     html += `<article onclick="openMatchupModal(${closeGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-yellow-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'nail_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-yellow-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1626,14 +1691,26 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `NO MERCY: ${wName} DROPS THE HAMMER ON ${lName}`,
                         `BLOODBATH: ${wName} TAKES ${lName} OUT TO THE WOODSHED`,
                         `LAUGHING STOCK: ${lName} LAYS A MASSIVE EGG AGAINST ${wName}`,
-                        `MERCY RULE INVOKED: ${wName} ANNIHILATES ${lName}`
+                        `MERCY RULE INVOKED: ${wName} ANNIHILATES ${lName}`,
+                        `UGLY SCENES: ${wName} HUMILIATES ${lName} IN ONE-SIDED AFFAIR`,
+                        `TOTAL COLLAPSE: ${lName} NO-SHOWS AGAINST ${wName}`,
+                        `COMPLETE MISMATCH: ${wName} DISPOSES OF ${lName} WITH EASE`,
+                        `RUTHLESS: ${wName} POURS IT ON A HELPLESS ${lName}`,
+                        `DESTRUCTION: ${wName} VAPORIZES ${lName}`,
+                        `WAVING THE WHITE FLAG: ${lName} SURRENDERS TO ${wName}`
                     ];
                     const bodies = [ 
                         `It was ugly from the opening kickoff. <strong>${wName}</strong> absolutely dismantled ${lName} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, 
                         `A complete demolition. <strong>${wName}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lName} failed to put up any resistance whatsoever.`, 
                         `This wasn't even a contest. <strong>${wName}</strong> violated every rule of sportsmanship, continuing to pour it on ${lName} until the clock hit triple zeroes.`,
                         `A truly humiliating performance from ${lName}. <strong>${wName}</strong> didn't even have to break a sweat, coasting behind ${star.name}'s massive performance.`,
-                        `Someone call a wellness check on ${lName}. They were systematically picked apart by <strong>${wName}</strong> in a brutal, one-sided affair.`
+                        `Someone call a wellness check on ${lName}. They were systematically picked apart by <strong>${wName}</strong> in a brutal, one-sided affair.`,
+                        `Fans were leaving the stadium by halftime. <strong>${wName}</strong> put on a clinic, crushing ${lName} by a truly embarrassing margin.`,
+                        `We advise ${lName} to delete the app for a few days. <strong>${wName}</strong> dragged them up and down the field in a totally lopsided mismatch.`,
+                        `${lName} clearly left their playbook at home. <strong>${wName}</strong> took full advantage, cruising to a massive blowout win.`,
+                        `Total humiliation. <strong>${wName}</strong> didn't even need their bench to absolutely wreck ${lName} this week.`,
+                        `If this was boxing, they would have thrown in the towel. <strong>${wName}</strong> delivered a devastating knockout blow to a completely helpless ${lName} roster.`,
+                        `A complete and total system failure for ${lName}. <strong>${wName}</strong> capitalized on every mistake to secure an easy laugher.`
                     ];
                     html += `<article onclick="openMatchupModal(${blowoutGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-purple-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'blow_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-purple-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1648,14 +1725,25 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `COACHING DISASTER: ${bName} OUTSMARTS THEMSELVES IN THE WORST WAY`,
                         `OVERTHINKING IT: ${bName} BENCHES ${starName} IN CRIMINAL OFFENSE`,
                         `HALL OF SHAME: ${bName} FORGETS HOW TO SET A LINEUP`,
-                        `PAINFUL REGRET: ${maxBenchPts.toFixed(1)} POINTS FROM ${starName} ROTTING ON BENCH`
+                        `PAINFUL REGRET: ${maxBenchPts.toFixed(1)} POINTS FROM ${starName} ROTTING ON BENCH`,
+                        `FIRE THE MANAGER: ${bName} LEAVES VALUABLE POINTS STRANDED`,
+                        `COSTLY MISTAKE: ${starName} GOES OFF WHILE BURIED ON ${bName}'S BENCH`,
+                        `SLEEPING ON TALENT: ${bName} MISSES OUT ON HUGE GAME FROM ${starName}`,
+                        `FANTASY CRIME: ${bName} SHOULD BE ARRESTED FOR BENCHING ${starName}`,
+                        `LEFT ON READ: ${bName} IGNORES ${starName}'S BREAKOUT GAME`,
+                        `SABOTAGE: ${bName} TANKS THEIR OWN WEEK BY BENCHING ${starName}`
                     ];
                     const bodies = [ 
                         `What were you thinking? <strong>${bName}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, 
                         `Congrats to <strong>${bName}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, 
                         `Someone revoke their coaching credentials. <strong>${bName}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.`,
                         `The fantasy gods are punishing <strong>${bName}</strong> for this one. You don't leave ${maxBenchPts.toFixed(2)} points from ${starName} riding the pine without consequences.`,
-                        `Absolute malpractice from the manager's chair. <strong>${bName}</strong> is going to lose sleep over benching ${starName}.`
+                        `Absolute malpractice from the manager's chair. <strong>${bName}</strong> is going to lose sleep over benching ${starName}.`,
+                        `Tinkering on Sunday morning strikes again. <strong>${bName}</strong> sat ${starName} down, and had to watch from the sidelines as they erupted for ${maxBenchPts.toFixed(2)} points.`,
+                        `It's a tough pill to swallow when your bench outscores your starters. <strong>${bName}</strong> is kicking themselves for not giving ${starName} the nod this week.`,
+                        `A rookie mistake by a veteran manager. <strong>${bName}</strong> failed to recognize the matchup and left a golden ${maxBenchPts.toFixed(2)} points stranded on the bench.`,
+                        `This one is going to sting on Tuesday morning. <strong>${bName}</strong> has no one to blame but themselves for leaving ${starName} out of the lineup.`,
+                        `You have to play your studs. <strong>${bName}</strong> got too cute with the lineup construction, leaving a crucial ${maxBenchPts.toFixed(2)} points to wither on the bench.`
                     ];
                     html += `<article onclick="openMatchupModal(${blunderer.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-red-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'blund_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1670,14 +1758,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Name} AND ${t2Name}`,
                         `SNOOZEFEST: ${t1Name} AND ${t2Name} ENGAGE IN A RACE TO THE BOTTOM`,
                         `MUD FIGHT: ${t1Name} BARELY OUT-SUCKS ${t2Name} IN BRUTAL WATCH`,
-                        `PUNTS GALORE: A DISGUSTING DISPLAY OF FANTASY FOOTBALL`
+                        `PUNTS GALORE: A DISGUSTING DISPLAY OF FANTASY FOOTBALL`,
+                        `A GAME ONLY A PUNTER COULD LOVE: ${t1Name} VS ${t2Name}`,
+                        `RACE TO ZERO: ${t1Name} AND ${t2Name} FORGET HOW TO SCORE`,
+                        `UGLY FOOTBALL: ${t1Name} BATTLES ${t2Name} IN A SLOG`,
+                        `OFFENSIVE OUTAGE: NEITHER ${t1Name} NOR ${t2Name} SHOWS UP TO PLAY`,
+                        `PAINFUL TO WATCH: ${t1Name} AND ${t2Name} STINK UP THE JOINT`
                     ];
                     const bodies = [ 
                         `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, 
                         `Did either of these managers even look at their lineups on Sunday? <strong>${t1Name}</strong> and <strong>${t2Name}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, 
                         `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.`,
                         `Both managers should have to issue a public apology for this one. A combined ${minCombined.toFixed(2)} points of pure garbage from <strong>${t1Name}</strong> and <strong>${t2Name}</strong>.`,
-                        `We strongly advise deleting the game tape. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> were equally pathetic this week, rewarding onlookers with nothing but pain.`
+                        `We strongly advise deleting the game tape. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> were equally pathetic this week, rewarding onlookers with nothing but pain.`,
+                        `A truly disgusting display. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> both failed to reach basic fantasy competency, stumbling to a combined ${minCombined.toFixed(2)} points.`,
+                        `Nobody wanted to win this one. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> traded punts all weekend in what will surely go down as the ugliest game of the year.`,
+                        `The less said about this matchup, the better. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> completely flatlined for a collective ${minCombined.toFixed(2)} points.`,
+                        `This game set fantasy football back a decade. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> subjected us to a historically bad scoring performance.`,
+                        `Neither team deserved to walk away with a W. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> engaged in a sloppy, low-scoring mud fight that tested everyone's patience.`
                     ];
                     html += `<article onclick="openMatchupModal(${toiletGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-orange-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'toilet_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-orange-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
                     highlightCount++;
@@ -1702,7 +1800,6 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                 if (phase === "PREVIEW") {
                     let piDiff = Math.abs(pi1 - pi2);
                     if (piDiff > 20) {
-                        let fav = pi1 > pi2 ? t1Link : t2Link; let dog = pi1 < pi2 ? t1Link : t2Link;
                         let favName = pi1 > pi2 ? t1Name : t2Name; let dogName = pi1 < pi2 ? t1Name : t2Name;
                         
                         const pTitles = [
@@ -1710,14 +1807,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `UPSET ALERT: CAN ${dogName} STUN ${favName}?`,
                             `UPHILL BATTLE: ${dogName} FACES MASSIVE TEST AGAINST ${favName}`,
                             `HEAVY FAVORITE: ${favName} EXPECTED TO ROLL OVER ${dogName}`,
-                            `MISMATCH ON PAPER: ${favName} PROJECTED TO DOMINATE ${dogName}`
+                            `MISMATCH ON PAPER: ${favName} PROJECTED TO DOMINATE ${dogName}`,
+                            `TALL TASK: ${dogName} TRIES TO SLAY ${favName}`,
+                            `MISMATCH OF THE WEEK: ${favName} DRAWS FAVORABLE MATCHUP AGAINST ${dogName}`,
+                            `AGAINST THE ODDS: ${dogName} HOPING FOR A MIRACLE OVER ${favName}`,
+                            `CLEAR ADVANTAGE: ${favName} LOOKS TO CRUISE PAST ${dogName}`,
+                            `DANGEROUS TERRITORY: ${dogName} BRACES FOR ${favName}`
                         ];
                         const pBodies = [
-                            `The power index heavily favors ${fav} in this one, but anything can happen on any given Sunday. ${dog} will need a massive over-performance to pull off the upset.`,
-                            `Projections show a clear advantage for ${fav}. If ${dog} wants to walk away with a win, they will need their stars to vastly exceed expectations.`,
-                            `${fav} enters this matchup with all the momentum. ${dog} has their work cut out for them if they want to avoid adding another tally to the loss column.`,
-                            `The numbers don't lie. ${fav} holds a significant edge in True Power Index, leaving ${dog} desperate for a miracle on the waiver wire or a boom performance.`,
-                            `Expectations are low for ${dog} as they prepare to face a loaded ${fav} roster. This could get ugly early if the projections hold true.`
+                            `The power index heavily favors ${favName} in this one, but anything can happen on any given Sunday. ${dogName} will need a massive over-performance to pull off the upset.`,
+                            `Projections show a clear advantage for ${favName}. If ${dogName} wants to walk away with a win, they will need their stars to vastly exceed expectations.`,
+                            `${favName} enters this matchup with all the momentum. ${dogName} has their work cut out for them if they want to avoid adding another tally to the loss column.`,
+                            `The numbers don't lie. ${favName} holds a significant edge in True Power Index, leaving ${dogName} desperate for a miracle on the waiver wire or a boom performance.`,
+                            `Expectations are low for ${dogName} as they prepare to face a loaded ${favName} roster. This could get ugly early if the projections hold true.`,
+                            `${dogName} is entering a buzzsaw this week. ${favName} has been firing on all cylinders, making this a daunting task for the underdog.`,
+                            `It's hard to bet against ${favName} here. They severely outclass ${dogName} in almost every metric, setting the stage for a potential blowout.`,
+                            `Fantasy football can be cruel. ${dogName} needs a completely flawless execution of their lineup to even have a prayer against ${favName}.`,
+                            `A classic trap game for ${favName}. They are widely expected to dominate ${dogName}, but they can't afford to get caught looking ahead to next week.`,
+                            `${favName} should be able to write this one down in pen. ${dogName} lacks the firepower required to keep pace in this lopsided affair.`
                         ];
                         cardTitle = pickSeeded(pTitles, saltTitle, week);
                         cardBody = pickSeeded(pBodies, saltBody, week);
@@ -1728,14 +1835,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `HEAVYWEIGHT BOUT: ${t1Name} TAKES ON ${t2Name}`,
                             `CLASH OF THE TITANS: ${t1Name} BATTLES ${t2Name}`,
                             `BLOCKBUSTER MATCHUP: ${t1Name} GOES HEAD-TO-HEAD WITH ${t2Name}`,
-                            `MARQUEE MATCHUP: ${t1Name} AND ${t2Name} FIGHT FOR SUPREMACY`
+                            `MARQUEE MATCHUP: ${t1Name} AND ${t2Name} FIGHT FOR SUPREMACY`,
+                            `BATTLE OF THE BEST: ${t1Name} PROBES ${t2Name}`,
+                            `ELITE SHOWDOWN: ${t1Name} VS ${t2Name}`,
+                            `MUST-WATCH TV: ${t1Name} LOCKS HORNS WITH ${t2Name}`,
+                            `PLAYOFF PREVIEW: ${t1Name} FACES OFF AGAINST ${t2Name}`,
+                            `STAR-STUDDED AFFAIR: ${t1Name} COLLIDES WITH ${t2Name}`
                         ];
                         const pBodies = [
                             `Two of the strongest rosters in the FFF face off. This is a true heavyweight bout that will test the depth and star power of both managers.`,
-                            `Grab your popcorn. ${t1Link} and ${t2Link} are both sporting elite True Power Indexes, guaranteeing fireworks when the slate kicks off.`,
-                            `This matchup features two managers at the absolute top of their game. Expect a high-scoring shootout between ${t1Link} and ${t2Link} this week.`,
-                            `Playoff implications are massive as ${t1Link} meets ${t2Link}. When two juggernauts meet, every single starting spot on the roster matters.`,
-                            `You couldn't ask for a better prime-time matchup. ${t1Link} and ${t2Link} are primed to put on an absolute clinic in fantasy football excellence.`
+                            `Grab your popcorn. ${t1Name} and ${t2Name} are both sporting elite True Power Indexes, guaranteeing fireworks when the slate kicks off.`,
+                            `This matchup features two managers at the absolute top of their game. Expect a high-scoring shootout between ${t1Name} and ${t2Name} this week.`,
+                            `Playoff implications are massive as ${t1Name} meets ${t2Name}. When two juggernauts meet, every single starting spot on the roster matters.`,
+                            `You couldn't ask for a better prime-time matchup. ${t1Name} and ${t2Name} are primed to put on an absolute clinic in fantasy football excellence.`,
+                            `This is the type of matchup that defines a season. ${t1Name} and ${t2Name} both carry elite point-scoring potential into what should be a classic.`,
+                            `Expect heavy offensive output. Both ${t1Name} and ${t2Name} have the firepower to completely break the slate this week.`,
+                            `The margin for error is zero. ${t1Name} and ${t2Name} are so evenly matched at the top of the leaderboards that one injury could swing the whole tie.`,
+                            `It's a battle for bragging rights and playoff seeding as the high-flying ${t1Name} roster prepares to duel with the lethal ${t2Name} squad.`,
+                            `We are in for a treat. ${t1Name} and ${t2Name} boast two of the most terrifying lineups in the league, making this a true clash of titans.`
                         ];
                         cardTitle = pickSeeded(pTitles, saltTitle, week);
                         cardBody = pickSeeded(pBodies, saltBody, week);
@@ -1746,14 +1863,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `TOSS-UP: ${t1Name} AND ${t2Name} TOO CLOSE TO CALL`,
                             `DOWN TO THE WIRE: PROJECTIONS DEADLOCKED FOR ${t1Name} VS ${t2Name}`,
                             `HARD TO PREDICT: ${t1Name} MEETS ${t2Name} IN GRUDGE MATCH`,
-                            `DEAD HEAT: ${t1Name} BATTLES ${t2Name} FOR SURVIVAL`
+                            `DEAD HEAT: ${t1Name} BATTLES ${t2Name} FOR SURVIVAL`,
+                            `ANYONE'S GAME: ${t1Name} FACES ${t2Name}`,
+                            `COIN FLIP MATCHUP: ${t1Name} TAKES ON ${t2Name}`,
+                            `NARROW MARGINS: ${t1Name} DUELS WITH ${t2Name}`,
+                            `MIDCARD SCRAP: ${t1Name} AND ${t2Name} SEEK VITAL WIN`,
+                            `GRINDING IT OUT: ${t1Name} PREPARES FOR ${t2Name}`
                         ];
                         const pBodies = [
-                            `The projections suggest a coin-flip. Both ${t1Link} and ${t2Link} are coming into this week looking for a crucial victory to shift their momentum.`,
-                            `The True Power Index separates these two teams by razor-thin margins. ${t1Link} and ${t2Link} will likely be sweating this out until Monday night.`,
-                            `A true toss-up. Neither ${t1Link} nor ${t2Link} holds a distinct advantage on paper, making this a matchup purely determined by who gets lucky on Sunday.`,
-                            `This one is entirely too close to call. ${t1Link} and ${t2Link} match up perfectly, making a single boom or bust performance the likely deciding factor.`,
-                            `With nearly identical metrics, ${t1Link} takes on ${t2Link} in what should be a gritty, highly-contested battle for positioning in the standings.`
+                            `The projections suggest a coin-flip. Both ${t1Name} and ${t2Name} are coming into this week looking for a crucial victory to shift their momentum.`,
+                            `The True Power Index separates these two teams by razor-thin margins. ${t1Name} and ${t2Name} will likely be sweating this out until Monday night.`,
+                            `A true toss-up. Neither ${t1Name} nor ${t2Name} holds a distinct advantage on paper, making this a matchup purely determined by who gets lucky on Sunday.`,
+                            `This one is entirely too close to call. ${t1Name} and ${t2Name} match up perfectly, making a single boom or bust performance the likely deciding factor.`,
+                            `With nearly identical metrics, ${t1Name} takes on ${t2Name} in what should be a gritty, highly-contested battle for positioning in the standings.`,
+                            `Both of these rosters are desperate for a win. ${t1Name} and ${t2Name} match up in a classic trap game where either side could easily take it.`,
+                            `Expect a close, low-scoring affair. ${t1Name} and ${t2Name} are both searching for an identity, making this a pure battle of attrition.`,
+                            `It's going to come down to the flex spots. ${t1Name} and ${t2Name} are deadlocked in the projections, placing massive importance on the deep bench.`,
+                            `This matchup might fly under the radar, but it's hugely important. ${t1Name} and ${t2Name} are jockeying for position in the middle of the pack.`,
+                            `Flip a coin. The algorithm sees virtually no separation between ${t1Name} and ${t2Name} heading into the Sunday slate.`
                         ];
                         cardTitle = pickSeeded(pTitles, saltTitle, week);
                         cardBody = pickSeeded(pBodies, saltBody, week);
@@ -1770,14 +1897,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                         `IN PROGRESS: ${leadName} OUT FRONT`,
                         `CURRENT SCORE: ${leadName} HAS THE EDGE`,
                         `MATCHUP LIVE: ${leadName} PACING ${trailName}`,
-                        `WEEK ${week} ACTION: ${leadName} PULLING AHEAD`
+                        `WEEK ${week} ACTION: ${leadName} PULLING AHEAD`,
+                        `PULLING AWAY: ${leadName} BUILDS A LEAD ON ${trailName}`,
+                        `SUNDAY ACTION: ${leadName} EDGING OUT ${trailName}`,
+                        `REAL-TIME TRACKER: ${leadName} IN CONTROL OVER ${trailName}`,
+                        `ON THE BOARD: ${leadName} STARTING STRONG AGAINST ${trailName}`,
+                        `AS IT STANDS: ${leadName} HOLDING OFF ${trailName}`
                     ];
                     const lBodies = [
                         `As the action unfolds, ${leadLink} is currently holding a ${diff.toFixed(2)}-point lead over ${trailLink}.`,
                         `${leadLink} is pacing the matchup right now with ${leader.points.toFixed(2)} points, but there is still plenty of football left to play.`,
                         `The matchup is live. ${leadLink} (${leader.points.toFixed(2)}) is currently edging out ${trailLink} (${trailer.points.toFixed(2)}).`,
                         `It's a developing situation on the scoreboard. ${leadLink} has the current advantage, but ${trailLink} remains in striking distance.`,
-                        `Points are on the board. ${leadLink} has established an early lead of ${diff.toFixed(2)} points over ${trailLink}.`
+                        `Points are on the board. ${leadLink} has established an early lead of ${diff.toFixed(2)} points over ${trailLink}.`,
+                        `${leadLink} is off to a solid start, sitting on ${leader.points.toFixed(2)} points while ${trailLink} tries to rally their remaining players.`,
+                        `The early games have favored ${leadLink}, leaving ${trailLink} with a ${diff.toFixed(2)}-point deficit to overcome in the afternoon.`,
+                        `It's a tight race so far, but ${leadLink} is managing to keep their nose in front of ${trailLink} with ${leader.points.toFixed(2)} points.`,
+                        `${leadLink} is dictating the pace of this matchup, forcing ${trailLink} to rely on their late-game options to close the gap.`,
+                        `Things are heating up on the scoreboard. ${leadLink} is currently fending off ${trailLink} with a slim ${diff.toFixed(2)} point margin.`
                     ];
                     cardTitle = pickSeeded(lTitles, saltTitle, week);
                     cardBody = pickSeeded(lBodies, saltBody, week);
@@ -1794,14 +1931,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `PHOTO FINISH: ${wName} EDGES OUT ${lName}`,
                             `BY A HAIR: ${wName} SQUEAKS PAST ${lName}`,
                             `HEARTBREAKER: ${lName} FALLS SHORT TO ${wName}`,
-                            `NAIL-BITER: ${wName} ESCAPES WITH THE W`
+                            `NAIL-BITER: ${wName} ESCAPES WITH THE W`,
+                            `THRILLER: ${wName} OUTLASTS ${lName} IN TIGHT CONTEST`,
+                            `TOO CLOSE TO CALL: ${wName} SURVIVES LATE PUSH FROM ${lName}`,
+                            `ONE PLAY AWAY: ${lName} LOSES HEARTBREAKER TO ${wName}`,
+                            `MARGIN OF ERROR: ZERO. ${wName} DEFEATS ${lName}`,
+                            `CLUTCH GENE: ${wName} SEALS NARROW WIN OVER ${lName}`
                         ];
                         const rBodies = [
                             `A stressful, back-and-forth affair ended with ${wLink} edging out ${lLink} by just ${diff.toFixed(2)} points. Every lineup decision mattered.`,
                             `${lLink} is left wondering what could have been after falling to ${wLink} in a devastatingly close ${diff.toFixed(2)} point loss.`,
                             `${wLink} held on for dear life to secure the victory over ${lLink}. A margin of ${diff.toFixed(2)} points means one dropped pass was the difference.`,
                             `An absolute cardiac event. ${wLink} escaped with the win, leaving ${lLink} frustrated by a razor-thin ${diff.toFixed(2)} point defeat.`,
-                            `You can't ask for a closer matchup. ${wLink} managed to scrape by ${lLink} with a mere ${diff.toFixed(2)} point advantage when the dust settled.`
+                            `You can't ask for a closer matchup. ${wLink} managed to scrape by ${lLink} with a mere ${diff.toFixed(2)} point advantage when the dust settled.`,
+                            `This one came down to the final whistle. ${wLink} showed incredible resilience to hold off a charging ${lLink} roster.`,
+                            `Absolute devastation for ${lLink}. They lost a complete toss-up game to ${wLink} by a heartbreaking ${diff.toFixed(2)} points.`,
+                            `A vital victory for ${wLink}. They managed the narrowest of wins against ${lLink}, securing the result by just ${diff.toFixed(2)} points.`,
+                            `Fantasy football is a game of inches, and ${wLink} had just enough of them to sneak past ${lLink} on Monday night.`,
+                            `${lLink} played a great game, but ${wLink} played just a tiny bit better, walking away with a grueling ${diff.toFixed(2)}-point triumph.`
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
@@ -1813,14 +1960,24 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `BLOWOUT: ${wName} DISMANTLES ${lName}`,
                             `MASSACRE: ${wName} DESTROYS ${lName}`,
                             `LAUGHER: ${wName} MAKES QUICK WORK OF ${lName}`,
-                            `ABSOLUTE BEATDOWN: ${wName} EMBARRASSES ${lName}`
+                            `ABSOLUTE BEATDOWN: ${wName} EMBARRASSES ${lName}`,
+                            `ROUT: ${wName} HUMILIATES ${lName} IN ONE-SIDED AFFAIR`,
+                            `SHELLACKING: ${lName} HAS NO ANSWERS FOR ${wName}`,
+                            `WOODSHED: ${wName} POURS IT ON AGAINST ${lName}`,
+                            `NOT EVEN CLOSE: ${wName} DOMINATES ${lName}`,
+                            `A COMPLETE JOKE: ${wName} CRUSHES ${lName} WITH EASE`
                         ];
                         const rBodies = [
                             `${wLink} put on an absolute clinic, cruising to a comfortable ${diff.toFixed(2)}-point victory. ${lLink} never really stood a chance in this one.`,
                             `It was over before it started. ${wLink} steamrolled ${lLink}, opening up a massive ${diff.toFixed(2)} point lead and never looking back.`,
                             `A thorough dismantling. ${wLink} poured it on against ${lLink}, securing an easy blowout victory by ${diff.toFixed(2)} points.`,
                             `${lLink} had absolutely no answers for ${wLink} this week, getting systematically crushed in a non-competitive ${diff.toFixed(2)} point loss.`,
-                            `Total dominance. ${wLink} put ${lLink} out of their misery early, riding a massive lead to an eventual ${diff.toFixed(2)} point blowout.`
+                            `Total dominance. ${wLink} put ${lLink} out of their misery early, riding a massive lead to an eventual ${diff.toFixed(2)} point blowout.`,
+                            `${wLink} sent a message to the rest of the league with this one. They completely obliterated ${lLink} in a ${diff.toFixed(2)}-point drubbing.`,
+                            `It's back to the drawing board for ${lLink}. They were hopelessly outmatched by ${wLink}, dropping the matchup by ${diff.toFixed(2)} points.`,
+                            `${lLink} failed to show up. ${wLink} took full advantage, running up the score for a laughably easy win.`,
+                            `A certified beatdown. ${wLink} treated ${lLink} like a practice squad, securing the blowout win with zero stress.`,
+                            `${wLink} had everything clicking this week, which unfortunately resulted in a humiliating ${diff.toFixed(2)} point defeat for ${lLink}.`
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
@@ -1832,18 +1989,28 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                             `GETS IT DONE: ${wName} HANDLES ${lName}`,
                             `SOLID VICTORY: ${wName} OUTLASTS ${lName}`,
                             `SECURES THE W: ${wName} BEATS ${lName}`,
-                            `CRUISING: ${wName} PULLS AWAY FROM ${lName}`
+                            `CRUISING: ${wName} PULLS AWAY FROM ${lName}`,
+                            `COMFORTABLE WIN: ${wName} TAKES DOWN ${lName}`,
+                            `METHODICAL: ${wName} SECURES RESULT OVER ${lName}`,
+                            `CLEAN SHEET: ${wName} ADDS ANOTHER WIN AGAINST ${lName}`,
+                            `JOB DONE: ${wName} MANAGES MATCHUP AGAINST ${lName}`,
+                            `NO SWEAT: ${wName} DISPATCHES ${lName}`
                         ];
                         const rBodies = [
                             `${wLink} executed their gameplan and secured a solid win over ${lLink}, putting up ${winner.points.toFixed(2)} points to lock in the victory.`,
                             `A clean, respectable victory for ${wLink}, who comfortably outpaced ${lLink} by ${diff.toFixed(2)} points to add another win to their record.`,
                             `${wLink} proved to be too much for ${lLink} this week. They methodically built a lead and finished with ${winner.points.toFixed(2)} total points.`,
                             `Nothing flashy, just good fantasy football. ${wLink} did what they needed to do to secure a nice ${diff.toFixed(2)} point win against ${lLink}.`,
-                            `${lLink} put up a decent fight, but ${wLink} ultimately pulled away late to secure the matchup with a final score of ${winner.points.toFixed(2)}.`
+                            `${lLink} put up a decent fight, but ${wLink} ultimately pulled away late to secure the matchup with a final score of ${winner.points.toFixed(2)}.`,
+                            `${wLink} leaned on a balanced roster to methodically dismantle ${lLink}, cruising to a comfortable ${diff.toFixed(2)}-point margin.`,
+                            `A solid, drama-free week for ${wLink}. They handled their business against ${lLink} and walked away with a clean ${winner.points.toFixed(2)} points.`,
+                            `${lLink} hung around for a while, but ${wLink} simply had too much firepower down the stretch, securing the win by ${diff.toFixed(2)} points.`,
+                            `This was a textbook victory. ${wLink} never really looked in danger, managing the gap over ${lLink} perfectly.`,
+                            `${wLink} picks up a crucial win, outscoring ${lLink} ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} in a fundamentally sound performance.`
                         ];
                         cardTitle = pickSeeded(rTitles, saltTitle, week);
                         cardBody = pickSeeded(rBodies, saltBody, week);
-                        tagColor = (phase === "LIVE") ? "text-red-500" : "text-green-500";
+                        tagColor = "text-green-500";
                     }
                 }
 
@@ -1865,550 +2032,14 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
                     <svg id="matchup-recap-chevron-${week}" class="w-5 h-5 chevron text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <div id="matchup-recap-content-${week}" class="draft-accordion matchup-recap-acc">
-function generateAlgorithmicHeadlines(matchups, week) {
-    const feed = document.getElementById('news-feed');
-    if(matchups.length === 0) { 
-        feed.innerHTML = `<div class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No matchup data available for this week.</p></div>`; 
-        return; 
-    }
+                    <div class="grid grid-cols-1 gap-3 pt-3">
+                        ${allMatchupsHtml}
+                    </div>
+                </div>
+            </div>`;
 
-    const totalWeekPts = matchups.reduce((sum, g) => sum + (g[0].points || 0) + (g[1].points || 0), 0);
-    const d = new Date();
-    const day = d.getDay(); 
-    const isCurrentWeek = (parseInt(week) === parseInt(actualSleeperWeek));
-    
-    let phase = "RECAP";
-    if (parseInt(week) > parseInt(actualSleeperWeek)) {
-        phase = "PREVIEW";
-    } else if (isCurrentWeek) {
-        if (totalWeekPts === 0) {
-            phase = "PREVIEW";
-        } else if (day >= 4 || day === 0 || day === 1) {
-            phase = "LIVE";
-        } else {
-            phase = "RECAP";
+            feed.innerHTML = (html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`) + accordionHtml;
         }
-    }
-
-    const getTName = (rId) => getTeamName(rostersData.find(r => r.roster_id === rId)?.owner_id);
-    const getTPI = (rId) => {
-        let oId = rostersData.find(r => r.roster_id === rId)?.owner_id;
-        return globalPowerRankings[oId]?.score || 0;
-    };
-
-    let html = "";
-    let highlightCount = 0;
-
-    if (phase === "PREVIEW") {
-        let highestCombinedPI = 0;
-        let motw = null;
-        matchups.forEach(g => {
-            let pi1 = getTPI(g[0].roster_id), pi2 = getTPI(g[1].roster_id);
-            if (pi1 + pi2 > highestCombinedPI) { highestCombinedPI = pi1 + pi2; motw = g; }
-        });
-        if (motw) {
-            let t1Name = getTName(motw[0].roster_id), t2Name = getTName(motw[1].roster_id);
-            let titles = [
-                `MATCHUP OF THE WEEK: ${t1Name} CLASHES WITH ${t2Name}`, 
-                `HEAVYWEIGHT SHOWDOWN: ${t1Name} TAKES ON ${t2Name}`, 
-                `CAN'T MISS ACTION: ${t1Name} BATTLES ${t2Name}`,
-                `PRIME TIME: ${t1Name} AND ${t2Name} SET FOR WAR`,
-                `GAME OF THE WEEK: ${t1Name} SQUARES OFF AGAINST ${t2Name}`,
-                `THE MAIN EVENT: ${t1Name} VS ${t2Name}`,
-                `HIGH STAKES: ${t1Name} AND ${t2Name} COLLIDE`,
-                `TITLE ELIMINATOR: ${t1Name} FACES ${t2Name}`,
-                `POWER RANKINGS TEST: ${t1Name} MEETS ${t2Name}`,
-                `GRUDGE MATCH: ${t1Name} LOOKS TO TOPPLE ${t2Name}`
-            ];
-            let bodies = [
-                `All eyes are on this highly anticipated matchup. Based on current power indexes, this is expected to be a grueling battle between two of the league's top rosters.`, 
-                `This is what fantasy football is all about. ${t1Name} and ${t2Name} are set for a monumental collision that could shake up the playoff picture.`, 
-                `Set your lineups and grab your popcorn. ${t1Name} meets ${t2Name} in a matchup that has massive implications for the FFF power rankings.`,
-                `Projections are flying out the window for this one. When ${t1Name} and ${t2Name} meet on the gridiron, expect absolute fireworks from start to finish.`,
-                `The algorithm has flagged this as the most competitive matchup of the slate. Both ${t1Name} and ${t2Name} bring elite talent to the table this week.`,
-                `It doesn't get much better than this. ${t1Name} will attempt to assert dominance over ${t2Name} in a matchup that has the whole league watching.`,
-                `Both managers have been putting in the work on the waiver wire, and it all comes down to this. ${t1Name} vs ${t2Name} is going to be an absolute thriller.`,
-                `With playoff seeding always on the line, ${t1Name} and ${t2Name} cannot afford to leave any points on the bench in this marquee matchup.`,
-                `Get ready for a shootout. The data suggests a massive point total as ${t1Name} goes head-to-head with a loaded ${t2Name} squad.`,
-                `This is the matchup the schedule-makers dream about. ${t1Name} and ${t2Name} are prepared for a four-quarter bloodbath.`
-            ];
-            html += `<article onclick="openMatchupModal(${motw[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-cyan-700 shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6 cursor-pointer hover:border-cyan-400 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'prev_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • PREVIEW</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'prev_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-    } else if (phase === "LIVE") {
-        let highestPts = 0; let liveLeader = null; let star = null;
-        matchups.forEach(g => {
-            if(g[0].points > highestPts) { highestPts = g[0].points; liveLeader = g[0]; star = getStarPlayer(g[0]); }
-            if(g[1].points > highestPts) { highestPts = g[1].points; liveLeader = g[1]; star = getStarPlayer(g[1]); }
-        });
-
-        if (liveLeader && highestPts > 0) {
-            let tName = getTName(liveLeader.roster_id);
-            let titles = [
-                `LIVE LEADER: ${tName} SETTING THE PACE`,
-                `CURRENTLY DOMINATING: ${tName} OUT FRONT`,
-                `WEEK ${week} PACESETTER: ${tName} LEADS THE PACK`,
-                `CATCH THEM IF YOU CAN: ${tName} JUMPS OUT EARLY`,
-                `ON FIRE: ${tName} SCORCHING THE SCOREBOARD`,
-                `IN THE DRIVER'S SEAT: ${tName} CONTROLS THE WEEK`,
-                `EARLY ONSLAUGHT: ${tName} SHOWING NO MERCY`,
-                `HOT START: ${tName} PUTTING THE LEAGUE ON NOTICE`,
-                `MID-WEEK UPDATE: ${tName} COMMANDS THE LEAD`,
-                `UNTOUCHABLE SO FAR: ${tName} RACKING UP POINTS`
-            ];
-            let bodies = [
-                `As the action unfolds, <strong>${tName}</strong> is currently holding a commanding presence with ${highestPts.toFixed(2)} points.`,
-                `The week is still young, but <strong>${tName}</strong> has jumped out to an early lead, currently boasting ${highestPts.toFixed(2)} points.`,
-                `${star && star.pts > 0 ? `Fueled by ${star.name}'s ${star.pts.toFixed(2)} points, ` : ''}<strong>${tName}</strong> is currently holding the top spot for Week ${week}.`,
-                `It's looking like a great week to be a fan of <strong>${tName}</strong>. They are currently leading all scorers with ${highestPts.toFixed(2)} points on the board.`,
-                `Nobody is having a better Sunday than <strong>${tName}</strong>. ${star && star.pts > 0 ? `${star.name} has been heavily relied upon to get them to ` : `They are sitting pretty at `}${highestPts.toFixed(2)} points.`,
-                `The rest of the league is playing catch-up. <strong>${tName}</strong> has exploded out of the gates for ${highestPts.toFixed(2)} points.`,
-                `Through the early slate of games, <strong>${tName}</strong> is the team to beat, setting the benchmark at ${highestPts.toFixed(2)} points.`,
-                `The fantasy gods are smiling on <strong>${tName}</strong> right now. They've amassed ${highestPts.toFixed(2)} points and show no signs of slowing down.`,
-                `If the week ended right now, <strong>${tName}</strong> would be taking home the hardware. They lead the FFF with ${highestPts.toFixed(2)} points.`,
-                `Absolute domination in progress. <strong>${tName}</strong> is running up the score, currently sitting at ${highestPts.toFixed(2)} total points.`
-            ];
-            html += `<article onclick="openMatchupModal(${liveLeader.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 overflow-hidden cursor-pointer hover:border-red-500 transition group relative">${star && star.id && star.pts > 0 ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-red-500 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'live_title', week)}</h2><p class="text-red-500 text-xs font-bold mb-4 tracking-widest uppercase animate-pulse">WEEK ${week} AUTOREPORT • LIVE UPDATE</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'live_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-    } else {
-        let highGame = null, maxPts = 0, closeGame = null, minDiff = 999, blowoutGame = null, maxDiff = 0;
-        let toiletGame = null, minCombined = 9999, blunderer = null, blunderPlayerId = null, maxBenchPts = 0;
-
-        matchups.forEach(g => {
-            const diff = Math.abs(g[0].points - g[1].points); const gMax = Math.max(g[0].points, g[1].points);
-            const comb = g[0].points + g[1].points;
-            
-            if (gMax > maxPts) { maxPts = gMax; highGame = g; }
-            if (diff < minDiff && diff > 0) { minDiff = diff; closeGame = g; }
-            if (diff > maxDiff) { maxDiff = diff; blowoutGame = g; }
-            if (comb < minCombined && comb > 0) { minCombined = comb; toiletGame = g; }
-
-            [g[0], g[1]].forEach(team => {
-                let roster = rostersData.find(r => r.roster_id === team.roster_id);
-                if(!roster || !roster.players || !team.starters) return;
-                let bench = roster.players.filter(p => !team.starters.includes(p));
-                bench.forEach(pid => {
-                    let pts = team.players_points ? (team.players_points[pid] || 0) : 0;
-                    if(pts > maxBenchPts) { maxBenchPts = pts; blunderer = team; blunderPlayerId = pid; }
-                });
-            });
-        });
-
-        if(highGame && highlightCount < 3) {
-            let winner = highGame[0].points > highGame[1].points ? highGame[0] : highGame[1]; let loser = highGame[0].points > highGame[1].points ? highGame[1] : highGame[0];
-            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
-            
-            const titles = [ 
-                `JUGGERNAUT: ${star.name} DROPS ${star.pts.toFixed(1)} TO PROPEL ${wName}`, 
-                `TOTAL DOMINATION: ${star.name} CARRIES ${wName} TO A MONSTROUS ${winner.points.toFixed(2)} PTS`, 
-                `OFFENSIVE CLINIC: ${wName} PUTS ON A MASTERCLASS OVER ${lName}`,
-                `UNSTOPPABLE FORCE: ${wName} CATCHES FIRE, LEAVES ${lName} IN THE DUST`,
-                `SCORING EXPLOSION: ${star.name} ERUPTS AS ${wName} SETS THE LEAGUE ON FIRE`,
-                `NO CEILING: ${wName} HITS ${winner.points.toFixed(2)} PTS IN RUTHLESS BEATDOWN OF ${lName}`,
-                `ABSOLUTE UNIT: ${wName} CRUSHES COMPETITION WITH WEEK'S HIGH SCORE`,
-                `RECORD PACE: ${wName} DEMOLISHES ${lName} WITH OFFENSIVE FIREPOWER`,
-                `LIGHTING UP THE SCOREBOARD: ${wName} DROPS A HAMMER ON THE LEAGUE`,
-                `PEAK PERFORMANCE: ${wName} FLIES HIGH TO ${winner.points.toFixed(2)} POINTS`
-            ];
-            const bodies = [ 
-                `Nobody was stopping <strong>${wName}</strong> this week. Fueled by a massive ${star.pts.toFixed(2)}-point performance from ${star.name}, they secured the league's highest score (${winner.points.toFixed(2)}), leaving ${lName} (${loser.points.toFixed(2)}) completely in the dust.`, 
-                `${lName} got completely rolled over. <strong>${wName}</strong> showed zero mercy, riding ${star.name}'s explosive ${star.pts.toFixed(2)} points to take the high score crown of the week.`, 
-                `A certified blowout display. <strong>${wName}</strong> set the bar high across the FFF, getting an absolute masterclass from ${star.name} (${star.pts.toFixed(2)} pts) to leave ${lName} shell-shocked.`,
-                `Every manager's worst nightmare. <strong>${wName}</strong> clicked on all cylinders, riding ${star.name} to an insurmountable ${winner.points.toFixed(2)} points.`,
-                `It's a miracle the servers didn't crash from all the points <strong>${wName}</strong> scored. ${star.name} went nuclear to guarantee the victory over ${lName}.`,
-                `This is what a perfectly managed roster looks like. <strong>${wName}</strong> obliterated their projections, coasting to ${winner.points.toFixed(2)} points while ${lName} watched helplessly.`,
-                `Someone check <strong>${wName}</strong> for performance-enhancing algorithms. They utterly destroyed ${lName} with a slate-breaking ${winner.points.toFixed(2)} total points.`,
-                `A true offensive clinic. <strong>${wName}</strong> got a massive ${star.pts.toFixed(2)} point lift from ${star.name} to comfortably secure the week's highest score.`,
-                `There was never a doubt. <strong>${wName}</strong> jumped out early and never looked back, burying ${lName} in a barrage of fantasy points.`,
-                `Send condolences to ${lName}. They had the misfortune of running into <strong>${wName}</strong> on a week where their entire roster caught fire for ${winner.points.toFixed(2)} points.`
-            ];
-            html += `<article onclick="openMatchupModal(${highGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 overflow-hidden cursor-pointer hover:border-cyan-500 transition group relative">${star.id ? `<img src="https://sleepercdn.com/content/nfl/players/thumb/${star.id}.jpg" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-cyan-400 float-right ml-4 mb-2 object-cover relative z-10" onerror="this.style.display='none'">` : ''}<h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'jug_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'jug_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-
-        if(closeGame && closeGame !== highGame && minDiff < 15 && highlightCount < 3) {
-            let winner = closeGame[0].points > closeGame[1].points ? closeGame[0] : closeGame[1]; let loser = closeGame[0].points > closeGame[1].points ? closeGame[1] : closeGame[0];
-            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
-
-            const titles = [ 
-                `NAIL-BITER: ${wName} SURVIVES BY ${minDiff.toFixed(2)} OVER ${lName}`, 
-                `HEARTBREAK IN THE FFF: ${lName} COMES UP JUST SHORT TO ${wName}`, 
-                `DOWN TO THE WIRE: ${star.name} DELIVERS CLUTCH FINISH FOR ${wName}`,
-                `PHOTO FINISH: ${wName} ESCAPES WITH THE NARROWEST OF VICTORIES`,
-                `EVERY YARD MATTERS: ${wName} EDGES OUT ${lName} BY RAZOR-THIN MARGIN`,
-                `CARDIAC ARREST: ${wName} SURVIVES LATE PUSH FROM ${lName}`,
-                `TRENCH WARFARE: ${wName} OUTLASTS ${lName} IN A GRIND`,
-                `BY THE SKIN OF THEIR TEETH: ${wName} HANGS ON AGAINST ${lName}`,
-                `INSTANT CLASSIC: ${wName} PREVAILS IN A THRILLER OVER ${lName}`,
-                `TOO CLOSE FOR COMFORT: ${wName} SECURES NARROW W AGAINST ${lName}`
-            ];
-            const bodies = [ 
-                `Talk about a high-stress finish. <strong>${wName}</strong> barely escaped with their lives, edging out ${lName} by a razor-thin margin of ${minDiff.toFixed(2)} points. Every single yard counted in this absolute cardiac finish.`, 
-                `An agonizing finish for ${lName}. <strong>${wName}</strong> dragged themselves across the finish line with a ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} victory, sealed by ${star.name}'s ${star.pts.toFixed(2)} points.`, 
-                `The matchup of the week lived up to the hype. <strong>${wName}</strong> survived the scare thanks to ${star.name} clutching up with ${star.pts.toFixed(2)} points while ${lName} is left wondering what could have been.`,
-                `Neither team deserved to lose this one. <strong>${wName}</strong> held on by the skin of their teeth, leaving ${lName} utterly devastated by the narrow ${minDiff.toFixed(2)}-point margin.`,
-                `Check their blood pressure. <strong>${wName}</strong> survives an absolute thriller, heavily relying on ${star.name}'s heroics to seal the win over ${lName}.`,
-                `This is why you play to the final whistle. A late swing pushed <strong>${wName}</strong> just barely past ${lName} to steal a ${diff.toFixed(2)}-point victory.`,
-                `Absolutely brutal for ${lName}. They fought tooth and nail, only to watch <strong>${wName}</strong> escape with a microscopic ${diff.toFixed(2)} point win.`,
-                `A single dropped pass, one missed field goal—that was the difference here. <strong>${wName}</strong> survives a gritty battle against a resilient ${lName} squad.`,
-                `Matches like this are what define a fantasy season. <strong>${wName}</strong> clutched up when it mattered most to put away ${lName} in an instant classic.`,
-                `Sweat was poured, tears were shed. <strong>${wName}</strong> finally took down ${lName} in a back-and-forth slugfest that won't be forgotten anytime soon.`
-            ];
-            html += `<article onclick="openMatchupModal(${closeGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-yellow-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'nail_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'nail_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-yellow-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-
-        if(blowoutGame && blowoutGame !== highGame && blowoutGame !== closeGame && maxDiff > 30 && highlightCount < 3) {
-            let winner = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[0] : blowoutGame[1]; let loser = blowoutGame[0].points > blowoutGame[1].points ? blowoutGame[1] : blowoutGame[0];
-            let star = getStarPlayer(winner); let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
-
-            const titles = [ 
-                `MASSACRE: ${wName} ABSOLUTELY EMBARRASSES ${lName} BY ${maxDiff.toFixed(2)}`, 
-                `BLOWOUT ALERT: ${lName} GETS SYSTEMATICALLY DISMANTLED`, 
-                `NO MERCY: ${wName} DROPS THE HAMMER ON ${lName}`,
-                `BLOODBATH: ${wName} TAKES ${lName} OUT TO THE WOODSHED`,
-                `LAUGHING STOCK: ${lName} LAYS A MASSIVE EGG AGAINST ${wName}`,
-                `MERCY RULE INVOKED: ${wName} ANNIHILATES ${lName}`,
-                `UGLY SCENES: ${wName} HUMILIATES ${lName} IN ONE-SIDED AFFAIR`,
-                `TOTAL COLLAPSE: ${lName} NO-SHOWS AGAINST ${wName}`,
-                `COMPLETE MISMATCH: ${wName} DISPOSES OF ${lName} WITH EASE`,
-                `RUTHLESS: ${wName} POURS IT ON A HELPLESS ${lName}`
-            ];
-            const bodies = [ 
-                `It was ugly from the opening kickoff. <strong>${wName}</strong> absolutely dismantled ${lName} by a crushing margin of ${maxDiff.toFixed(2)} points. ${star.name} poured salt in the wound with an explosive ${star.pts.toFixed(2)} points.`, 
-                `A complete demolition. <strong>${wName}</strong> coasted to an effortless ${maxDiff.toFixed(2)} point blowout victory while ${lName} failed to put up any resistance whatsoever.`, 
-                `This wasn't even a contest. <strong>${wName}</strong> violated every rule of sportsmanship, continuing to pour it on ${lName} until the clock hit triple zeroes.`,
-                `A truly humiliating performance from ${lName}. <strong>${wName}</strong> didn't even have to break a sweat, coasting behind ${star.name}'s massive performance.`,
-                `Someone call a wellness check on ${lName}. They were systematically picked apart by <strong>${wName}</strong> in a brutal, one-sided affair.`,
-                `Fans were leaving the stadium by halftime. <strong>${wName}</strong> put on a clinic, crushing ${lName} by a truly embarrassing margin.`,
-                `We advise ${lName} to delete the app for a few days. <strong>${wName}</strong> dragged them up and down the field in a totally lopsided mismatch.`,
-                `${lName} clearly left their playbook at home. <strong>${wName}</strong> took full advantage, cruising to a massive blowout win.`,
-                `Total humiliation. <strong>${wName}</strong> didn't even need their bench to absolutely wreck ${lName} this week.`,
-                `If this was boxing, they would have thrown in the towel. <strong>${wName}</strong> delivered a devastating knockout blow to a completely helpless ${lName} roster.`
-            ];
-            html += `<article onclick="openMatchupModal(${blowoutGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-slate-700 shadow-lg mb-6 cursor-pointer hover:border-purple-500 transition group relative"><h2 class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight pr-6">${pickSeeded(titles, 'blow_title', week)}</h2><p class="text-cyan-500 text-xs font-bold mb-4 tracking-widest uppercase">WEEK ${week} AUTOREPORT • HIGHLIGHT</p><p class="text-gray-300 leading-relaxed text-sm group-hover:text-white transition">${pickSeeded(bodies, 'blow_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-purple-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-        
-        if(blunderer && maxBenchPts >= 15 && highlightCount < 3) {
-            let starName = playerDictionary[blunderPlayerId]?.name || "A player"; let bName = getTName(blunderer.roster_id);
-            
-            const titles = [ 
-                `ROSTER MALPRACTICE: ${bName} GALAXY-BRAINS LINEUP, LEAVES ${maxBenchPts.toFixed(1)} ON PINE`, 
-                `BENCH BLUNDER: ${bName} WASTES A MONSTER PERFORMANCE FROM ${starName}`, 
-                `COACHING DISASTER: ${bName} OUTSMARTS THEMSELVES IN THE WORST WAY`,
-                `OVERTHINKING IT: ${bName} BENCHES ${starName} IN CRIMINAL OFFENSE`,
-                `HALL OF SHAME: ${bName} FORGETS HOW TO SET A LINEUP`,
-                `PAINFUL REGRET: ${maxBenchPts.toFixed(1)} POINTS FROM ${starName} ROTTING ON BENCH`,
-                `FIRE THE MANAGER: ${bName} LEAVES VALUABLE POINTS STRANDED`,
-                `COSTLY MISTAKE: ${starName} GOES OFF WHILE BURIED ON ${bName}'S BENCH`,
-                `SLEEPING ON TALENT: ${bName} MISSES OUT ON HUGE GAME FROM ${starName}`,
-                `FANTASY CRIME: ${bName} SHOULD BE ARRESTED FOR BENCHING ${starName}`
-            ];
-            const bodies = [ 
-                `What were you thinking? <strong>${bName}</strong> completely overthought their lineup, leaving ${maxBenchPts.toFixed(2)} points from ${starName} rotting on the bench. Classic fantasy coaching malpractice.`, 
-                `Congrats to <strong>${bName}</strong> on the blunder of the week. You left ${starName} and their ${maxBenchPts.toFixed(2)} points catching splinters. Those points would have looked pretty nice in the active lineup.`, 
-                `Someone revoke their coaching credentials. <strong>${bName}</strong> decided ${starName} wasn't good enough to start, only to watch them go off for ${maxBenchPts.toFixed(2)} points from the pine.`,
-                `The fantasy gods are punishing <strong>${bName}</strong> for this one. You don't leave ${maxBenchPts.toFixed(2)} points from ${starName} riding the pine without consequences.`,
-                `Absolute malpractice from the manager's chair. <strong>${bName}</strong> is going to lose sleep over benching ${starName}.`,
-                `Tinkering on Sunday morning strikes again. <strong>${bName}</strong> sat ${starName} down, and had to watch from the sidelines as they erupted for ${maxBenchPts.toFixed(2)} points.`,
-                `It's a tough pill to swallow when your bench outscores your starters. <strong>${bName}</strong> is kicking themselves for not giving ${starName} the nod this week.`,
-                `A rookie mistake by a veteran manager. <strong>${bName}</strong> failed to recognize the matchup and left a golden ${maxBenchPts.toFixed(2)} points stranded on the bench.`,
-                `This one is going to sting on Tuesday morning. <strong>${bName}</strong> has no one to blame but themselves for leaving ${starName} out of the lineup.`,
-                `You have to play your studs. <strong>${bName}</strong> got too cute with the lineup construction, leaving a crucial ${maxBenchPts.toFixed(2)} points to wither on the bench.`
-            ];
-            html += `<article onclick="openMatchupModal(${blunderer.matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-red-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-red-500 hidden sm:block">🤡</div><h2 class="text-xl sm:text-2xl font-black text-red-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'blund_title', week)}</h2><p class="text-red-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'blund_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-red-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-
-        if(toiletGame && minCombined > 0 && minCombined < 170 && highlightCount < 3) {
-            let t1Name = getTName(toiletGame[0].roster_id), t2Name = getTName(toiletGame[1].roster_id);
-            
-            const titles = [ 
-                `TOILET BOWL: A MASTERCLASS IN OFFENSIVE INEPTITUDE (${minCombined.toFixed(1)} COMBINED PTS)`, 
-                `EYE BLEACH REQUIRED: ${t1Name} & ${t2Name} COMBINE FOR PURE TRASH`, 
-                `OFFENSIVE CLINIC DENIED: WORST GAME OF THE WEEK GOES TO ${t1Name} AND ${t2Name}`,
-                `SNOOZEFEST: ${t1Name} AND ${t2Name} ENGAGE IN A RACE TO THE BOTTOM`,
-                `MUD FIGHT: ${t1Name} BARELY OUT-SUCKS ${t2Name} IN BRUTAL WATCH`,
-                `PUNTS GALORE: A DISGUSTING DISPLAY OF FANTASY FOOTBALL`,
-                `A GAME ONLY A PUNTER COULD LOVE: ${t1Name} VS ${t2Name}`,
-                `RACE TO ZERO: ${t1Name} AND ${t2Name} FORGET HOW TO SCORE`,
-                `UGLY FOOTBALL: ${t1Name} BATTLES ${t2Name} IN A SLOG`,
-                `OFFENSIVE OUTAGE: NEITHER ${t1Name} NOR ${t2Name} SHOWS UP TO PLAY`
-            ];
-            const bodies = [ 
-                `If you enjoy offensive football, this matchup was an absolute crime. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> put on a clinic in offensive disaster, combining for a miserable ${minCombined.toFixed(2)} points. Burn the tape.`, 
-                `Did either of these managers even look at their lineups on Sunday? <strong>${t1Name}</strong> and <strong>${t2Name}</strong> laid massive eggs, scraping together just ${minCombined.toFixed(2)} combined points in a contest with no real winners.`, 
-                `This was the fantasy equivalent of watching paint dry in a snowstorm. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> should both be issued losses after this dreadful ${minCombined.toFixed(2)} point snooze-fest.`,
-                `Both managers should have to issue a public apology for this one. A combined ${minCombined.toFixed(2)} points of pure garbage from <strong>${t1Name}</strong> and <strong>${t2Name}</strong>.`,
-                `We strongly advise deleting the game tape. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> were equally pathetic this week, rewarding onlookers with nothing but pain.`,
-                `A truly disgusting display. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> both failed to reach basic fantasy competency, stumbling to a combined ${minCombined.toFixed(2)} points.`,
-                `Nobody wanted to win this one. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> traded punts all weekend in what will surely go down as the ugliest game of the year.`,
-                `The less said about this matchup, the better. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> completely flatlined for a collective ${minCombined.toFixed(2)} points.`,
-                `This game set fantasy football back a decade. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> subjected us to a historically bad scoring performance.`,
-                `Neither team deserved to walk away with a W. <strong>${t1Name}</strong> and <strong>${t2Name}</strong> engaged in a sloppy, low-scoring mud fight that tested everyone's patience.`
-            ];
-            html += `<article onclick="openMatchupModal(${toiletGame[0].matchup_id})" class="glass-panel p-6 sm:p-7 rounded-xl border border-orange-900/50 shadow-[0_0_15px_rgba(234,88,12,0.1)] mb-6 relative overflow-hidden cursor-pointer hover:border-orange-500 transition group"><div class="absolute -right-4 -top-4 opacity-5 text-9xl text-orange-500 hidden sm:block">🚽</div><h2 class="text-xl sm:text-2xl font-black text-orange-400 mb-2 uppercase tracking-tight relative z-10 pr-6">${pickSeeded(titles, 'toilet_title', week)}</h2><p class="text-orange-500/70 text-xs font-bold mb-4 tracking-widest uppercase relative z-10">WEEK ${week} AUTOREPORT • HALL OF SHAME</p><p class="text-gray-300 leading-relaxed text-sm relative z-10 group-hover:text-white transition">${pickSeeded(bodies, 'toilet_body', week)}</p><div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-orange-500 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg></div></article>`;
-            highlightCount++;
-        }
-    }
-
-    // ALL MATCHUPS SLATE
-    let allMatchupsHtml = "";
-    matchups.forEach(g => {
-        let t1 = g[0], t2 = g[1];
-        let t1Name = getTName(t1.roster_id), t2Name = getTName(t2.roster_id);
-        let pi1 = getTPI(t1.roster_id), pi2 = getTPI(t2.roster_id);
-        
-        let cardTitle = "", cardBody = "";
-        let tagColor = "text-cyan-500";
-        let tagText = `WEEK ${week} ${phase}`;
-        
-        let saltTitle = 'slate_title_' + t1.roster_id;
-        let saltBody = 'slate_body_' + t1.roster_id;
-
-        if (phase === "PREVIEW") {
-            let piDiff = Math.abs(pi1 - pi2);
-            if (piDiff > 20) {
-                let favName = pi1 > pi2 ? t1Name : t2Name; let dogName = pi1 < pi2 ? t1Name : t2Name;
-                
-                const pTitles = [
-                    `DAVID VS GOLIATH: ${dogName} LOOKS TO SHOCK THE WORLD`,
-                    `UPSET ALERT: CAN ${dogName} STUN ${favName}?`,
-                    `UPHILL BATTLE: ${dogName} FACES MASSIVE TEST AGAINST ${favName}`,
-                    `HEAVY FAVORITE: ${favName} EXPECTED TO ROLL OVER ${dogName}`,
-                    `MISMATCH ON PAPER: ${favName} PROJECTED TO DOMINATE ${dogName}`,
-                    `TALL TASK: ${dogName} TRIES TO SLAY ${favName}`,
-                    `MISMATCH OF THE WEEK: ${favName} DRAWS FAVORABLE MATCHUP AGAINST ${dogName}`,
-                    `AGAINST THE ODDS: ${dogName} HOPING FOR A MIRACLE OVER ${favName}`,
-                    `CLEAR ADVANTAGE: ${favName} LOOKS TO CRUISE PAST ${dogName}`,
-                    `DANGEROUS TERRITORY: ${dogName} BRACES FOR ${favName}`
-                ];
-                const pBodies = [
-                    `The power index heavily favors ${favName} in this one, but anything can happen on any given Sunday. ${dogName} will need a massive over-performance to pull off the upset.`,
-                    `Projections show a clear advantage for ${favName}. If ${dogName} wants to walk away with a win, they will need their stars to vastly exceed expectations.`,
-                    `${favName} enters this matchup with all the momentum. ${dogName} has their work cut out for them if they want to avoid adding another tally to the loss column.`,
-                    `The numbers don't lie. ${favName} holds a significant edge in True Power Index, leaving ${dogName} desperate for a miracle on the waiver wire or a boom performance.`,
-                    `Expectations are low for ${dogName} as they prepare to face a loaded ${favName} roster. This could get ugly early if the projections hold true.`,
-                    `${dogName} is entering a buzzsaw this week. ${favName} has been firing on all cylinders, making this a daunting task for the underdog.`,
-                    `It's hard to bet against ${favName} here. They severely outclass ${dogName} in almost every metric, setting the stage for a potential blowout.`,
-                    `Fantasy football can be cruel. ${dogName} needs a completely flawless execution of their lineup to even have a prayer against ${favName}.`,
-                    `A classic trap game for ${favName}. They are widely expected to dominate ${dogName}, but they can't afford to get caught looking ahead to next week.`,
-                    `${favName} should be able to write this one down in pen. ${dogName} lacks the firepower required to keep pace in this lopsided affair.`
-                ];
-                cardTitle = pickSeeded(pTitles, saltTitle, week);
-                cardBody = pickSeeded(pBodies, saltBody, week);
-                
-            } else if (pi1 > 100 && pi2 > 100) {
-                const pTitles = [
-                    `TITANS COLLIDE: ${t1Name} BATTLES ${t2Name}`,
-                    `HEAVYWEIGHT BOUT: ${t1Name} TAKES ON ${t2Name}`,
-                    `CLASH OF THE TITANS: ${t1Name} BATTLES ${t2Name}`,
-                    `BLOCKBUSTER MATCHUP: ${t1Name} GOES HEAD-TO-HEAD WITH ${t2Name}`,
-                    `MARQUEE MATCHUP: ${t1Name} AND ${t2Name} FIGHT FOR SUPREMACY`,
-                    `BATTLE OF THE BEST: ${t1Name} PROBES ${t2Name}`,
-                    `ELITE SHOWDOWN: ${t1Name} VS ${t2Name}`,
-                    `MUST-WATCH TV: ${t1Name} LOCKS HORNS WITH ${t2Name}`,
-                    `PLAYOFF PREVIEW: ${t1Name} FACES OFF AGAINST ${t2Name}`,
-                    `STAR-STUDDED AFFAIR: ${t1Name} COLLIDES WITH ${t2Name}`
-                ];
-                const pBodies = [
-                    `Two of the strongest rosters in the FFF face off. This is a true heavyweight bout that will test the depth and star power of both managers.`,
-                    `Grab your popcorn. ${t1Name} and ${t2Name} are both sporting elite True Power Indexes, guaranteeing fireworks when the slate kicks off.`,
-                    `This matchup features two managers at the absolute top of their game. Expect a high-scoring shootout between ${t1Name} and ${t2Name} this week.`,
-                    `Playoff implications are massive as ${t1Name} meets ${t2Name}. When two juggernauts meet, every single starting spot on the roster matters.`,
-                    `You couldn't ask for a better prime-time matchup. ${t1Name} and ${t2Name} are primed to put on an absolute clinic in fantasy football excellence.`,
-                    `This is the type of matchup that defines a season. ${t1Name} and ${t2Name} both carry elite point-scoring potential into what should be a classic.`,
-                    `Expect heavy offensive output. Both ${t1Name} and ${t2Name} have the firepower to completely break the slate this week.`,
-                    `The margin for error is zero. ${t1Name} and ${t2Name} are so evenly matched at the top of the leaderboards that one injury could swing the whole tie.`,
-                    `It's a battle for bragging rights and playoff seeding as the high-flying ${t1Name} roster prepares to duel with the lethal ${t2Name} squad.`,
-                    `We are in for a treat. ${t1Name} and ${t2Name} boast two of the most terrifying lineups in the league, making this a true clash of titans.`
-                ];
-                cardTitle = pickSeeded(pTitles, saltTitle, week);
-                cardBody = pickSeeded(pBodies, saltBody, week);
-                
-            } else {
-                const pTitles = [
-                    `EVENLY MATCHED: ${t1Name} BATTLES ${t2Name}`,
-                    `TOSS-UP: ${t1Name} AND ${t2Name} TOO CLOSE TO CALL`,
-                    `DOWN TO THE WIRE: PROJECTIONS DEADLOCKED FOR ${t1Name} VS ${t2Name}`,
-                    `HARD TO PREDICT: ${t1Name} MEETS ${t2Name} IN GRUDGE MATCH`,
-                    `DEAD HEAT: ${t1Name} BATTLES ${t2Name} FOR SURVIVAL`,
-                    `ANYONE'S GAME: ${t1Name} FACES ${t2Name}`,
-                    `COIN FLIP MATCHUP: ${t1Name} TAKES ON ${t2Name}`,
-                    `NARROW MARGINS: ${t1Name} DUELS WITH ${t2Name}`,
-                    `MIDCARD SCRAP: ${t1Name} AND ${t2Name} SEEK VITAL WIN`,
-                    `GRINDING IT OUT: ${t1Name} PREPARES FOR ${t2Name}`
-                ];
-                const pBodies = [
-                    `The projections suggest a coin-flip. Both ${t1Name} and ${t2Name} are coming into this week looking for a crucial victory to shift their momentum.`,
-                    `The True Power Index separates these two teams by razor-thin margins. ${t1Name} and ${t2Name} will likely be sweating this out until Monday night.`,
-                    `A true toss-up. Neither ${t1Name} nor ${t2Name} holds a distinct advantage on paper, making this a matchup purely determined by who gets lucky on Sunday.`,
-                    `This one is entirely too close to call. ${t1Name} and ${t2Name} match up perfectly, making a single boom or bust performance the likely deciding factor.`,
-                    `With nearly identical metrics, ${t1Name} takes on ${t2Name} in what should be a gritty, highly-contested battle for positioning in the standings.`,
-                    `Both of these rosters are desperate for a win. ${t1Name} and ${t2Name} match up in a classic trap game where either side could easily take it.`,
-                    `Expect a close, low-scoring affair. ${t1Name} and ${t2Name} are both searching for an identity, making this a pure battle of attrition.`,
-                    `It's going to come down to the flex spots. ${t1Name} and ${t2Name} are deadlocked in the projections, placing massive importance on the deep bench.`,
-                    `This matchup might fly under the radar, but it's hugely important. ${t1Name} and ${t2Name} are jockeying for position in the middle of the pack.`,
-                    `Flip a coin. The algorithm sees virtually no separation between ${t1Name} and ${t2Name} heading into the Sunday slate.`
-                ];
-                cardTitle = pickSeeded(pTitles, saltTitle, week);
-                cardBody = pickSeeded(pBodies, saltBody, week);
-            }
-        } else if (phase === "LIVE") {
-            let leader = t1.points >= t2.points ? t1 : t2; 
-            let trailer = t1.points < t2.points ? t1 : t2;
-            let leadName = getTName(leader.roster_id), trailName = getTName(trailer.roster_id);
-            let diff = leader.points - trailer.points;
-
-            const lTitles = [
-                `LIVE UPDATE: ${leadName} LEADS ${trailName}`,
-                `IN PROGRESS: ${leadName} OUT FRONT`,
-                `CURRENT SCORE: ${leadName} HAS THE EDGE`,
-                `MATCHUP LIVE: ${leadName} PACING ${trailName}`,
-                `WEEK ${week} ACTION: ${leadName} PULLING AHEAD`,
-                `PULLING AWAY: ${leadName} BUILDS A LEAD ON ${trailName}`,
-                `SUNDAY ACTION: ${leadName} EDGING OUT ${trailName}`,
-                `REAL-TIME TRACKER: ${leadName} IN CONTROL OVER ${trailName}`,
-                `ON THE BOARD: ${leadName} STARTING STRONG AGAINST ${trailName}`,
-                `AS IT STANDS: ${leadName} HOLDING OFF ${trailName}`
-            ];
-            const lBodies = [
-                `As the action unfolds, ${leadName} is currently holding a ${diff.toFixed(2)}-point lead over ${trailName}.`,
-                `${leadName} is pacing the matchup right now with ${leader.points.toFixed(2)} points, but there is still plenty of football left to play.`,
-                `The matchup is live. ${leadName} (${leader.points.toFixed(2)}) is currently edging out ${trailName} (${trailer.points.toFixed(2)}).`,
-                `It's a developing situation on the scoreboard. ${leadName} has the current advantage, but ${trailName} remains in striking distance.`,
-                `Points are on the board. ${leadName} has established an early lead of ${diff.toFixed(2)} points over ${trailName}.`,
-                `${leadName} is off to a solid start, sitting on ${leader.points.toFixed(2)} points while ${trailName} tries to rally their remaining players.`,
-                `The early games have favored ${leadName}, leaving ${trailName} with a ${diff.toFixed(2)}-point deficit to overcome in the afternoon.`,
-                `It's a tight race so far, but ${leadName} is managing to keep their nose in front of ${trailName} with ${leader.points.toFixed(2)} points.`,
-                `${leadName} is dictating the pace of this matchup, forcing ${trailName} to rely on their late-game options to close the gap.`,
-                `Things are heating up on the scoreboard. ${leadName} is currently fending off ${trailName} with a slim ${diff.toFixed(2)} point margin.`
-            ];
-            cardTitle = pickSeeded(lTitles, saltTitle, week);
-            cardBody = pickSeeded(lBodies, saltBody, week);
-            tagColor = "text-red-500";
-        } else {
-            let winner = t1.points > t2.points ? t1 : t2; let loser = t1.points > t2.points ? t2 : t1;
-            let wName = getTName(winner.roster_id), lName = getTName(loser.roster_id);
-            let diff = winner.points - loser.points;
-            
-            if (diff < 10) {
-                const rTitles = [
-                    `DOWN TO THE WIRE: ${wName} SURVIVES ${lName}`,
-                    `PHOTO FINISH: ${wName} EDGES OUT ${lName}`,
-                    `BY A HAIR: ${wName} SQUEAKS PAST ${lName}`,
-                    `HEARTBREAKER: ${lName} FALLS SHORT TO ${wName}`,
-                    `NAIL-BITER: ${wName} ESCAPES WITH THE W`,
-                    `THRILLER: ${wName} OUTLASTS ${lName} IN TIGHT CONTEST`,
-                    `TOO CLOSE TO CALL: ${wName} SURVIVES LATE PUSH FROM ${lName}`,
-                    `ONE PLAY AWAY: ${lName} LOSES HEARTBREAKER TO ${wName}`,
-                    `MARGIN OF ERROR: ZERO. ${wName} DEFEATS ${lName}`,
-                    `CLUTCH GENE: ${wName} SEALS NARROW WIN OVER ${lName}`
-                ];
-                const rBodies = [
-                    `A stressful, back-and-forth affair ended with ${wName} edging out ${lName} by just ${diff.toFixed(2)} points. Every lineup decision mattered.`,
-                    `${lName} is left wondering what could have been after falling to ${wName} in a devastatingly close ${diff.toFixed(2)} point loss.`,
-                    `${wName} held on for dear life to secure the victory over ${lName}. A margin of ${diff.toFixed(2)} points means one dropped pass was the difference.`,
-                    `An absolute cardiac event. ${wName} escaped with the win, leaving ${lName} frustrated by a razor-thin ${diff.toFixed(2)} point defeat.`,
-                    `You can't ask for a closer matchup. ${wName} managed to scrape by ${lName} with a mere ${diff.toFixed(2)} point advantage when the dust settled.`,
-                    `This one came down to the final whistle. ${wName} showed incredible resilience to hold off a charging ${lName} roster.`,
-                    `Absolute devastation for ${lName}. They lost a complete toss-up game to ${wName} by a heartbreaking ${diff.toFixed(2)} points.`,
-                    `A vital victory for ${wName}. They managed the narrowest of wins against ${lName}, securing the result by just ${diff.toFixed(2)} points.`,
-                    `Fantasy football is a game of inches, and ${wName} had just enough of them to sneak past ${lName} on Monday night.`,
-                    `${lName} played a great game, but ${wName} played just a tiny bit better, walking away with a grueling ${diff.toFixed(2)}-point triumph.`
-                ];
-                cardTitle = pickSeeded(rTitles, saltTitle, week);
-                cardBody = pickSeeded(rBodies, saltBody, week);
-                tagColor = "text-yellow-500";
-                
-            } else if (diff > 35) {
-                const rTitles = [
-                    `NO CONTEST: ${wName} ROLLS OVER ${lName}`,
-                    `BLOWOUT: ${wName} DISMANTLES ${lName}`,
-                    `MASSACRE: ${wName} DESTROYS ${lName}`,
-                    `LAUGHER: ${wName} MAKES QUICK WORK OF ${lName}`,
-                    `ABSOLUTE BEATDOWN: ${wName} EMBARRASSES ${lName}`,
-                    `ROUT: ${wName} HUMILIATES ${lName} IN ONE-SIDED AFFAIR`,
-                    `SHELLACKING: ${lName} HAS NO ANSWERS FOR ${wName}`,
-                    `WOODSHED: ${wName} POURS IT ON AGAINST ${lName}`,
-                    `NOT EVEN CLOSE: ${wName} DOMINATES ${lName}`,
-                    `A COMPLETE JOKE: ${wName} CRUSHES ${lName} WITH EASE`
-                ];
-                const rBodies = [
-                    `${wName} put on an absolute clinic, cruising to a comfortable ${diff.toFixed(2)}-point victory. ${lName} never really stood a chance in this one.`,
-                    `It was over before it started. ${wName} steamrolled ${lName}, opening up a massive ${diff.toFixed(2)} point lead and never looking back.`,
-                    `A thorough dismantling. ${wName} poured it on against ${lName}, securing an easy blowout victory by ${diff.toFixed(2)} points.`,
-                    `${lName} had absolutely no answers for ${wName} this week, getting systematically crushed in a non-competitive ${diff.toFixed(2)} point loss.`,
-                    `Total dominance. ${wName} put ${lName} out of their misery early, riding a massive lead to an eventual ${diff.toFixed(2)} point blowout.`,
-                    `${wName} sent a message to the rest of the league with this one. They completely obliterated ${lName} in a ${diff.toFixed(2)}-point drubbing.`,
-                    `It's back to the drawing board for ${lName}. They were hopelessly outmatched by ${wName}, dropping the matchup by ${diff.toFixed(2)} points.`,
-                    `${lName} failed to show up. ${wName} took full advantage, running up the score for a laughably easy win.`,
-                    `A certified beatdown. ${wName} treated ${lName} like a practice squad, securing the blowout win with zero stress.`,
-                    `${wName} had everything clicking this week, which unfortunately resulted in a humiliating ${diff.toFixed(2)} point defeat for ${lName}.`
-                ];
-                cardTitle = pickSeeded(rTitles, saltTitle, week);
-                cardBody = pickSeeded(rBodies, saltBody, week);
-                tagColor = "text-purple-500";
-                
-            } else {
-                const rTitles = [
-                    `TAKES CARE OF BUSINESS: ${wName} DEFEATS ${lName}`,
-                    `GETS IT DONE: ${wName} HANDLES ${lName}`,
-                    `SOLID VICTORY: ${wName} OUTLASTS ${lName}`,
-                    `SECURES THE W: ${wName} BEATS ${lName}`,
-                    `CRUISING: ${wName} PULLS AWAY FROM ${lName}`,
-                    `COMFORTABLE WIN: ${wName} TAKES DOWN ${lName}`,
-                    `METHODICAL: ${wName} SECURES RESULT OVER ${lName}`,
-                    `CLEAN SHEET: ${wName} ADDS ANOTHER WIN AGAINST ${lName}`,
-                    `JOB DONE: ${wName} MANAGES MATCHUP AGAINST ${lName}`,
-                    `NO SWEAT: ${wName} DISPATCHES ${lName}`
-                ];
-                const rBodies = [
-                    `${wName} executed their gameplan and secured a solid win over ${lName}, putting up ${winner.points.toFixed(2)} points to lock in the victory.`,
-                    `A clean, respectable victory for ${wName}, who comfortably outpaced ${lName} by ${diff.toFixed(2)} points to add another win to their record.`,
-                    `${wName} proved to be too much for ${lName} this week. They methodically built a lead and finished with ${winner.points.toFixed(2)} total points.`,
-                    `Nothing flashy, just good fantasy football. ${wName} did what they needed to do to secure a nice ${diff.toFixed(2)} point win against ${lName}.`,
-                    `${lName} put up a decent fight, but ${wName} ultimately pulled away late to secure the matchup with a final score of ${winner.points.toFixed(2)}.`,
-                    `${wName} leaned on a balanced roster to methodically dismantle ${lName}, cruising to a comfortable ${diff.toFixed(2)}-point margin.`,
-                    `A solid, drama-free week for ${wName}. They handled their business against ${lName} and walked away with a clean ${winner.points.toFixed(2)} points.`,
-                    `${lName} hung around for a while, but ${wName} simply had too much firepower down the stretch, securing the win by ${diff.toFixed(2)} points.`,
-                    `This was a textbook victory. ${wName} never really looked in danger, managing the gap over ${lName} perfectly.`,
-                    `${wName} picks up a crucial win, outscoring ${lName} ${winner.points.toFixed(2)} to ${loser.points.toFixed(2)} in a fundamentally sound performance.`
-                ];
-                cardTitle = pickSeeded(rTitles, saltTitle, week);
-                cardBody = pickSeeded(rBodies, saltBody, week);
-                tagColor = "text-green-500";
-            }
-        }
-
-        allMatchupsHtml += `
-        <div onclick="openMatchupModal(${t1.matchup_id})" class="glass-panel p-4 rounded-lg border border-slate-700/50 hover:bg-slate-800/30 hover:border-cyan-500/50 transition shadow-sm cursor-pointer relative group">
-            <div class="text-[10px] font-black ${tagColor} uppercase tracking-widest mb-1.5">${tagText}</div>
-            <h4 class="font-bold text-white text-sm mb-1.5 pr-6">${cardTitle}</h4>
-            <p class="text-xs text-gray-400 leading-relaxed pr-2 group-hover:text-gray-300 transition">${cardBody}</p>
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition text-cyan-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
-            </div>
-        </div>`;
-    });
-
-    let accordionHtml = `
-    <div class="mt-2 w-full">
-        <button onclick="toggleAccordion('matchup-recap', '${week}')" class="w-full glass-panel p-4 rounded-xl border border-slate-700 flex justify-between items-center text-gray-300 hover:text-white transition focus:outline-none shadow-lg">
-            <span class="font-black uppercase tracking-widest text-sm text-cyan-400 text-left">The Full Slate: Week ${week} Matchups</span>
-            <svg id="matchup-recap-chevron-${week}" class="w-5 h-5 chevron text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
-        <div id="matchup-recap-content-${week}" class="draft-accordion matchup-recap-acc">
-            <div class="grid grid-cols-1 gap-3 pt-3">
-                ${allMatchupsHtml}
-            </div>
-        </div>
-    </div>`;
-
-    feed.innerHTML = (html || `<article class="glass-panel p-6 rounded-xl border border-slate-700 text-center"><p class="text-gray-400 italic">No standout algorithmic events detected for this week.</p></article>`) + accordionHtml;
-}
 
         async function compileAllTimeRecords(activeLeagueId, activeWeek) {
             try {
