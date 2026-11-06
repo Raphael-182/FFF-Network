@@ -492,6 +492,28 @@
         let historicalDataLoaded = false;
         let historicalDataLoading = false;
         let livePollingInterval = null;
+        let livePollingInterval = null;
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAIKEy8XeR_UsY9C_EXZ9b6IhMJBLvo2JU",
+  authDomain: "fff-network.firebaseapp.com",
+  databaseURL: "https://fff-network-default-rtdb.firebaseio.com",
+  projectId: "fff-network",
+  storageBucket: "fff-network.firebasestorage.app",
+  messagingSenderId: "1082695285653",
+  appId: "1:1082695285653:web:f3f1e1ce9ef157b7d6149c",
+  measurementId: "G-F03NC101GP"
+};
+firebase.initializeApp(firebaseConfig);
+const rtdb = firebase.database();
+
+// Firebase References
+const dbAnnouncements = rtdb.ref('announcements');
+const dbFinances = rtdb.ref('finances');
+const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
+// -------------------------------
+
 
         function triggerHaptic() {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
