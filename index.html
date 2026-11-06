@@ -12,14 +12,13 @@
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" id="apple-icon" href="https://sleepercdn.com/images/v2/icons/player_default.webp">
     
+    <!-- External Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-            <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
+    <!-- Internal Styles -->
+    <style>
         body { background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); background-attachment: fixed; color: #e2e8f0; -webkit-tap-highlight-color: transparent; }
         .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
@@ -47,6 +46,7 @@
         .nav-btn svg { width: 1.25rem; height: 1.25rem; margin-bottom: 0.125rem; }
     </style>
 </head>
+
 <body class="min-h-screen font-sans antialiased pb-24 sm:pb-8">
 
     <div class="ticker-wrap hidden sm:block">
