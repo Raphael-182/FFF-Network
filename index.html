@@ -1493,6 +1493,7 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
             }
 
             const getTName = (rId) => getTeamName(rostersData.find(r => r.roster_id === rId)?.owner_id);
+            const getTLink = (rId) => getTeamLink(rostersData.find(r => r.roster_id === rId)?.owner_id);
             const getTPI = (rId) => {
                 let oId = rostersData.find(r => r.roster_id === rId)?.owner_id;
                 return globalPowerRankings[oId]?.score || 0;
