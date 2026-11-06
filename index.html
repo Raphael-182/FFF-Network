@@ -2294,24 +2294,105 @@ const dbConfig = rtdb.ref('config'); // For manual adjustments and start year
             `;
         }
 
-        function publishAnnouncement() {
-            const t = document.getElementById('post-title').value.trim(), b = document.getElementById('post-body').value.trim();
-            if (!t || !b) { alert("Title and message required."); return; }
-            let posts = JSON.parse(localStorage.getItem('fff_announcements') || '[]');
-            posts.unshift({ id: Date.now(), title: t, body: b, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
-            localStorage.setItem('fff_announcements', JSON.stringify(posts));
-            document.getElementById('post-title').value = ''; document.getElementById('post-body').value = ''; loadAnnouncements(); switchTab('news'); window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        let financesInitDone = false;
+function renderFinances() {
+    if(!financesInitDone) {
+        dbFinances.on('value', (snapshot) => {
+            let finances = snapshot.val() || {};
+            let publicHtml = '';
+            let adminHtml = '';
+            
+            let sortedRosters = [...rostersData].sort((a,b) => getTeamName(a.owner_id).localeCompare(getTeamName(b.owner_id)));
+            
+            sortedRosters.forEach(r => {
+                let name = getTeamName(r.owner_id);
+                let paid = finances[r.owner_id] || 0;
+                let due = 100; 
+                let remaining = due - paid;
+                let statusText = remaining <= 0 ? "Paid" : "Unpaid";
+                let statusColor = remaining <= 0 ? "text-green-400" : "text-red-400";
 
-        function loadAnnouncements() {
-            const posts = JSON.parse(localStorage.getItem('fff_announcements') || '[]');
+                publicHtml += `
+                <div class="flex justify-between items-center p-3 sm:p-4 hover:bg-slate-700/30 transition">
+                    <div class="flex-1 font-bold text-white truncate pr-2">${name}</div>
+                    <div class="w-16 text-center font-mono text-gray-400">$${due}</div>
+                    <div class="w-16 text-center font-mono text-white">$${paid}</div>
+                    <div class="w-20 text-right font-bold uppercase text-[10px] sm:text-xs ${statusColor}">${statusText}</div>
+                </div>`;
+
+                adminHtml += `
+                <div class="bg-slate-900/50 p-2 rounded border border-slate-700/50 flex justify-between items-center">
+                    <div class="text-[10px] font-bold text-white truncate flex-1 pr-2">${name}</div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[10px] text-gray-500 uppercase">Paid: $</span>
+                        <input type="number" id="finance-${r.owner_id}" value="${paid}" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-white text-xs text-center focus:border-green-500 focus:outline-none">
+                    </div>
+                </div>`;
+            });
+            
+            if(document.getElementById('finances-body')) document.getElementById('finances-body').innerHTML = publicHtml;
+            if(document.getElementById('admin-finances-list')) document.getElementById('admin-finances-list').innerHTML = adminHtml;
+        });
+        financesInitDone = true;
+    }
+}
+
+function saveFinances() {
+    let finances = {};
+    rostersData.forEach(r => {
+        let paidVal = parseInt(document.getElementById(`finance-${r.owner_id}`).value) || 0;
+        finances[r.owner_id] = paidVal;
+    });
+    
+    dbFinances.set(finances).then(() => {
+        alert("League finances securely updated in the cloud!");
+    }).catch(error => {
+        alert("Error saving: " + error.message);
+    });
+}
+
+function publishAnnouncement() {
+    const t = document.getElementById('post-title').value.trim();
+    const b = document.getElementById('post-body').value.trim();
+    if (!t || !b) { alert("Title and message required."); return; }
+    
+    const newPostRef = dbAnnouncements.push();
+    newPostRef.set({
+        title: t,
+        body: b,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        timestamp: Date.now()
+    }).then(() => {
+        document.getElementById('post-title').value = ''; 
+        document.getElementById('post-body').value = ''; 
+        switchTab('news'); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+let announcementsInitDone = false;
+function loadAnnouncements() {
+    if(!announcementsInitDone) {
+        dbAnnouncements.on('value', (snapshot) => {
+            let postsObj = snapshot.val() || {};
+            let posts = Object.keys(postsObj).map(key => ({ id: key, ...postsObj[key] })).sort((a, b) => b.timestamp - a.timestamp);
+            
             let html = '';
-            posts.forEach(p => { html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement(${p.id})" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow z-10">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`; });
-            document.getElementById('commish-announcements-feed').innerHTML = html;
-        }
+            posts.forEach(p => { 
+                html += `<article class="glass-panel p-5 sm:p-7 rounded-xl border border-cyan-500/50 relative group shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-6"><button onclick="deleteAnnouncement('${p.id}')" class="absolute top-4 right-4 bg-red-900/50 text-red-400 text-xs px-2 py-1 rounded hover:bg-red-600 hover:text-white transition shadow z-10">Delete</button><h2 class="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-tight leading-tight pr-14 flex items-center">📣 ${p.title}</h2><p class="text-gray-400 text-xs font-bold mb-4 tracking-widest uppercase">${p.date} • COMMISSIONER ANNOUNCEMENT</p><div class="prose prose-invert max-w-none text-white leading-relaxed text-sm sm:text-base">${p.body}</div></article>`; 
+            });
+            document.getElementById('commish-announcements-feed').innerHTML = html || '<div class="glass-panel p-8 rounded-xl text-center text-gray-500">No official league announcements.</div>';
+        });
+        announcementsInitDone = true;
+    }
+}
 
-        function deleteAnnouncement(id) { if(confirm("Permanently delete this announcement?")) { localStorage.setItem('fff_announcements', JSON.stringify(JSON.parse(localStorage.getItem('fff_announcements') || '[]').filter(p => p.id !== id))); loadAnnouncements(); } }
-
+function deleteAnnouncement(id) { 
+    if(confirm("Permanently delete this announcement from the cloud?")) { 
+        dbAnnouncements.child(id).remove(); 
+    } 
+}
+        
         window.addEventListener('DOMContentLoaded', () => { runDataPipeline(); });
     </script>
 </body>
